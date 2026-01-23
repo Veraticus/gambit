@@ -19,16 +19,25 @@ LOW FREEDOM - Follow the 6-step process exactly. Present exactly 4 options. Neve
 
 ## Quick Reference
 
-| Step | Action | If Blocked |
-|------|--------|------------|
-| 1 | Verify all tasks complete | Tasks still open → STOP |
-| 2 | Verify tests pass (test-runner agent) | Tests fail → STOP |
-| 3 | Determine base branch | Ask if unclear |
-| 4 | Present exactly 4 options | Wait for choice |
-| 5 | Execute choice | Follow option workflow |
-| 6 | Cleanup worktree (options 1,2,4 only) | Option 3 keeps worktree |
+| Step | Action | STOP If |
+|------|--------|---------|
+| 1 | Verify all tasks complete | Any task not completed |
+| 2 | Verify tests pass | Any test fails |
+| 3 | Determine base branch | - |
+| 4 | Present exactly 4 options | No answer received |
+| 5 | Execute choice | Git command fails |
+| 6 | Cleanup worktree | Options 2,3 skip this step |
 
-**Options:** 1=Merge locally, 2=PR, 3=Keep as-is, 4=Discard (requires confirmation)
+## Option Matrix
+
+| Option | Merge | Push | Keep Worktree | Delete Branch | Delete Worktree |
+|--------|-------|------|---------------|---------------|-----------------|
+| 1. Merge locally | Yes | - | - | Yes | Yes |
+| 2. Create PR | - | Yes | **Yes** | - | - |
+| 3. Keep as-is | - | - | **Yes** | - | - |
+| 4. Discard | - | - | - | Yes (force) | Yes |
+
+**Critical:** Options 2 and 3 keep the worktree. Do not clean up.
 
 ## When to Use
 
@@ -46,15 +55,17 @@ LOW FREEDOM - Follow the 6-step process exactly. Present exactly 4 options. Neve
 
 ### Step 1: Verify All Tasks Complete
 
-**Check task status:**
+**Run TaskList:**
 
 ```
 TaskList
 ```
 
-**Look for the epic and its subtasks. All must show status="completed".**
+**Decision tree:**
+- All tasks show status="completed" → Go to Step 2
+- Any task shows status="pending" or "in_progress" → **STOP**
 
-**If any tasks still open:**
+**If tasks still open:**
 
 ```
 Cannot finish: N tasks still open:
@@ -64,67 +75,77 @@ Cannot finish: N tasks still open:
 Complete all tasks before finishing.
 ```
 
-**STOP. Do not proceed.**
+**STOP. Do not proceed until all tasks completed.**
 
-**If all tasks complete:**
+**If all tasks complete, verify epic success criteria:**
 
 ```
 TaskGet
   taskId: "epic-task-id"
 ```
 
-Verify all success criteria are met.
+Review success criteria. All must be met.
+
+---
 
 ### Step 2: Verify Tests Pass
 
-**IMPORTANT:** Use test-runner agent to avoid context pollution.
+**REQUIRED: Run full test suite before presenting options.**
 
-```
-Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./..."
+**Detect test command:**
+
+| Project Type | Detection | Test Command |
+|--------------|-----------|--------------|
+| Go | `go.mod` exists | `go test ./...` |
+| Node.js | `package.json` exists | `npm test` |
+| Rust | `Cargo.toml` exists | `cargo test` |
+| Python | `pyproject.toml` or `pytest.ini` | `pytest` |
+| Devenv | Check Makefile | `make test` |
+
+**Run tests:**
+
+```bash
+# Example for Go
+go test ./...
 ```
 
-Agent returns summary + failures only.
+**Decision tree:**
+- All tests pass (exit code 0) → Go to Step 3
+- Any test fails → **STOP**
 
 **If tests fail:**
 
 ```
 Tests failing (N failures). Must fix before completing:
 
-[Show failures]
+[Show first 3-5 failures]
 
 Cannot proceed until tests pass.
 ```
 
-**STOP. Do not proceed.**
+**STOP. Do not proceed until tests pass.**
 
-**If tests pass:** Continue to Step 3.
+---
 
 ### Step 3: Determine Base Branch
+
+**Check merge base:**
 
 ```bash
 git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
 ```
 
-Or ask: "This branch split from main - is that correct?"
+**Decision tree:**
+- Command succeeds → Use detected base branch
+- Command fails → Ask user: "What is the base branch for this work?"
+
+**STOP if user doesn't respond.**
+
+---
 
 ### Step 4: Present Options
 
-**Present exactly these 4 options:**
-
-```
-Implementation complete. What would you like to do?
-
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
-
-Which option?
-```
-
-Or use AskUserQuestion:
+**REQUIRED: Use AskUserQuestion tool**
 
 ```
 AskUserQuestion
@@ -143,40 +164,40 @@ AskUserQuestion
       multiSelect: false
 ```
 
-**Don't add explanation.** Keep concise.
+**STOP: Wait for user response before proceeding.**
+
+**Do not add explanation or recommendations.** Present options and wait.
+
+---
 
 ### Step 5: Execute Choice
 
 #### Option 1: Merge Locally
 
+**Step 5.1a: Switch to base branch**
 ```bash
-# Switch to base branch
 git checkout <base-branch>
+```
 
-# Pull latest
+**Step 5.1b: Pull latest**
+```bash
 git pull
+```
 
-# Merge feature branch
+**Step 5.1c: Merge feature branch**
+```bash
 git merge <feature-branch>
 ```
 
-**Verify tests on merged result:**
-
-```
-Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./..."
-```
-
-**If tests pass:**
+**Step 5.1d: Verify tests on merged result**
 
 ```bash
-git branch -d <feature-branch>
+go test ./...  # or appropriate test command
 ```
 
-Then: Step 6 (cleanup worktree)
-
-**If tests fail after merge:**
+**Decision tree:**
+- Tests pass → Continue to Step 5.1e
+- Tests fail → Present sub-options:
 
 ```
 Merge introduced test failures. Options:
@@ -186,21 +207,31 @@ Merge introduced test failures. Options:
 Which option?
 ```
 
-#### Option 2: Push and Create PR
+**STOP: Wait for user choice.**
 
+**Step 5.1e: Delete feature branch**
+```bash
+git branch -d <feature-branch>
+```
+
+**Go to Step 6.**
+
+---
+
+#### Option 2: Create Pull Request
+
+**Step 5.2a: Push branch**
 ```bash
 git push -u origin <feature-branch>
 ```
 
-**Create PR with epic context:**
-
+**Step 5.2b: Get epic info for PR**
 ```
 TaskGet
   taskId: "epic-task-id"
 ```
 
-Use epic info for PR description:
-
+**Step 5.2c: Create PR**
 ```bash
 gh pr create --title "feat: <epic-name>" --body "$(cat <<'EOF'
 ## Summary
@@ -219,115 +250,172 @@ EOF
 )"
 ```
 
-**Report PR URL.**
-
-Then: Step 6 (cleanup worktree) — **BUT keep worktree for PR option**
-
-Actually, for Option 2, DON'T cleanup worktree. User may need it for PR feedback.
+**Step 5.2d: Report and preserve worktree**
 
 ```
 Pull request created: <PR-URL>
 
-Keeping worktree at <path> for PR updates.
+Keeping worktree at <absolute-path> for PR updates.
 ```
+
+**Do NOT go to Step 6. Worktree is preserved for PR feedback.**
+
+**DONE.**
+
+---
 
 #### Option 3: Keep As-Is
 
+**Report:**
 ```
-Keeping branch <name>. Worktree preserved at <path>.
+Keeping branch <name>. Worktree preserved at <absolute-path>.
 ```
 
-**Don't cleanup worktree.**
+**Do NOT go to Step 6. Worktree is preserved.**
+
+**DONE.**
+
+---
 
 #### Option 4: Discard
 
-**Confirm first:**
+**Step 5.4a: Show what will be deleted**
+
+```bash
+# Get commit list
+git log --oneline <base-branch>..HEAD
+```
+
+**Step 5.4b: Request explicit confirmation**
 
 ```
 This will permanently delete:
 - Branch <name>
 - All commits:
-  * <commit-hash> <commit-message>
-  * <commit-hash> <commit-message>
+  * <hash> <message>
+  * <hash> <message>
   * ... (N more commits)
 - Worktree at <path>
 
 Type 'discard' to confirm.
 ```
 
-**Wait for exact "discard" confirmation.**
+**STOP: Wait for exact text "discard".**
 
-**If confirmed:**
+**Decision tree:**
+- User types exactly "discard" → Continue to Step 5.4c
+- User types anything else → Ask for clarification, do not proceed
 
+**Step 5.4c: Delete branch**
 ```bash
 git checkout <base-branch>
 git branch -D <feature-branch>
 ```
 
-Then: Step 6 (cleanup worktree)
+**Go to Step 6.**
+
+---
 
 ### Step 6: Cleanup Worktree
 
-**For Options 1 and 4 only:**
+**Only for Options 1 and 4.**
 
+**Check if worktree exists:**
 ```bash
-# Check if in worktree
 git worktree list | grep <feature-branch>
+```
 
-# If yes
+**Decision tree:**
+- Worktree found → Remove it
+- Worktree not found → Skip (might not have used worktree)
+
+**Remove worktree:**
+```bash
 git worktree remove <worktree-path>
 ```
 
-**For Options 2 and 3:** Keep worktree.
-
-## Option Matrix
-
-| Option | Merge | Push | Keep Worktree | Cleanup Branch | Cleanup Worktree |
-|--------|-------|------|---------------|----------------|------------------|
-| 1. Merge locally | Yes | - | - | Yes | Yes |
-| 2. Create PR | - | Yes | Yes | - | - |
-| 3. Keep as-is | - | - | Yes | - | - |
-| 4. Discard | - | - | - | Yes (force) | Yes |
-
-## Task Tool Reference
-
-### TaskList
-
+**Report:**
 ```
-TaskList
+Worktree removed at <path>.
 ```
 
-Returns all tasks with status. Look for epic and subtasks all showing "completed".
+**For Options 2 and 3:** This step is skipped entirely. Worktree preserved.
 
-### TaskGet
+## Critical Rules
 
-```
-TaskGet
-  taskId: "epic-task-id"
-```
+### Rules That Have No Exceptions
 
-Read success criteria to include in PR description.
+1. **Never skip test verification** → Tests must pass before presenting options
+2. **Never present more or fewer than 4 options** → Exactly 4, always
+3. **Never proceed with Option 4 without typed "discard"** → Exact text required
+4. **Never cleanup worktree for Options 2 or 3** → User needs it for PR feedback or later work
+5. **Always verify tests after merge (Option 1)** → Merged result might have conflicts
+6. **Always verify all tasks complete before Step 2** → Can't finish incomplete work
 
-### TaskUpdate
+### Common Excuses
 
-```
-TaskUpdate
-  taskId: "epic-task-id"
-  status: "completed"
-```
+All of these mean: **STOP. Follow the process.**
 
-Mark epic complete after successful merge/PR.
+| Excuse | Reality |
+|--------|---------|
+| "Tests passed earlier" | RUN THEM NOW - code might have changed |
+| "User obviously wants to merge" | PRESENT ALL 4 OPTIONS - let them choose |
+| "User said discard" | GET TYPED CONFIRMATION - "discard" exactly |
+| "PR is done, cleanup worktree" | KEEP IT - PR will likely need updates |
+| "Only 2 options make sense here" | PRESENT ALL 4 - always |
+| "Tasks are mostly done" | ALL must be complete - no exceptions |
+
+## Anti-patterns
+
+**Never:**
+- Proceed with failing tests
+- Merge without verifying tests on result
+- Delete work without typed "discard" confirmation
+- Force-push without explicit request
+- Skip task verification
+- Cleanup worktree for Option 2 (PR)
+- Cleanup worktree for Option 3 (keep as-is)
+- Present fewer than 4 options
+- Present more than 4 options
+
+**Always:**
+- Verify all tasks complete before proceeding
+- Verify tests before offering options
+- Present exactly 4 options
+- Use AskUserQuestion tool for option selection
+- Get typed "discard" confirmation for Option 4
+- Keep worktree for Options 2 & 3
+- Report absolute paths
+
+## Verification Checklist
+
+Before completing:
+
+- [ ] All tasks show status="completed" (TaskList)
+- [ ] Tests verified passing
+- [ ] Base branch determined
+- [ ] Presented exactly 4 options (using AskUserQuestion)
+- [ ] Waited for user choice
+- [ ] If Option 1: Verified tests on merged result
+- [ ] If Option 1: Deleted feature branch
+- [ ] If Option 2: Created PR with epic context
+- [ ] If Option 2: Reported PR URL and kept worktree
+- [ ] If Option 3: Reported branch and worktree preserved
+- [ ] If Option 4: Got typed "discard" confirmation
+- [ ] If Option 4: Deleted branch with -D flag
+- [ ] If Option 1 or 4: Cleaned up worktree
+- [ ] If Option 2 or 3: Did NOT cleanup worktree
 
 ## Examples
 
 ### Bad: Skip Test Verification
 
 ```
-# Tasks all complete ✓
+Step 1: Tasks all complete ✓
 TaskList shows all completed
 
-# SKIP test verification
-# Jump to presenting options
+Step 2: SKIP test verification  # WRONG
+Jump to presenting options
 
 "Implementation complete. What would you like to do?..."
 
@@ -346,17 +434,34 @@ git merge feature-branch
 ### Good: Verify Tests Before Options
 
 ```
-# Tasks all complete ✓
+Step 1: Tasks all complete ✓
 TaskList shows all completed
 
-# Verify tests
-Task subagent_type: "hyperpowers:test-runner"
-      prompt: "Run: go test ./..."
+Step 2: Verify tests
+$ go test ./...
+ok  myproject/... 2.3s
+127 tests passed
 
-Agent reports: "127 tests passed, 0 failures"
+Step 3: Determine base branch
+$ git merge-base HEAD main
+abc123
 
-# NOW present options
-"Implementation complete. What would you like to do?..."
+Step 4: Present options
+[AskUserQuestion with 4 options]
+User selects: Merge locally
+
+Step 5: Execute
+$ git checkout main
+$ git pull
+$ git merge feature-auth
+$ go test ./...  # Verify merged result
+ok  myproject/... 2.4s
+$ git branch -d feature-auth
+
+Step 6: Cleanup worktree
+$ git worktree remove .worktrees/auth
+
+Done. Feature merged to main.
 ```
 
 ### Bad: Cleanup Worktree for PR
@@ -366,8 +471,7 @@ User selects Option 2
 git push -u origin feature-auth
 gh pr create ...
 
-# Immediately cleanup worktree
-git worktree remove ../feature-auth-worktree
+git worktree remove ../feature-auth-worktree  # WRONG
 
 # PR gets feedback: "Please add rate limiting"
 # Worktree is gone! Have to recreate
@@ -382,13 +486,14 @@ git worktree remove ../feature-auth-worktree
 
 ```
 User selects Option 2
-git push -u origin feature-auth
-gh pr create ...
+$ git push -u origin feature-auth
+$ gh pr create --title "feat: OAuth" --body "..."
 
-"Pull request created: https://github.com/user/repo/pull/42
+Pull request created: https://github.com/user/repo/pull/42
 
-Keeping worktree at ../feature-auth-worktree for PR updates."
+Keeping worktree at /home/dev/project/.worktrees/auth for PR updates.
 
+# NO worktree cleanup
 # User can address feedback in same worktree
 ```
 
@@ -397,9 +502,8 @@ Keeping worktree at ../feature-auth-worktree for PR updates."
 ```
 User: "Discard this work"
 
-# Immediately execute
 git checkout main
-git branch -D feature-experimental
+git branch -D feature-experimental  # WRONG - no confirmation
 git worktree remove ../worktree
 
 # 50 commits deleted
@@ -411,61 +515,68 @@ git worktree remove ../worktree
 - Misunderstood user intent
 - Permanent data loss
 
-### Good: Require Confirmation
+### Good: Require Typed Confirmation
 
 ```
 User: "Discard this work"
 
-"This will permanently delete:
+This will permanently delete:
 - Branch feature-experimental
 - All commits:
   * a1b2c3d Add OAuth integration
   * d4e5f6g Add rate limiting
   ... (48 more commits)
-- Worktree at ../worktree
+- Worktree at /home/dev/project/.worktrees/experimental
 
-Type 'discard' to confirm."
+Type 'discard' to confirm.
 
 User types: "discard"
 
-# NOW execute
-git checkout main
-git branch -D feature-experimental
-git worktree remove ../worktree
+$ git checkout main
+$ git branch -D feature-experimental
+$ git worktree remove .worktrees/experimental
 
-"Branch deleted."
+Branch deleted.
 ```
 
-## Anti-patterns
+## Resources
 
-**Never:**
-- Proceed with failing tests
-- Merge without verifying tests on result
-- Delete work without typed confirmation
-- Force-push without explicit request
-- Skip task verification
-- Cleanup worktree for Option 2 (PR)
+**When stuck:**
+- Tasks won't complete → Check TaskList, verify all subtasks done
+- Tests fail → Fix before presenting options (cannot proceed)
+- User unsure which option → Explain trade-offs, but present all 4
+- Worktree won't remove → Might have uncommitted changes, ask user
+- Git merge fails → Report conflict, ask user how to proceed
+- PR creation fails → Check gh auth status, report error
 
-**Always:**
-- Verify all tasks complete before proceeding
-- Verify tests before offering options
-- Present exactly 4 options (not open-ended)
-- Get typed "discard" confirmation for Option 4
-- Keep worktree for Options 2 & 3
+## Task Tool Reference
 
-## Verification Checklist
+### TaskList
 
-Before completing:
+```
+TaskList
+```
 
-- [ ] All tasks show status="completed" (TaskList)
-- [ ] Tests verified passing (via test-runner agent)
-- [ ] Presented exactly 4 options
-- [ ] Waited for user choice
-- [ ] If Option 1: Verified tests on merged result
-- [ ] If Option 4: Got typed "discard" confirmation
-- [ ] Worktree cleaned for Options 1, 4 only
-- [ ] Worktree kept for Options 2, 3
-- [ ] Reported completion status
+Returns all tasks with status. All must show "completed" before proceeding.
+
+### TaskGet
+
+```
+TaskGet
+  taskId: "epic-task-id"
+```
+
+Read epic success criteria for PR description and final verification.
+
+### TaskUpdate
+
+```
+TaskUpdate
+  taskId: "epic-task-id"
+  status: "completed"
+```
+
+Mark epic complete after successful merge/PR.
 
 ## Integration
 
@@ -474,8 +585,8 @@ Before completing:
 - After `gambit:execute-plan` completes all tasks
 
 **This skill calls:**
-- test-runner agent (for test verification)
 - gh commands (PR creation)
+- git commands (merge, branch, worktree)
 
 **This skill pairs with:**
 - `gambit:worktree` - Cleans up worktree created by that skill
@@ -485,8 +596,10 @@ Before completing:
 gambit:execute-plan
     → All tasks complete
 gambit:finish
-    → Verify tasks + tests
-    → Present options
-    → Execute choice
-    → Cleanup
+    → Step 1: Verify tasks complete
+    → Step 2: Verify tests pass
+    → Step 3: Determine base branch
+    → Step 4: Present 4 options
+    → Step 5: Execute choice
+    → Step 6: Cleanup (Options 1,4 only)
 ```
