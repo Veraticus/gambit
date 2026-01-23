@@ -60,18 +60,27 @@ Gambit uses native Claude Code Tasks (not external tools like beads/bd):
 
 ## Available Skills
 
+### Phase 1: Core Planning
 | Skill | Slash Command | Purpose |
 |-------|---------------|---------|
 | using-gambit | `/gambit` | Session entry point (this skill) |
-| brainstorming | `/gambit:brainstorm` | Socratic design refinement |
 | writing-plans | `/gambit:write-plan` | Create Tasks with dependencies |
 | executing-plans | `/gambit:execute-plan` | One-task-at-a-time execution |
-| using-worktrees | `/gambit:worktree` | Git worktree + devenv setup |
-| finishing-branch | `/gambit:finish` | Merge/PR/discard workflow |
-| test-driven-dev | `/gambit:tdd` | RED-GREEN-REFACTOR |
+
+### Phase 2: Quality Assurance
+| Skill | Slash Command | Purpose |
+|-------|---------------|---------|
+| test-driven-development | `/gambit:tdd` | RED-GREEN-REFACTOR cycle |
 | verification | `/gambit:verify` | Evidence before completion |
+| testing-quality | `/gambit:test-quality` | Audit test effectiveness |
+
+### Planned (Coming Soon)
+| Skill | Slash Command | Purpose |
+|-------|---------------|---------|
+| brainstorming | `/gambit:brainstorm` | Socratic design refinement |
 | debugging | `/gambit:debug` | Systematic root cause analysis |
 | refactoring | `/gambit:refactor` | Safe incremental transforms |
+| finishing-branch | `/gambit:finish` | Merge/PR/discard workflow |
 
 ## Anti-patterns
 
