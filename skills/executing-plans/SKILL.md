@@ -24,14 +24,69 @@ Do not skip checkpoints or verification. Epic requirements never change. Tasks a
 | Step | Tool | Purpose |
 |------|------|---------|
 | **Check State** | `TaskList` | Find in-progress or ready tasks |
-| **Load Epic** | `TaskGet` on epic | Read immutable requirements |
-| **Start Task** | `TaskUpdate` status → in_progress | Mark task active |
+| **Load Epic** | `TaskGet taskId` on epic | Read immutable requirements |
+| **Start Task** | `TaskUpdate taskId status="in_progress"` | Mark task active |
 | **Execute** | Follow steps in task description | TDD cycle, verify each step |
-| **Complete Task** | `TaskUpdate` status → completed | After ALL steps done |
-| **Review** | Re-read epic, check learnings | Adapt if needed |
+| **Complete Task** | `TaskUpdate taskId status="completed"` | After ALL steps done |
+| **Review** | `TaskGet` on epic | Check learnings against requirements |
 | **STOP** | Present summary | User reviews, runs command again |
 
 **Critical:** One task → STOP → User reviews → Next task. No batching. No continuing without checkpoint.
+
+## Task Tool Reference
+
+### TaskList
+
+Lists all tasks with status, owner, and blockers. Use to find ready tasks.
+
+```
+TaskList
+```
+
+Returns tasks showing:
+- `id` — Task identifier
+- `subject` — Task title
+- `status` — "pending", "in_progress", or "completed"
+- `blockedBy` — List of task IDs that must complete first
+
+**Ready task:** status="pending" AND blockedBy is empty
+
+### TaskGet
+
+Retrieves full task details including description.
+
+```
+TaskGet
+  taskId: "the-task-id"
+```
+
+### TaskUpdate
+
+Updates task status or dependencies.
+
+```
+TaskUpdate
+  taskId: "the-task-id"
+  status: "in_progress"  # or "completed"
+```
+
+### TaskCreate
+
+Creates a new task (used if discoveries require new work).
+
+```
+TaskCreate
+  subject: "Handle edge case discovered during implementation"
+  description: "Full description..."
+  activeForm: "Handling edge case"
+```
+
+Then set dependency:
+```
+TaskUpdate
+  taskId: "new-task-id"
+  addBlockedBy: ["current-task-id"]
+```
 
 ## When to Use
 
@@ -52,12 +107,12 @@ When this skill is invoked, first check state:
 TaskList
 ```
 
-**Fresh start:** No in-progress tasks → Step 1
+**Analyze the output:**
 
-**Resuming:**
-- In-progress task exists → Resume at Step 2 (continue executing)
-- Ready tasks exist, none in-progress → Step 2 (start next)
-- All subtasks completed, epic open → Step 4 (final check)
+- **Fresh start:** All tasks "pending", none "in_progress" → Proceed to Step 1
+- **Resume in-progress:** Found task with status="in_progress" → Resume at Step 2
+- **Start next:** All previous completed, next is "pending" with empty blockedBy → Step 2
+- **All done:** All subtasks "completed" → Step 4 (final check)
 
 **Do NOT ask "where did we leave off?"** — Task state tells you exactly where to resume.
 
@@ -66,7 +121,8 @@ TaskList
 Before executing ANY task, load the epic:
 
 ```
-TaskGet on epic task
+TaskGet
+  taskId: "epic-task-id"
 ```
 
 **Extract and keep in mind:**
@@ -79,10 +135,25 @@ TaskGet on epic task
 
 ### 2. Execute Current Ready Task
 
+**Find and start the task:**
+
 ```
-TaskList                           # Find ready task
-TaskUpdate taskId status=in_progress  # Start it
-TaskGet taskId                     # Read full details
+TaskList
+```
+
+Identify ready task (status="pending", blockedBy=[]).
+
+```
+TaskUpdate
+  taskId: "ready-task-id"
+  status: "in_progress"
+```
+
+**Load full details:**
+
+```
+TaskGet
+  taskId: "ready-task-id"
 ```
 
 **Execute the steps in the task description:**
@@ -91,15 +162,25 @@ Task descriptions contain 4-8 bite-sized steps. Execute each:
 
 1. Follow TDD cycle (test → fail → implement → pass → commit)
 2. Run verifications exactly as specified
-3. Use test-runner agent to avoid context pollution
+3. Use test-runner agent to avoid context pollution:
+
+```
+Task
+  subagent_type: "hyperpowers:test-runner"
+  prompt: "Run: npm test -- tests/models/user.test.ts"
+```
 
 **Pre-completion verification:**
 - All steps in description completed?
 - Tests passing?
 - Changes committed?
 
+**Mark complete:**
+
 ```
-TaskUpdate taskId status=completed  # Only when ALL steps done
+TaskUpdate
+  taskId: "ready-task-id"
+  status: "completed"
 ```
 
 ### 2a. When Hitting Obstacles
@@ -108,11 +189,18 @@ TaskUpdate taskId status=completed  # Only when ALL steps done
 
 When blocked:
 
-1. **Re-read epic** — Check requirements and anti-patterns
+1. **Re-read epic:**
+```
+TaskGet
+  taskId: "epic-task-id"
+```
+
 2. **Check if workaround violates anti-patterns** — If yes, don't do it
+
 3. **Research or ask** — Don't rationalize around blockers
 
 **If solution would violate anti-pattern:**
+
 ```markdown
 ## Obstacle Encountered
 
@@ -129,6 +217,41 @@ When blocked:
 
 **Never water down requirements to "make it easier."**
 
+### 2b. When Discoveries Require New Work
+
+If implementation reveals unexpected work needed:
+
+```
+TaskCreate
+  subject: "Handle discovered edge case: empty email validation"
+  description: |
+    **Discovered during:** Task "Add login endpoint"
+    **Issue:** Login crashes on empty email input
+
+    **Step 1: Write failing test**
+    ```typescript
+    it('returns 400 for empty email', async () => {
+      const response = await request(app)
+        .post('/auth/login')
+        .send({ email: '', password: 'test' });
+      expect(response.status).toBe(400);
+    });
+    ```
+
+    **Step 2-5:** [Full implementation steps...]
+  activeForm: "Handling empty email validation"
+```
+
+**Set dependency on current task:**
+
+```
+TaskUpdate
+  taskId: "new-edge-case-task"
+  addBlockedBy: ["current-task-id"]
+```
+
+Document in checkpoint summary that new task was created.
+
 ### 3. Review and Adapt
 
 After completing task:
@@ -140,8 +263,16 @@ After completing task:
 4. What's the logical next step?
 
 **Re-read epic:**
+
 ```
-TaskGet epic-task-id  # Keep requirements fresh
+TaskGet
+  taskId: "epic-task-id"
+```
+
+**Check remaining tasks:**
+
+```
+TaskList
 ```
 
 **Three cases:**
@@ -151,11 +282,16 @@ TaskGet epic-task-id  # Keep requirements fresh
 **B) Next task now redundant:**
 - Discovery makes planned work unnecessary
 - Document why in summary
-- Task can be marked completed with note, or left for user to decide
+- Can mark completed with note:
+```
+TaskUpdate
+  taskId: "redundant-task-id"
+  status: "completed"
+  description: "SKIPPED: Discovered existing implementation in lib/auth.ts"
+```
 
 **C) Need to adjust approach:**
-- Document learnings
-- Explain in summary
+- Document learnings in summary
 - Let user decide how to adapt
 
 ### 4. STOP Checkpoint (Mandatory)
@@ -168,6 +304,11 @@ TaskGet epic-task-id  # Keep requirements fresh
 ### What Was Done
 - [Summary of implementation]
 - [Key decisions made]
+
+### Task Status
+```
+TaskList output showing current state
+```
 
 ### Learnings
 - [Discoveries during implementation]
@@ -198,11 +339,24 @@ Run `/gambit:execute-plan` to execute the next task.
 
 ### 5. Final Validation
 
-When all subtasks completed and success criteria appear met:
+When all subtasks completed:
 
-1. **Run full verification** — All tests, all checks
-2. **Review against epic** — Every requirement, every criterion
-3. **Present completion summary:**
+```
+TaskList
+```
+
+Verify all subtasks show status="completed".
+
+**Check epic success criteria:**
+
+```
+TaskGet
+  taskId: "epic-task-id"
+```
+
+Review each success criterion. Run full verification.
+
+**Present completion summary:**
 
 ```markdown
 ## Epic Complete — Final Review
@@ -219,8 +373,21 @@ When all subtasks completed and success criteria appear met:
 - [x] Did not [forbidden thing 1]
 - [x] Did not [forbidden thing 2]
 
+### Task Summary
+```
+TaskList showing all completed
+```
+
 ### Ready for Finish
 Use `/gambit:finish` to merge, create PR, or cleanup.
+```
+
+**Mark epic complete:**
+
+```
+TaskUpdate
+  taskId: "epic-task-id"
+  status: "completed"
 ```
 
 ## Examples
@@ -229,9 +396,15 @@ Use `/gambit:finish` to merge, create PR, or cleanup.
 
 ```
 Completed Task 2 (auth middleware).
-Task 3 (rate limiting) is ready.
+
+TaskList shows Task 3 (rate limiting) is ready.
 
 Developer thinks: "Good context, I'll do Task 3 quickly..."
+
+TaskUpdate
+  taskId: "task-3"
+  status: "in_progress"
+
 Continues to execute Task 3 without STOP.
 ```
 
@@ -243,13 +416,21 @@ Continues to execute Task 3 without STOP.
 ### Good: Proper STOP
 
 ```
-Completed Task 2 (auth middleware).
+TaskUpdate
+  taskId: "task-2"
+  status: "completed"
 
 ## Task Complete — Checkpoint
 
 ### What Was Done
 - Implemented JWT validation middleware
 - Added token refresh handling
+
+### Task Status
+TaskList shows:
+- Task 1: completed
+- Task 2: completed ← just finished
+- Task 3: pending, blockedBy: [] ← ready
 
 ### Learnings
 - Found existing session utils in lib/session.ts
@@ -273,7 +454,11 @@ Then STOP. Wait for user.
 ```
 Epic anti-pattern: "FORBIDDEN: Mock database in integration tests"
 
-Developer hits complex DB setup, thinks: "I'll mock just for now..."
+Developer hits complex DB setup.
+
+TaskGet on epic shows the anti-pattern clearly.
+
+Developer thinks: "I'll mock just for now..."
 Adds mocks with TODO comment.
 ```
 
@@ -282,6 +467,11 @@ Adds mocks with TODO comment.
 ### Good: Handling Blockers
 
 ```
+TaskGet
+  taskId: "epic-id"
+
+Reads anti-pattern: "FORBIDDEN: Mock database in integration tests"
+
 ## Obstacle Encountered
 
 **Blocker:** Test database setup is complex
@@ -307,7 +497,7 @@ Adds mocks with TODO comment.
 **Do:**
 - STOP after every task
 - Re-read epic when blocked
-- Complete ALL steps before closing task
+- Complete ALL steps before `TaskUpdate status="completed"`
 - Document learnings in checkpoint
 - Let user review before continuing
 
@@ -315,20 +505,22 @@ Adds mocks with TODO comment.
 
 Before completing each task:
 - [ ] All steps in description executed
-- [ ] Tests passing
+- [ ] Tests passing (verified with test-runner agent)
 - [ ] Changes committed
-- [ ] Task actually done (not "mostly")
+- [ ] `TaskUpdate status="completed"` only after truly done
 
 After completing each task:
-- [ ] Reviewed learnings against epic
+- [ ] Reviewed learnings against epic (`TaskGet` on epic)
+- [ ] Checked `TaskList` for next ready task
 - [ ] Presented checkpoint summary
 - [ ] STOPPED execution
-- [ ] Waiting for user to continue
+- [ ] Waiting for user to run `/gambit:execute-plan` again
 
 Before closing epic:
-- [ ] ALL success criteria verified
+- [ ] ALL subtasks show status="completed" in `TaskList`
+- [ ] ALL success criteria verified against epic
 - [ ] ALL anti-patterns avoided
-- [ ] Full verification run
+- [ ] `TaskUpdate status="completed"` on epic task
 
 ## Integration
 
@@ -339,13 +531,33 @@ Before closing epic:
 **This skill calls:**
 - `gambit:tdd` during implementation
 - `gambit:verify` before claiming task complete
+- test-runner agent for running tests
 - `gambit:finish` after epic complete
+
+**Task tools used:**
+- `TaskList` — Find ready tasks, check progress
+- `TaskGet` — Load epic requirements, read task details
+- `TaskUpdate` — Mark in_progress, mark completed
+- `TaskCreate` — Add tasks for discovered work
 
 **Workflow pattern:**
 ```
-/gambit:execute-plan → Execute task → STOP
+/gambit:execute-plan
+  → TaskList (find ready task)
+  → TaskUpdate status="in_progress"
+  → Execute steps
+  → TaskUpdate status="completed"
+  → Present checkpoint
+  → STOP
+
 [User reviews, clears context if needed]
-/gambit:execute-plan → Execute next task → STOP
-[Repeat until epic complete]
-/gambit:finish → Merge/PR/cleanup
+
+/gambit:execute-plan
+  → TaskList (find next ready task)
+  → ... repeat ...
+
+[Until all tasks complete]
+
+/gambit:finish
+  → Merge/PR/cleanup
 ```

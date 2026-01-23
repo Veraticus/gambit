@@ -21,14 +21,56 @@ MEDIUM FREEDOM — Follow task structure and verification pattern strictly. Adap
 
 | Step | Action | Critical Rule |
 |------|--------|---------------|
-| **Create Epic** | TaskCreate with requirements + success criteria | Requirements are IMMUTABLE |
+| **Create Epic** | `TaskCreate` with requirements + success criteria | Requirements are IMMUTABLE |
 | **Verify Codebase** | Use codebase-investigator agent | NEVER verify yourself |
-| **Create Subtasks** | TaskCreate with dependencies | Bite-sized (2-5 min each) |
+| **Create Subtasks** | `TaskCreate` for each, then `TaskUpdate` with `addBlockedBy` | Bite-sized (2-5 min each) |
 | **Present to User** | Show COMPLETE plan FIRST | Then ask for approval |
 | **Continue** | Move to next subtask automatically | NO asking permission between |
 
 **FORBIDDEN:** Placeholders like `[implementation details go here]`
 **REQUIRED:** Complete code, exact paths, real commands
+
+## Task Tool Reference
+
+### TaskCreate
+
+Creates a new task. Returns the task ID.
+
+```
+TaskCreate
+  subject: "Brief imperative title (e.g., 'Add login endpoint')"
+  description: "Full markdown description with steps, code, commands"
+  activeForm: "Present participle for spinner (e.g., 'Adding login endpoint')"
+```
+
+### TaskUpdate
+
+Updates an existing task. Use for setting dependencies and status.
+
+```
+TaskUpdate
+  taskId: "the-task-id"
+  status: "pending" | "in_progress" | "completed"
+  addBlockedBy: ["task-id-that-must-complete-first"]
+  addBlocks: ["task-id-that-waits-for-this"]
+```
+
+### TaskGet
+
+Retrieves full task details.
+
+```
+TaskGet
+  taskId: "the-task-id"
+```
+
+### TaskList
+
+Lists all tasks with status, owner, and blockers.
+
+```
+TaskList
+```
 
 ## When to Use
 
@@ -47,44 +89,56 @@ Symptoms:
 The epic contains immutable requirements — these don't change during implementation.
 
 ```
-TaskCreate:
-  subject: "Feature: [Name]"
+TaskCreate
+  subject: "Feature: User Authentication"
   description: |
     ## Goal
-    [One sentence]
+    Add JWT-based authentication to the API.
 
     ## Requirements (IMMUTABLE)
-    - [Requirement 1]
-    - [Requirement 2]
+    - Users can register with email/password
+    - Users can login and receive JWT token
+    - Protected routes validate JWT
 
     ## Success Criteria
-    - [ ] [Criterion 1]
-    - [ ] [Criterion 2]
+    - [ ] POST /auth/register creates user with hashed password
+    - [ ] POST /auth/login returns valid JWT
+    - [ ] Protected routes reject invalid/missing tokens
+    - [ ] All endpoints have integration tests
 
     ## Architecture
-    [2-3 sentences about approach]
+    Use bcrypt for password hashing, jsonwebtoken for JWT.
+    Middleware pattern for route protection.
 
     ## Anti-patterns (FORBIDDEN)
-    - [What NOT to do]
+    - Do NOT store plaintext passwords
+    - Do NOT use symmetric JWT signing in production
+    - Do NOT mock database in integration tests
+  activeForm: "Planning user authentication"
 ```
+
+Note the epic task ID returned — you'll reference it when creating subtasks.
 
 ### 2. Verify Codebase State
 
 **CRITICAL: Use codebase-investigator agent. Never verify yourself.**
 
-Dispatch agent with assumptions from requirements:
+Dispatch Task tool with Explore agent:
 
 ```
-Assumptions from requirements:
-- Auth service should be in src/services/auth.ts
-- User model in src/models/user.ts with email field
-- Tests at tests/services/auth.test.ts
+Task
+  subagent_type: "Explore"
+  prompt: |
+    Verify these assumptions for the auth feature:
+    - Where should auth routes go? Check existing route patterns.
+    - Is there an existing User model? What fields does it have?
+    - What test patterns are used? Where do integration tests live?
+    - Is bcrypt or another hashing library already installed?
 
-Verify:
-1. What exists vs what we expect
-2. Structural differences (paths, exports, signatures)
-3. Dependency versions
-4. Related code we should know about
+    Report:
+    1. What exists vs what we expect
+    2. Exact file paths for new code
+    3. Dependency versions already installed
 ```
 
 **Based on report:**
@@ -97,110 +151,236 @@ Verify:
 - ❌ "Modify `config.py` (if present)"
 
 **ALWAYS write definitive steps:**
-- ✅ "Create `src/auth.ts`" (investigator confirmed doesn't exist)
-- ✅ "Modify `src/index.ts:45-67`" (investigator confirmed location)
+- ✅ "Create `src/routes/auth.ts`" (investigator confirmed doesn't exist)
+- ✅ "Modify `src/routes/index.ts:12-15`" (investigator confirmed location)
 
 ### 3. Create Subtasks with Dependencies
 
-Each subtask is bite-sized (2-5 minutes) and follows TDD:
+Each subtask is bite-sized (2-5 minutes) and follows TDD.
+
+**First subtask (no dependencies):**
 
 ```
-TaskCreate:
-  subject: "Add login function"
+TaskCreate
+  subject: "Add User model with password hashing"
   description: |
     **Files:**
-    - Create: `src/services/auth.ts`
-    - Test: `tests/services/auth.test.ts`
+    - Create: `src/models/user.ts`
+    - Test: `tests/models/user.test.ts`
 
     **Step 1: Write failing test**
     ```typescript
-    // tests/services/auth.test.ts
-    import { login } from '../src/services/auth';
+    // tests/models/user.test.ts
+    import { createUser, verifyPassword } from '../src/models/user';
 
-    describe('login', () => {
-      it('returns user on valid credentials', async () => {
-        const result = await login('test@example.com', 'password123');
-        expect(result.success).toBe(true);
-        expect(result.userId).toBeDefined();
+    describe('User model', () => {
+      it('hashes password on creation', async () => {
+        const user = await createUser('test@example.com', 'plaintext123');
+        expect(user.password).not.toBe('plaintext123');
+        expect(user.password).toMatch(/^\$2[ayb]\$.{56}$/);
+      });
+
+      it('verifies correct password', async () => {
+        const user = await createUser('test@example.com', 'mypassword');
+        expect(await verifyPassword(user, 'mypassword')).toBe(true);
+        expect(await verifyPassword(user, 'wrongpassword')).toBe(false);
       });
     });
     ```
 
     **Step 2: Run test (expect fail)**
     ```bash
-    npm test -- tests/services/auth.test.ts
-    # Expected: Cannot find module '../src/services/auth'
+    npm test -- tests/models/user.test.ts
     ```
+    Expected: `Cannot find module '../src/models/user'`
 
     **Step 3: Implement minimal code**
     ```typescript
-    // src/services/auth.ts
-    export interface LoginResult {
-      success: boolean;
-      userId?: string;
+    // src/models/user.ts
+    import bcrypt from 'bcrypt';
+
+    export interface User {
+      id: string;
+      email: string;
+      password: string;
     }
 
-    export async function login(email: string, password: string): Promise<LoginResult> {
-      // Minimal implementation to pass test
-      return { success: true, userId: '1' };
+    export async function createUser(email: string, plainPassword: string): Promise<User> {
+      const password = await bcrypt.hash(plainPassword, 10);
+      return { id: crypto.randomUUID(), email, password };
+    }
+
+    export async function verifyPassword(user: User, plainPassword: string): Promise<boolean> {
+      return bcrypt.compare(plainPassword, user.password);
     }
     ```
 
     **Step 4: Run test (expect pass)**
     ```bash
-    npm test -- tests/services/auth.test.ts
-    # Expected: PASS
+    npm test -- tests/models/user.test.ts
     ```
+    Expected: `PASS`
 
     **Step 5: Commit**
     ```bash
-    git add src/services/auth.ts tests/services/auth.test.ts
-    git commit -m "feat(auth): add login function"
+    git add src/models/user.ts tests/models/user.test.ts
+    git commit -m "feat(auth): add User model with bcrypt password hashing"
     ```
+  activeForm: "Adding User model"
 ```
 
-**Set dependencies:**
+Save the returned task ID (e.g., `task-user-model`).
+
+**Second subtask (depends on first):**
+
 ```
-TaskUpdate:
-  taskId: [subtask-2-id]
-  addBlockedBy: [subtask-1-id]
+TaskCreate
+  subject: "Add login endpoint"
+  description: |
+    **Files:**
+    - Create: `src/routes/auth.ts`
+    - Modify: `src/routes/index.ts:12-15`
+    - Test: `tests/routes/auth.test.ts`
+
+    **Step 1: Write failing test**
+    ```typescript
+    // tests/routes/auth.test.ts
+    import request from 'supertest';
+    import { app } from '../src/app';
+    import { createUser } from '../src/models/user';
+
+    describe('POST /auth/login', () => {
+      it('returns JWT for valid credentials', async () => {
+        await createUser('test@example.com', 'password123');
+
+        const response = await request(app)
+          .post('/auth/login')
+          .send({ email: 'test@example.com', password: 'password123' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.token).toBeDefined();
+        expect(response.body.token).toMatch(/^eyJ/); // JWT format
+      });
+
+      it('returns 401 for invalid password', async () => {
+        await createUser('test@example.com', 'password123');
+
+        const response = await request(app)
+          .post('/auth/login')
+          .send({ email: 'test@example.com', password: 'wrongpassword' });
+
+        expect(response.status).toBe(401);
+      });
+    });
+    ```
+
+    **Step 2: Run test (expect fail)**
+    ```bash
+    npm test -- tests/routes/auth.test.ts
+    ```
+    Expected: `404` (route doesn't exist yet)
+
+    **Step 3: Implement login route**
+    ```typescript
+    // src/routes/auth.ts
+    import { Router } from 'express';
+    import jwt from 'jsonwebtoken';
+    import { findUserByEmail, verifyPassword } from '../models/user';
+
+    const router = Router();
+
+    router.post('/login', async (req, res) => {
+      const { email, password } = req.body;
+
+      const user = await findUserByEmail(email);
+      if (!user || !await verifyPassword(user, password)) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
+      res.json({ token });
+    });
+
+    export default router;
+    ```
+
+    **Step 4: Register route in index**
+    ```typescript
+    // src/routes/index.ts - add at line 12
+    import authRoutes from './auth';
+    router.use('/auth', authRoutes);
+    ```
+
+    **Step 5: Run test (expect pass)**
+    ```bash
+    npm test -- tests/routes/auth.test.ts
+    ```
+    Expected: `PASS`
+
+    **Step 6: Commit**
+    ```bash
+    git add src/routes/auth.ts src/routes/index.ts tests/routes/auth.test.ts
+    git commit -m "feat(auth): add POST /auth/login endpoint"
+    ```
+  activeForm: "Adding login endpoint"
+```
+
+Save the returned task ID (e.g., `task-login`).
+
+**Set dependency:**
+
+```
+TaskUpdate
+  taskId: "task-login"
+  addBlockedBy: ["task-user-model"]
 ```
 
 ### 4. Present Complete Plan
 
 Show the FULL plan before asking for approval:
 
-```
-## Epic: [Name]
+```markdown
+## Epic: User Authentication
 
-### Task 1: [Title]
-[Full description with all steps, code, commands]
+**Task 1: Add User model with password hashing**
+- Creates `src/models/user.ts` with bcrypt hashing
+- Tests in `tests/models/user.test.ts`
+- No dependencies (ready to start)
 
-### Task 2: [Title] (blocked by Task 1)
-[Full description...]
+**Task 2: Add login endpoint** (blocked by Task 1)
+- Creates `src/routes/auth.ts`
+- Modifies `src/routes/index.ts`
+- Tests in `tests/routes/auth.test.ts`
 
-### Task 3: [Title] (blocked by Task 2)
-[Full description...]
+**Task 3: Add JWT middleware** (blocked by Task 2)
+- Creates `src/middleware/auth.ts`
+- Tests in `tests/middleware/auth.test.ts`
 
 ---
 
 **Codebase verification findings:**
-- ✓ Confirmed: [what matched]
-- ✗ Adjusted: [what changed from assumptions]
-- + Discovered: [relevant findings]
+- ✓ Confirmed: Express app at `src/app.ts`, routes at `src/routes/`
+- ✓ Confirmed: bcrypt@5.1.0 already installed
+- + Discovered: Existing test helper at `tests/helpers/db.ts` for test DB setup
 ```
 
 **THEN ask:**
-"Is this plan approved? I can begin execution with gambit:execute-plan."
+"Is this plan approved? I can begin execution with `/gambit:execute-plan`."
 
-### 5. Continue Automatically
+### 5. After Approval
 
-After user approves:
-- All Tasks are created with dependencies
-- Ready for `gambit:execute-plan`
+All Tasks are now created with proper dependencies.
 
-**Don't ask:** "Should I continue?" or "What next?"
-**Just report:** "Plan created. N tasks ready for execution."
+```
+TaskList
+```
+
+Shows:
+- Task 1: pending, blockedBy: [] (ready)
+- Task 2: pending, blockedBy: [task-1]
+- Task 3: pending, blockedBy: [task-2]
+
+Report: "Plan created. 3 tasks ready for execution. Run `/gambit:execute-plan` to begin."
 
 ## Task Granularity
 
@@ -217,86 +397,18 @@ After user approves:
 - "Add tests" (too vague)
 - "Update the code" (meaningless)
 
-## Examples
-
-### Bad: Placeholder Content
-
-```
-TaskCreate:
-  subject: "Implement auth"
-  description: |
-    Add authentication to the app.
-
-    [See requirements for details]
-    [Implementation steps will be added]
-```
-
-**Why it fails:** Zero-context engineer can't execute this.
-
-### Good: Complete Content
-
-```
-TaskCreate:
-  subject: "Add password hashing to user registration"
-  description: |
-    **Files:**
-    - Modify: `src/services/user.ts:23-45`
-    - Test: `tests/services/user.test.ts`
-
-    **Step 1: Write failing test**
-    ```typescript
-    it('hashes password before storing', async () => {
-      const user = await createUser('test@example.com', 'plaintext');
-      expect(user.password).not.toBe('plaintext');
-      expect(user.password).toMatch(/^\$2[ayb]\$.{56}$/); // bcrypt format
-    });
-    ```
-
-    **Step 2: Run test (expect fail)**
-    ```bash
-    npm test -- tests/services/user.test.ts -t "hashes password"
-    # Expected: FAIL - password equals 'plaintext'
-    ```
-
-    **Step 3: Add bcrypt hashing**
-    ```typescript
-    // src/services/user.ts line 23-45
-    import bcrypt from 'bcrypt';
-
-    export async function createUser(email: string, password: string) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      return db.users.create({
-        email,
-        password: hashedPassword,
-      });
-    }
-    ```
-
-    **Step 4: Run test (expect pass)**
-    ```bash
-    npm test -- tests/services/user.test.ts -t "hashes password"
-    # Expected: PASS
-    ```
-
-    **Step 5: Commit**
-    ```bash
-    git add src/services/user.ts tests/services/user.test.ts
-    git commit -m "feat(user): hash passwords with bcrypt"
-    ```
-```
-
 ## Anti-patterns
 
 **Don't:**
 - Write placeholders ("details above", "see requirements")
-- Verify codebase yourself (use codebase-investigator)
+- Verify codebase yourself (use Explore agent)
 - Write conditional steps ("if exists")
 - Ask permission between subtasks
 - Create vague tasks ("implement feature")
 
 **Do:**
 - Write complete code in every step
-- Use codebase-investigator to verify assumptions
+- Use Explore agent to verify assumptions
 - Write definitive steps based on verification
 - Continue automatically after approval
 - Create bite-sized tasks (2-5 min each)
@@ -304,11 +416,11 @@ TaskCreate:
 ## Verification Checklist
 
 Before presenting plan:
-- [ ] Used codebase-investigator (not manual verification)
+- [ ] Used Explore agent (not manual verification)
 - [ ] All steps have complete code (no placeholders)
 - [ ] All steps have exact file paths
 - [ ] All steps have exact commands with expected output
-- [ ] Dependencies set correctly between tasks
+- [ ] Dependencies set correctly with `TaskUpdate addBlockedBy`
 - [ ] Each task is 2-5 minutes of work
 
 ## Integration
@@ -318,10 +430,11 @@ Before presenting plan:
 - User via `/gambit:write-plan`
 
 **This skill calls:**
-- codebase-investigator agent (verify assumptions)
+- Explore agent (verify assumptions)
 - `gambit:execute-plan` (offered after plan approval)
 
 **Task tools used:**
 - `TaskCreate` — Create epic and subtasks
 - `TaskUpdate` — Set dependencies via `addBlockedBy`
 - `TaskList` — Verify task structure
+- `TaskGet` — Read task details
