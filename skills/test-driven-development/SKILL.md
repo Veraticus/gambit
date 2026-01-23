@@ -28,6 +28,7 @@ Violating the letter of the rules is violating the spirit of the rules.
 | **GREEN** | Write minimal code | Implement feature | Test passes |
 | **Verify GREEN** | All tests pass | `go test ./...` | All green, no warnings |
 | **REFACTOR** | Clean up code | Improve while green | Tests still pass |
+| **COMMIT** | Commit increment | `git commit` | Behavior captured |
 
 ## The Iron Law
 
@@ -175,9 +176,49 @@ Confirm:
 
 Keep tests green. Don't add behavior.
 
-### 6. Repeat
+### 6. Commit
+
+After green, commit the increment:
+
+```bash
+git add path/to/test.go path/to/implementation.go
+git commit -m "feat(module): add retry operation with 3 attempts"
+```
+
+**Commit message should describe the behavior, not the test.**
+
+### 7. Repeat
 
 Next failing test for next feature.
+
+## Workflow Checklists
+
+### For Each New Feature
+
+- [ ] Write one failing test (RED)
+- [ ] Run test, confirm it fails correctly (expected reason)
+- [ ] Write minimal code to pass (GREEN)
+- [ ] Run test, confirm it passes
+- [ ] Run ALL tests, confirm no regressions
+- [ ] Refactor if needed (staying green)
+- [ ] Commit
+
+### For Each Bug Fix
+
+- [ ] Write test reproducing the bug (RED)
+- [ ] Run test, confirm it fails (reproduces bug)
+- [ ] Fix the bug (minimal change)
+- [ ] Run test, confirm it passes (bug fixed)
+- [ ] Run ALL tests, confirm no regressions
+- [ ] Commit
+
+### For Each Refactoring
+
+- [ ] Confirm tests exist and pass BEFORE refactoring
+- [ ] Make one small refactoring change
+- [ ] Run tests, confirm still green
+- [ ] Repeat until refactoring complete
+- [ ] Commit
 
 ## Why Order Matters
 

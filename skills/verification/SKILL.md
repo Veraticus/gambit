@@ -90,7 +90,7 @@ Execute the full command (fresh, complete).
 **For verbose commands (tests, hooks, commits):** Use test-runner agent
 ```
 Task
-  subagent_type: "hyperpowers:test-runner"
+  subagent_type: "test-runner"
   prompt: "Run: go test ./..."
 ```
 
@@ -407,7 +407,7 @@ Before marking epic complete:
 - test-runner agent (run tests, hooks, commits without output pollution)
 
 **Agents used:**
-- hyperpowers:test-runner (run verbose commands, return summary only)
+- test-runner (run verbose commands, return summary only)
 
 ## The Bottom Line
 

@@ -263,6 +263,59 @@ For each YELLOW test:
 **If you have ANY doubt about a GREEN, downgrade to YELLOW.**
 **If you have ANY doubt about a YELLOW, consider RED.**
 
+### Phase 4b: Line-by-Line Justification for RED/YELLOW
+
+**MANDATORY: For every RED or YELLOW classification, provide detailed justification.**
+
+This forces you to verify your classification is correct by explaining exactly WHY the test is problematic.
+
+**Required Format:**
+
+```markdown
+### [Test Name] - RED/YELLOW
+
+**Test code (file:lines):**
+- Line X: `code` - [what this line does]
+- Line Y: `code` - [what this line does]
+- Line Z: `assertion` - [what this asserts]
+
+**Production code it claims to test (file:lines):**
+- [Brief description of what production code does]
+
+**Why RED/YELLOW:**
+- [Specific reason with line references]
+- [What bug could slip through despite this test passing]
+```
+
+**Example RED Justification:**
+
+```markdown
+### TestAuthWorks - RED (Tautological)
+
+**Test code (auth_test.go:45-52):**
+- Line 46: `auth := NewAuthService()` - Creates auth instance
+- Line 47: `result := auth.Login("user", "pass")` - Calls login
+- Line 48: `assert.NotNil(result)` - Asserts result exists
+
+**Production code (auth.go:78-95):**
+- Login() returns *AuthResult (never nil by Go semantics)
+
+**Why RED:**
+- Line 48 asserts `!= nil` but Go guarantees non-nil return
+- If login returned {Success: false, Error: "invalid"}, test still passes
+- Bug example: Wrong password accepted → returns {Success: true} → test passes
+```
+
+**Why This Matters:**
+
+Writing the justification FORCES you to:
+1. Actually read the test code line by line
+2. Actually read the production code
+3. Articulate the specific gap
+4. Consider what bugs could slip through
+
+**If you cannot write this justification, you haven't done the analysis properly.**
+
 ### Phase 5: Corner Case Discovery
 
 For each module, identify missing corner case tests:
@@ -382,6 +435,46 @@ TaskUpdate
   taskId: "subtask-2-id"
   addBlockedBy: ["subtask-1-id"]
 ```
+
+**Apply task refinement to new tasks:**
+
+For each task created, verify it passes the SRE review criteria:
+- Is it 2-5 minutes of work? (If longer, break down)
+- Can it be executed without asking questions?
+- Are all file paths explicit?
+- Are success criteria specific and testable (at least 3)?
+
+If the task fails any check, update it with missing details.
+
+### Phase 8: Mutation Testing Validation (Optional)
+
+**If mutation testing is available in the codebase:**
+
+Mutation testing reveals tests that execute code without meaningful assertions by:
+1. Introducing small bugs (mutations) in production code
+2. Running tests
+3. If tests still pass, the test didn't detect the bug
+
+```bash
+# Go
+go-mutesting ./...
+
+# Python
+mutmut run
+
+# TypeScript
+stryker run
+```
+
+**Interpret Results:**
+
+| Mutation Result | Meaning | Action |
+|-----------------|---------|--------|
+| Killed | Test detected the bug | Test is meaningful |
+| Survived | Test missed the bug | Test needs strengthening (YELLOW) |
+| No coverage | Mutation in untested code | Missing test (add to corner cases) |
+
+**Add surviving mutations to the gap analysis.**
 
 ## Output Format
 
