@@ -1,6 +1,6 @@
 # Gambit Hooks
 
-Bash hooks for Claude Code. Fast startup, no Python (~5ms vs ~150ms).
+Bash hooks for Claude Code. Fast startup (~5ms).
 
 ## Installation
 
@@ -23,6 +23,14 @@ For manual installation, add to your project's `.claude/settings.json`:
       {
         "hooks": [
           { "type": "command", "command": "/path/to/gambit/hooks/user-prompt-submit/skill-activator.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "/path/to/gambit/hooks/post-tool-use/track-edits.sh" }
         ]
       }
     ],
@@ -94,6 +102,25 @@ Users often describe problems without knowing which skill applies. This hook bri
 
 ---
 
+### PostToolUse
+
+#### track-edits.sh
+
+Tracks which files were edited during the session.
+
+**Behavior:**
+- Logs Edit, Write, and MultiEdit tool calls to `context/edit-log.txt`
+- Records timestamp, tool name, and file path
+- Auto-rotates log at 500 lines
+
+**Used by:**
+`gentle-reminders.sh` reads this log to give accurate feedback about which files were edited.
+
+**Why:**
+Parsing Claude's response text for edit mentions is unreliable. Tracking actual tool calls gives accurate data for TDD and commit reminders.
+
+---
+
 ### PreToolUse
 
 #### block-pre-existing-checks.sh
@@ -122,9 +149,9 @@ Pre-commit hooks guarantee the previous commit was clean. If tests fail, it's fr
 Shows contextual reminders when Claude stops responding.
 
 **Behavior:**
+- Reads edit log from `track-edits.sh` to know which files were edited
 - Analyzes Claude's response for completion claims
 - Checks if verification was mentioned
-- Checks if tests were mentioned for code changes
 - Shows relevant reminders (max 3)
 
 **Reminders:**
@@ -196,11 +223,9 @@ Hooks read JSON from stdin, optionally write JSON to stdout.
 **To allow (no output needed):**
 Exit with code 0 and no output.
 
-## Why Bash?
+## Performance
 
-Python hooks add ~150ms startup overhead per invocation. Bash + jq is ~5ms.
-
-For hooks that run on every tool call or prompt, this matters.
+Bash + jq hooks start in ~5ms. For hooks that run on every tool call or prompt, startup time matters.
 
 ## Testing Hooks
 

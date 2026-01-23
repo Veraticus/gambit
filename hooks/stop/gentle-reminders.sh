@@ -7,6 +7,11 @@
 # Don't use set -e because grep returns 1 when no match (expected behavior)
 set -uo pipefail
 
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONTEXT_DIR="${SCRIPT_DIR}/../context"
+LOG_FILE="${CONTEXT_DIR}/edit-log.txt"
+
 # Read response from stdin (Claude passes JSON with session info)
 input=$(cat)
 
@@ -14,6 +19,23 @@ input=$(cat)
 response=""
 if command -v jq >/dev/null 2>&1; then
     response=$(echo "$input" | jq -r '.response // .text // ""' 2>/dev/null) || response=""
+fi
+
+# Get files edited in last hour from log
+edited_files=""
+file_count=0
+if [[ -f "$LOG_FILE" ]]; then
+    # Get edits from last hour
+    one_hour_ago=$(date -d "1 hour ago" +"%Y-%m-%d %H:%M:%S" 2>/dev/null || date -v-1H +"%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "")
+    if [[ -n "$one_hour_ago" ]]; then
+        edited_files=$(awk -F ' \\| ' -v since="$one_hour_ago" '$1 >= since {print $3}' "$LOG_FILE" 2>/dev/null | sort -u) || edited_files=""
+    else
+        # Fallback: just get recent entries
+        edited_files=$(tail -50 "$LOG_FILE" 2>/dev/null | awk -F ' \\| ' '{print $3}' | sort -u) || edited_files=""
+    fi
+    if [[ -n "$edited_files" ]]; then
+        file_count=$(echo "$edited_files" | wc -l | tr -d '[:space:]') || file_count=0
+    fi
 fi
 
 # Track which reminders to show
@@ -29,17 +51,19 @@ if echo "$response" | grep -qiE '(done|complete|finished|ready|fixed|works|imple
     fi
 fi
 
-# Check for code changes without test mentions
-if echo "$response" | grep -qiE '(Edit|Write|created|modified|updated|changed).*\.(go|ts|js|py|rs|java)' 2>/dev/null; then
-    if ! echo "$response" | grep -qiE '(test|spec|_test\.|\.test\.)' 2>/dev/null; then
-        show_tdd=true
+# Check if source files edited without test files (using edit log)
+if [[ -n "$edited_files" ]]; then
+    # Check if source files edited
+    if echo "$edited_files" | grep -qE '\.(go|ts|js|py|rs|java)$' 2>/dev/null; then
+        # Check if NO test files edited
+        if ! echo "$edited_files" | grep -qE '(test|spec|_test\.)' 2>/dev/null; then
+            show_tdd=true
+        fi
     fi
 fi
 
-# Check for many file edits (suggest commit)
-edit_count=$(echo "$response" | grep -oE '(Edit|Write)' 2>/dev/null | wc -l | tr -d '[:space:]') || edit_count=0
-edit_count=${edit_count:-0}
-if [[ "$edit_count" -ge 3 ]]; then
+# Suggest commit if many files edited
+if [[ "$file_count" -ge 3 ]]; then
     show_commit=true
 fi
 
@@ -57,7 +81,7 @@ if [[ "$show_tdd" == "true" ]] || [[ "$show_verify" == "true" ]] || [[ "$show_co
     fi
 
     if [[ "$show_commit" == "true" ]]; then
-        echo "💾 Consider: Multiple files edited - commit incrementally"
+        echo "💾 Consider: $file_count files edited - commit incrementally"
     fi
 
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
