@@ -185,21 +185,65 @@ TaskUpdate
 
 ### 2a. When Hitting Obstacles
 
-**CRITICAL: Don't automatically try alternative approaches.**
+**CRITICAL: Check Design Discovery before switching approaches.**
 
-When blocked:
+When you hit a blocker, do NOT automatically try alternatives. First check if the alternative was already considered and rejected.
 
-1. **Re-read epic:**
+**Step 1: Re-read epic for "Approaches Considered"**
+
 ```
 TaskGet
   taskId: "epic-task-id"
 ```
 
-2. **Check if workaround violates anti-patterns** — If yes, don't do it
+Look for:
+- **Approaches Considered** section
+- **"⚠️ REJECTED BECAUSE"** notes
+- **"🚫 DO NOT REVISIT UNLESS"** conditions
+- **Anti-patterns (FORBIDDEN)** section
 
-3. **Research or ask** — Don't rationalize around blockers
+**Step 2: Check if your alternative was already rejected**
 
-**If solution would violate anti-pattern:**
+If the epic shows the approach you're considering was rejected:
+
+```markdown
+## Obstacle Encountered
+
+**Current approach:** [Chosen Approach from epic]
+**Obstacle:** [What blocker was hit]
+
+**Considering:** [Rejected Approach from epic]
+
+**Original rejection reason:** [Copy from epic]
+**DO NOT REVISIT UNLESS:** [Copy from epic]
+
+**Why reconsidering:**
+- [ ] Rejection reason no longer applies because: [specific reason]
+- [ ] DO NOT REVISIT condition is now met: [specific evidence]
+
+**Recommendation:** [Stay course / Switch with user approval]
+```
+
+**Step 3: Get user approval before switching**
+
+Before switching to a previously rejected approach, you MUST:
+- Document why the rejection reason no longer applies
+- OR explain why this obstacle changes the calculus
+- Get explicit user confirmation
+
+**Why this matters:**
+
+Rejected approaches were rejected for good reasons. Those reasons often still apply when obstacles arise.
+
+Example:
+- Chose passport.js, hit session complexity
+- Considered switching to custom JWT
+- But custom JWT was rejected because it requires rewriting 15 files
+- The obstacle doesn't change that — switching makes the problem worse
+
+**Step 4: If no prior rejection, check anti-patterns**
+
+If the workaround wasn't previously considered but might violate anti-patterns:
 
 ```markdown
 ## Obstacle Encountered
@@ -219,7 +263,9 @@ TaskGet
 
 ### 2b. When Discoveries Require New Work
 
-If implementation reveals unexpected work needed:
+If implementation reveals unexpected work needed, new tasks require the same rigor as initial planning.
+
+**Step 1: Create the new task with full detail**
 
 ```
 TaskCreate
@@ -238,11 +284,41 @@ TaskCreate
     });
     ```
 
-    **Step 2-5:** [Full implementation steps...]
+    **Step 2: Run test (expect fail)**
+    ```bash
+    npm test -- tests/routes/auth.test.ts -t "empty email"
+    ```
+    Expected: FAIL (currently crashes or returns 500)
+
+    **Step 3: Add validation**
+    ```typescript
+    // src/routes/auth.ts - add at start of login handler
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+    ```
+
+    **Step 4: Run test (expect pass)**
+    ```bash
+    npm test -- tests/routes/auth.test.ts -t "empty email"
+    ```
+    Expected: PASS
+
+    **Step 5: Commit**
+    ```bash
+    git add src/routes/auth.ts tests/routes/auth.test.ts
+    git commit -m "fix(auth): validate email and password presence"
+    ```
+
+    ## Success Criteria
+    - [ ] Returns 400 for empty email
+    - [ ] Returns 400 for empty password
+    - [ ] Returns 400 for missing fields
+    - [ ] Tests pass
   activeForm: "Handling empty email validation"
 ```
 
-**Set dependency on current task:**
+**Step 2: Set dependency on current task**
 
 ```
 TaskUpdate
@@ -250,7 +326,38 @@ TaskUpdate
   addBlockedBy: ["current-task-id"]
 ```
 
-Document in checkpoint summary that new task was created.
+**Step 3: Apply SRE-style refinement**
+
+Before considering the new task ready, review it with scrutiny:
+
+**Granularity check:**
+- Is it 2-5 minutes of work? If longer, break it down.
+
+**Implementability check:**
+- Can it be executed without asking questions?
+- Are all file paths explicit?
+- Is all code complete (no placeholders)?
+
+**Edge cases check:**
+- Empty string vs null vs undefined?
+- Unicode/special characters?
+- Boundary conditions?
+
+**Success criteria check:**
+- Are criteria specific and testable?
+- At least 3 criteria?
+
+If the task fails any check, update it:
+
+```
+TaskUpdate
+  taskId: "new-edge-case-task"
+  description: "[Updated description with missing details]"
+```
+
+**Step 4: Document in checkpoint**
+
+Note in your STOP checkpoint that a new task was created and why.
 
 ### 3. Review and Adapt
 
@@ -464,7 +571,7 @@ Adds mocks with TODO comment.
 
 **Why it fails:** Violates explicit anti-pattern. "Later" never comes.
 
-### Good: Handling Blockers
+### Good: Handling Blockers (Anti-pattern Check)
 
 ```
 TaskGet
@@ -485,6 +592,59 @@ Reads anti-pattern: "FORBIDDEN: Mock database in integration tests"
 **Recommendation:** Let me search for existing test DB patterns first.
 ```
 
+### Good: Checking Approaches Considered Before Switching
+
+```
+Hit obstacle: passport.js session handling is complex.
+
+TaskGet
+  taskId: "epic-id"
+
+Epic shows:
+## Approaches Considered
+1. **passport.js** ✅ CHOSEN
+2. **Custom JWT** ⚠️ REJECTED BECAUSE: Requires rewriting 15 files
+   🚫 DO NOT REVISIT UNLESS: We're doing a full auth rewrite
+
+## Obstacle Encountered
+
+**Current approach:** passport.js (chosen)
+**Obstacle:** Session handling is complex, taking longer than expected
+
+**Considering:** Custom JWT (rejected)
+
+**Original rejection reason:** Requires rewriting 15 files
+**DO NOT REVISIT UNLESS:** We're doing a full auth rewrite
+
+**Why reconsidering:**
+- [ ] Rejection reason no longer applies because: [can't claim this - still 15 files]
+- [ ] DO NOT REVISIT condition is now met: [no - not doing full rewrite]
+
+**Recommendation:** Stay course. The obstacle (complexity) doesn't change the
+rejection reason (15 file rewrite). Switching would make things worse.
+Research passport.js session patterns instead.
+```
+
+### Bad: Switching to Rejected Approach Without Checking
+
+```
+Hit obstacle: passport.js session handling is complex.
+
+Developer thinks: "Custom JWT would be simpler..."
+
+TaskUpdate
+  taskId: "current-task"
+  description: "Switching to custom JWT approach"
+
+[Starts implementing custom JWT without checking epic]
+```
+
+**Why it fails:**
+- Didn't check if custom JWT was already rejected
+- The rejection reason (15 file rewrite) still applies
+- Made the problem worse, not better
+- Hours wasted on approach that was rejected for good reason
+
 ## Anti-patterns
 
 **Don't:**
@@ -493,10 +653,15 @@ Reads anti-pattern: "FORBIDDEN: Mock database in integration tests"
 - Water down requirements when blocked
 - Close task with steps incomplete
 - Rationalize "just one more task"
+- Switch to rejected approaches without checking epic
+- Create new tasks without SRE-style refinement
+- Skip checking "Approaches Considered" when hitting obstacles
 
 **Do:**
 - STOP after every task
 - Re-read epic when blocked
+- Check "Approaches Considered" before switching approaches
+- Apply SRE refinement to newly created tasks
 - Complete ALL steps before `TaskUpdate status="completed"`
 - Document learnings in checkpoint
 - Let user review before continuing
