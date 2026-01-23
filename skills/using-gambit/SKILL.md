@@ -74,13 +74,21 @@ Gambit uses native Claude Code Tasks (not external tools like beads/bd):
 | verification | `/gambit:verify` | Evidence before completion |
 | testing-quality | `/gambit:test-quality` | Audit test effectiveness |
 
-### Planned (Coming Soon)
+### Phase 3: Workflow
 | Skill | Slash Command | Purpose |
 |-------|---------------|---------|
 | brainstorming | `/gambit:brainstorm` | Socratic design refinement |
+| using-worktrees | `/gambit:worktree` | Git worktrees with devenv support |
+| finishing-branch | `/gambit:finish` | Merge/PR/discard workflow |
+
+### Planned (Coming Soon)
+| Skill | Slash Command | Purpose |
+|-------|---------------|---------|
 | debugging | `/gambit:debug` | Systematic root cause analysis |
 | refactoring | `/gambit:refactor` | Safe incremental transforms |
-| finishing-branch | `/gambit:finish` | Merge/PR/discard workflow |
+| code-review | `/gambit:review` | Request and receive reviews |
+| parallel-agents | `/gambit:parallel` | Concurrent investigations |
+| task-refinement | `/gambit:refine` | SRE-style corner case analysis |
 
 ## Anti-patterns
 
