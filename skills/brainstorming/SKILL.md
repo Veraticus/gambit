@@ -1,6 +1,7 @@
 ---
 name: brainstorming
 description: Use before any creative work - refines rough ideas into epic Tasks with immutable requirements through Socratic questioning
+user_invokable: true
 ---
 
 # Brainstorming Ideas Into Designs

@@ -1,6 +1,7 @@
 ---
 name: writing-plans
 description: Use when you have requirements for a multi-step task - creates Tasks with dependencies, exact file paths, complete code, verification commands
+user_invokable: true
 ---
 
 # Writing Plans

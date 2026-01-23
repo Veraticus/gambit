@@ -1,6 +1,7 @@
 ---
 name: executing-plans
 description: Use to execute Tasks one at a time - executes task, reviews learnings, then STOPS for user review before continuing
+user_invokable: true
 ---
 
 # Executing Plans
