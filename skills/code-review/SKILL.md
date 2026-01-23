@@ -85,23 +85,36 @@ Task
 
 ### Step 2: Dispatch Code-Reviewer Agent
 
+**First, get git SHAs:**
+
+```bash
+BASE_SHA=$(git rev-parse HEAD~N)  # or origin/main for full branch diff
+HEAD_SHA=$(git rev-parse HEAD)
+```
+
+**Then dispatch with this template:**
+
 ```
 Task
   subagent_type: "feature-dev:code-reviewer"
+  description: "Review [brief description]"
   prompt: |
     Review the changes in this commit range:
 
     ## What Was Implemented
+    {WHAT_WAS_IMPLEMENTED}
     [Brief description of what you built]
 
     ## Requirements
+    {PLAN_OR_REQUIREMENTS}
     [What it should do - from Task or epic]
 
     ## Commit Range
-    Base: [git rev-parse HEAD~N or origin/main]
-    Head: [git rev-parse HEAD]
+    Base: {BASE_SHA}
+    Head: {HEAD_SHA}
 
     ## Specific Concerns
+    {CONCERNS}
     [Areas you're uncertain about]
 
     ## Review Focus
@@ -117,6 +130,15 @@ Task
     - Minor: [Note for future]
     - Strengths: [What's done well]
 ```
+
+**Template placeholders:**
+| Placeholder | Description |
+|-------------|-------------|
+| `{WHAT_WAS_IMPLEMENTED}` | What you just built |
+| `{PLAN_OR_REQUIREMENTS}` | What it should do (from Task) |
+| `{BASE_SHA}` | Starting commit |
+| `{HEAD_SHA}` | Ending commit |
+| `{CONCERNS}` | Areas you're uncertain about |
 
 ### Step 3: Act on Feedback
 

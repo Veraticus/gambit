@@ -15,7 +15,7 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 ## Rigidity Level
 
-LOW FREEDOM - Follow the 5-phase process exactly. No fixes without root cause evidence. No closing without regression test. Use tools for investigation, not guessing.
+LOW FREEDOM - Follow the 6-phase process exactly. No fixes without root cause evidence. No closing without regression test and FIXED status classification. Use tools for investigation, not guessing.
 
 ## Quick Reference
 
@@ -23,12 +23,20 @@ LOW FREEDOM - Follow the 5-phase process exactly. No fixes without root cause ev
 |-------|--------|---------|------|
 | 1 | Create bug Task | - | TaskCreate |
 | 2 | Reproduce & gather evidence | Can't reproduce consistently | Bash, Read |
-| 3 | Investigate root cause | Still guessing (no evidence) | WebSearch, Explore agent |
+| 3 | Investigate root cause | Still guessing (no evidence) | WebSearch, Task (agents) |
 | 4 | Write failing test (RED) | Test passes (doesn't catch bug) | Write, Bash |
 | 5 | Fix and verify (GREEN) | Any test fails | Edit, Bash |
-| 6 | Close and document | Regression test not written | TaskUpdate |
+| 6 | Classify, close, and document | Status not FIXED | TaskUpdate |
 
-**Critical sequence:** Task → Reproduce → Evidence → Root Cause → Failing Test → Fix → Verify → Close
+**Fix Status Classification:**
+| Status | Definition | Action |
+|--------|------------|--------|
+| FIXED | Root cause addressed, tests pass | Close Task |
+| PARTIALLY_FIXED | Some aspects remain | Document, keep open |
+| NOT_ADDRESSED | Fix missed the bug | Return to Phase 3 |
+| CANNOT_DETERMINE | Need more info | Gather reproduction data |
+
+**Critical sequence:** Task → Reproduce → Evidence → Root Cause → Failing Test → Fix → Verify → Classify → Close
 
 ## When to Use
 
@@ -156,6 +164,26 @@ log.Printf("=== Query result: %+v", result)
 
 #### Step 3a: Search for Error Message
 
+**Dispatch internet-researcher agent:**
+
+```
+Task
+  subagent_type: "hyperpowers:internet-researcher"
+  description: "Search for error solution"
+  prompt: |
+    Search for error: [exact error message]
+
+    Find:
+    - Stack Overflow solutions
+    - GitHub issues in [library] version [X]
+    - Official documentation explaining this error
+    - Known bugs and workarounds
+
+    Return: Summary of solutions found and which applies to our case.
+```
+
+**Or use WebSearch directly for quick searches:**
+
 ```
 WebSearch
   query: "[exact error message] [language/framework]"
@@ -167,6 +195,26 @@ Common findings:
 - Version incompatibility
 
 #### Step 3b: Investigate Codebase
+
+**Dispatch codebase-investigator agent:**
+
+```
+Task
+  subagent_type: "hyperpowers:codebase-investigator"
+  description: "Investigate bug context"
+  prompt: |
+    Error occurs in function X at line Y.
+
+    Find:
+    - How is X called? What are the callers?
+    - What does variable Z contain at this point?
+    - Are there similar functions that work correctly?
+    - What changed recently in this area?
+
+    Return: Summary of code paths and likely root cause.
+```
+
+**Or use Explore agent for simpler investigations:**
 
 ```
 Task
@@ -319,7 +367,24 @@ Task
 
 ### Phase 6: Close and Document
 
-#### Step 6a: Update Task with Findings
+#### Step 6a: Classify Fix Status
+
+**REQUIRED: Classify before closing:**
+
+| Status | Definition | Action |
+|--------|------------|--------|
+| **FIXED** | Root cause addressed, regression test passes, full suite passes | Close Task |
+| **PARTIALLY_FIXED** | Some aspects addressed, others remain | Document what's left, keep open |
+| **NOT_ADDRESSED** | Fix doesn't address actual bug | Return to Phase 3 |
+| **CANNOT_DETERMINE** | Insufficient info to verify | Gather more reproduction data |
+
+**Evidence required for FIXED status:**
+- Root cause explanation (not just symptom description)
+- Regression test output showing PASS
+- Full test suite output
+- Specific verification that bug is resolved
+
+#### Step 6b: Update Task with Findings
 
 ```
 TaskUpdate
@@ -327,6 +392,13 @@ TaskUpdate
   description: |
     ## Bug Description
     [Original description]
+
+    ## Fix Status: FIXED
+    **Evidence:**
+    - Root cause: [explanation of what caused the bug]
+    - Regression test: [test name] PASSES
+    - Full suite: [N] tests pass
+    - Fix verified: [specific verification that bug is resolved]
 
     ## Root Cause
     [What actually caused the bug - be specific]
@@ -337,14 +409,14 @@ TaskUpdate
 
     ## Regression Test
     [Test name that prevents recurrence]
-
-    ## Evidence
-    - Root cause identified: [explanation]
-    - Regression test: [test name] PASSES
-    - Full suite: [N] tests pass
 ```
 
-#### Step 6b: Mark Task Complete
+**If status is NOT FIXED:**
+- **PARTIALLY_FIXED** → Document remaining work, create follow-up Task
+- **NOT_ADDRESSED** → Return to Phase 3, do not close
+- **CANNOT_DETERMINE** → Gather more info before closing
+
+#### Step 6c: Mark Task Complete
 
 ```
 TaskUpdate
@@ -352,7 +424,7 @@ TaskUpdate
   status: "completed"
 ```
 
-#### Step 6c: Commit with Task Reference
+#### Step 6d: Commit with Task Reference
 
 ```bash
 git add -A
@@ -531,11 +603,17 @@ Before claiming bug fixed:
 - [ ] Implemented fix addressing root cause (not symptom)
 - [ ] Verified test PASSES after fix (GREEN)
 - [ ] Ran full test suite (all pass)
-- [ ] Updated Task with root cause and fix
-- [ ] Marked Task complete
+- [ ] Classified fix status (FIXED with evidence)
+- [ ] Updated Task with root cause, fix, and status classification
+- [ ] Marked Task complete (only if status = FIXED)
 - [ ] Committed with Task reference
 
 **Can't check all boxes?** Return to the process.
+
+**If status not FIXED:**
+- PARTIALLY_FIXED → Document remaining work, keep Task open
+- NOT_ADDRESSED → Return to Phase 3
+- CANNOT_DETERMINE → Gather more reproduction data
 
 ---
 

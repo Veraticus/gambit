@@ -100,7 +100,7 @@ Check: Fix one affects others? No - isolated functionality
 Result: 3 independent domains ✓
 ```
 
-**Create Task for coordination:**
+**Create coordination Task to track the parallel work:**
 
 ```
 TaskCreate
@@ -116,13 +116,32 @@ TaskCreate
     - Domain 2 vs 3: [why independent]
     - Domain 1 vs 3: [why independent]
 
-    ## Status
-    - [ ] All agents dispatched
+    ## Agent Status
+    - [ ] Agent 1 ([Domain 1]): dispatched / returned / result summary
+    - [ ] Agent 2 ([Domain 2]): dispatched / returned / result summary
+    - [ ] Agent 3 ([Domain 3]): dispatched / returned / result summary
+
+    ## Progress
+    - [ ] All agents dispatched (single message)
     - [ ] All agents returned
     - [ ] No conflicts found
-    - [ ] Integration verified
+    - [ ] Integration verified (full test suite)
   activeForm: "Coordinating parallel investigation"
 ```
+
+**Mark in progress:**
+
+```
+TaskUpdate
+  taskId: "[coordination-task-id]"
+  status: "in_progress"
+```
+
+**Why track with a Task (not mental tracking):**
+- See all agent statuses at a glance with TaskGet
+- Document which agents fixed what
+- Track conflicts and integration decisions
+- Provides audit trail for complex investigations
 
 ---
 
@@ -221,12 +240,34 @@ As agents work:
 - Note which are still running
 - Don't start integration until ALL agents done
 
+**Check agent progress with TaskOutput:**
+
+```
+TaskOutput
+  task_id: "[agent-task-id]"
+  block: false
+  timeout: 5000
+```
+
+This returns current status without waiting for completion.
+
 **If an agent gets stuck (>5 minutes):**
 
-1. Check TaskOutput to see what it's doing
-2. If stuck on wrong path: Cancel and retry with clearer prompt
+1. Check TaskOutput to see what it's doing:
+   ```
+   TaskOutput
+     task_id: "[stuck-agent-id]"
+     block: false
+     timeout: 5000
+   ```
+2. If stuck on wrong path: KillShell and retry with clearer prompt
 3. If needs context from other domain: Wait for other agent, then restart with context
 4. If hit real blocker: Investigate blocker yourself, then retry
+
+**If agent completes with errors:**
+- Read the full output with `block: true`
+- Determine if it's a real failure or needs refinement
+- Consider retrying with more context from what it learned
 
 ---
 
