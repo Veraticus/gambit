@@ -1,0 +1,73 @@
+{
+  "_comment": "Skill activation rules. Keywords are case-insensitive substring matches.",
+
+  "debugging": {
+    "priority": "high",
+    "type": "workflow",
+    "keywords": ["bug", "broken", "failing", "error", "crash", "fix", "debug", "investigate"],
+    "patterns": ["test.*fail", "doesn't work", "not working", "unexpected"]
+  },
+
+  "test-driven-development": {
+    "priority": "high",
+    "type": "workflow",
+    "keywords": ["tdd", "test first", "red green", "write test"],
+    "patterns": ["add.*test", "implement.*with test", "test.*driven"]
+  },
+
+  "refactoring": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["refactor", "restructure", "reorganize", "clean up", "simplify"],
+    "patterns": ["extract.*method", "move.*to", "rename"]
+  },
+
+  "code-review": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["review", "check my", "look over", "feedback"],
+    "patterns": ["code review", "review.*code", "pr review"]
+  },
+
+  "brainstorming": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["design", "architect", "plan", "approach", "how should"],
+    "patterns": ["best way to", "how would you", "what approach"]
+  },
+
+  "writing-plans": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["create plan", "write plan", "implementation plan", "task breakdown"],
+    "patterns": ["plan.*implement", "break.*down.*task"]
+  },
+
+  "executing-plans": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["execute plan", "implement plan", "start implementing"],
+    "patterns": ["follow.*plan", "implement.*from plan"]
+  },
+
+  "parallel-agents": {
+    "priority": "low",
+    "type": "workflow",
+    "keywords": ["parallel", "concurrent", "multiple failures", "independent"],
+    "patterns": ["3\\+.*fail", "several.*broken", "multiple.*issue"]
+  },
+
+  "verification": {
+    "priority": "high",
+    "type": "workflow",
+    "keywords": ["verify", "check", "confirm", "make sure", "validate"],
+    "patterns": ["before.*commit", "ready.*merge", "done.*implement"]
+  },
+
+  "finishing-branch": {
+    "priority": "low",
+    "type": "workflow",
+    "keywords": ["finish branch", "merge", "pr", "pull request", "done with feature"],
+    "patterns": ["ready.*merge", "create.*pr", "open.*pull request"]
+  }
+}
