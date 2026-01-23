@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Use to execute Tasks one at a time - executes task, reviews learnings, then STOPS for user review before continuing
+description: Executes Tasks one at a time with mandatory human checkpoints. Reviews learnings, then STOPS for user review before continuing.
 user_invokable: true
 ---
 
@@ -186,179 +186,22 @@ TaskUpdate
 
 ### 2a. When Hitting Obstacles
 
-**CRITICAL: Check Design Discovery before switching approaches.**
+**CRITICAL: Check epic before switching approaches.**
 
-When you hit a blocker, do NOT automatically try alternatives. First check if the alternative was already considered and rejected.
-
-**Step 1: Re-read epic for "Approaches Considered"**
-
-```
-TaskGet
-  taskId: "epic-task-id"
-```
-
-Look for:
-- **Approaches Considered** section
-- **"⚠️ REJECTED BECAUSE"** notes
-- **"🚫 DO NOT REVISIT UNLESS"** conditions
-- **Anti-patterns (FORBIDDEN)** section
-
-**Step 2: Check if your alternative was already rejected**
-
-If the epic shows the approach you're considering was rejected:
-
-```markdown
-## Obstacle Encountered
-
-**Current approach:** [Chosen Approach from epic]
-**Obstacle:** [What blocker was hit]
-
-**Considering:** [Rejected Approach from epic]
-
-**Original rejection reason:** [Copy from epic]
-**DO NOT REVISIT UNLESS:** [Copy from epic]
-
-**Why reconsidering:**
-- [ ] Rejection reason no longer applies because: [specific reason]
-- [ ] DO NOT REVISIT condition is now met: [specific evidence]
-
-**Recommendation:** [Stay course / Switch with user approval]
-```
-
-**Step 3: Get user approval before switching**
-
-Before switching to a previously rejected approach, you MUST:
-- Document why the rejection reason no longer applies
-- OR explain why this obstacle changes the calculus
-- Get explicit user confirmation
-
-**Why this matters:**
-
-Rejected approaches were rejected for good reasons. Those reasons often still apply when obstacles arise.
-
-Example:
-- Chose passport.js, hit session complexity
-- Considered switching to custom JWT
-- But custom JWT was rejected because it requires rewriting 15 files
-- The obstacle doesn't change that — switching makes the problem worse
-
-**Step 4: If no prior rejection, check anti-patterns**
-
-If the workaround wasn't previously considered but might violate anti-patterns:
-
-```markdown
-## Obstacle Encountered
-
-**Blocker:** [What's blocking]
-**Tempting workaround:** [What you could do]
-**Why forbidden:** [Epic anti-pattern it violates]
-
-**Options:**
-1. Research proper solution
-2. Ask user for guidance
-
-**Recommendation:** [Your suggestion]
-```
+1. Re-read epic (`TaskGet`) for "Approaches Considered" and "Anti-patterns"
+2. If alternative was already REJECTED, note original rejection reason
+3. Only switch if rejection reason no longer applies AND user approves
 
 **Never water down requirements to "make it easier."**
 
 ### 2b. When Discoveries Require New Work
 
-If implementation reveals unexpected work needed, new tasks require the same rigor as initial planning.
+If implementation reveals unexpected work:
 
-**Step 1: Create the new task with full detail**
-
-```
-TaskCreate
-  subject: "Handle discovered edge case: empty email validation"
-  description: |
-    **Discovered during:** Task "Add login endpoint"
-    **Issue:** Login crashes on empty email input
-
-    **Step 1: Write failing test**
-    ```typescript
-    it('returns 400 for empty email', async () => {
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ email: '', password: 'test' });
-      expect(response.status).toBe(400);
-    });
-    ```
-
-    **Step 2: Run test (expect fail)**
-    ```bash
-    npm test -- tests/routes/auth.test.ts -t "empty email"
-    ```
-    Expected: FAIL (currently crashes or returns 500)
-
-    **Step 3: Add validation**
-    ```typescript
-    // src/routes/auth.ts - add at start of login handler
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-    ```
-
-    **Step 4: Run test (expect pass)**
-    ```bash
-    npm test -- tests/routes/auth.test.ts -t "empty email"
-    ```
-    Expected: PASS
-
-    **Step 5: Commit**
-    ```bash
-    git add src/routes/auth.ts tests/routes/auth.test.ts
-    git commit -m "fix(auth): validate email and password presence"
-    ```
-
-    ## Success Criteria
-    - [ ] Returns 400 for empty email
-    - [ ] Returns 400 for empty password
-    - [ ] Returns 400 for missing fields
-    - [ ] Tests pass
-  activeForm: "Handling empty email validation"
-```
-
-**Step 2: Set dependency on current task**
-
-```
-TaskUpdate
-  taskId: "new-edge-case-task"
-  addBlockedBy: ["current-task-id"]
-```
-
-**Step 3: Apply SRE-style refinement**
-
-Before considering the new task ready, review it with scrutiny:
-
-**Granularity check:**
-- Is it 2-5 minutes of work? If longer, break it down.
-
-**Implementability check:**
-- Can it be executed without asking questions?
-- Are all file paths explicit?
-- Is all code complete (no placeholders)?
-
-**Edge cases check:**
-- Empty string vs null vs undefined?
-- Unicode/special characters?
-- Boundary conditions?
-
-**Success criteria check:**
-- Are criteria specific and testable?
-- At least 3 criteria?
-
-If the task fails any check, update it:
-
-```
-TaskUpdate
-  taskId: "new-edge-case-task"
-  description: "[Updated description with missing details]"
-```
-
-**Step 4: Document in checkpoint**
-
-Note in your STOP checkpoint that a new task was created and why.
+1. **Create new task** with same rigor as initial planning (full detail, no placeholders)
+2. **Set dependency** on current task via `TaskUpdate addBlockedBy`
+3. **Refine** - ensure it's 2-5 min, explicit paths, testable criteria
+4. **Document** in STOP checkpoint that new task was added
 
 ### 3. Review and Adapt
 
@@ -500,151 +343,36 @@ TaskUpdate
 
 ## Examples
 
-### Bad: Continuing Without STOP
+### Proper STOP Checkpoint
 
-```
-Completed Task 2 (auth middleware).
+After completing a task, present this format then STOP:
 
-TaskList shows Task 3 (rate limiting) is ready.
-
-Developer thinks: "Good context, I'll do Task 3 quickly..."
-
-TaskUpdate
-  taskId: "task-3"
-  status: "in_progress"
-
-Continues to execute Task 3 without STOP.
-```
-
-**Why it fails:**
-- User can't review Task 2 before Task 3 starts
-- User can't clear context
-- No checkpoint = no oversight
-
-### Good: Proper STOP
-
-```
-TaskUpdate
-  taskId: "task-2"
-  status: "completed"
-
+```markdown
 ## Task Complete — Checkpoint
 
 ### What Was Done
-- Implemented JWT validation middleware
-- Added token refresh handling
+- [Summary of implementation]
 
 ### Task Status
-TaskList shows:
 - Task 1: completed
 - Task 2: completed ← just finished
 - Task 3: pending, blockedBy: [] ← ready
 
-### Learnings
-- Found existing session utils in lib/session.ts
-- Can reuse for Task 3
-
 ### Epic Progress
 - 2/4 success criteria met
 
-### Next Task
-- Task 3: Rate limiting
-- Add rate limits to auth endpoints
-
 ### To Continue
-Run `/gambit:execute-plan` to execute the next task.
+Run `/gambit:executing-plans` to execute the next task.
 ```
 
-Then STOP. Wait for user.
+**Never rationalize "just one more task"** - STOP means STOP.
 
-### Bad: Watering Down Requirements
+### Obstacle Handling
 
-```
-Epic anti-pattern: "FORBIDDEN: Mock database in integration tests"
-
-Developer hits complex DB setup.
-
-TaskGet on epic shows the anti-pattern clearly.
-
-Developer thinks: "I'll mock just for now..."
-Adds mocks with TODO comment.
-```
-
-**Why it fails:** Violates explicit anti-pattern. "Later" never comes.
-
-### Good: Handling Blockers (Anti-pattern Check)
-
-```
-TaskGet
-  taskId: "epic-id"
-
-Reads anti-pattern: "FORBIDDEN: Mock database in integration tests"
-
-## Obstacle Encountered
-
-**Blocker:** Test database setup is complex
-**Tempting workaround:** Mock the database
-**Why forbidden:** Epic explicitly forbids mocks for integration tests
-
-**Options:**
-1. Research existing test DB setup in codebase
-2. Ask user about test infrastructure
-
-**Recommendation:** Let me search for existing test DB patterns first.
-```
-
-### Good: Checking Approaches Considered Before Switching
-
-```
-Hit obstacle: passport.js session handling is complex.
-
-TaskGet
-  taskId: "epic-id"
-
-Epic shows:
-## Approaches Considered
-1. **passport.js** ✅ CHOSEN
-2. **Custom JWT** ⚠️ REJECTED BECAUSE: Requires rewriting 15 files
-   🚫 DO NOT REVISIT UNLESS: We're doing a full auth rewrite
-
-## Obstacle Encountered
-
-**Current approach:** passport.js (chosen)
-**Obstacle:** Session handling is complex, taking longer than expected
-
-**Considering:** Custom JWT (rejected)
-
-**Original rejection reason:** Requires rewriting 15 files
-**DO NOT REVISIT UNLESS:** We're doing a full auth rewrite
-
-**Why reconsidering:**
-- [ ] Rejection reason no longer applies because: [can't claim this - still 15 files]
-- [ ] DO NOT REVISIT condition is now met: [no - not doing full rewrite]
-
-**Recommendation:** Stay course. The obstacle (complexity) doesn't change the
-rejection reason (15 file rewrite). Switching would make things worse.
-Research passport.js session patterns instead.
-```
-
-### Bad: Switching to Rejected Approach Without Checking
-
-```
-Hit obstacle: passport.js session handling is complex.
-
-Developer thinks: "Custom JWT would be simpler..."
-
-TaskUpdate
-  taskId: "current-task"
-  description: "Switching to custom JWT approach"
-
-[Starts implementing custom JWT without checking epic]
-```
-
-**Why it fails:**
-- Didn't check if custom JWT was already rejected
-- The rejection reason (15 file rewrite) still applies
-- Made the problem worse, not better
-- Hours wasted on approach that was rejected for good reason
+When blocked, check epic BEFORE switching approaches:
+1. Read "Approaches Considered" section
+2. If alternative was rejected, note original rejection reason
+3. Only switch if rejection reason no longer applies AND user approves
 
 ## Anti-patterns
 

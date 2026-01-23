@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: Use before any creative work - refines rough ideas into epic Tasks with immutable requirements through Socratic questioning
+description: Refines rough ideas into epic Tasks with immutable requirements through Socratic questioning. Use before any creative work.
 user_invokable: true
 ---
 
@@ -115,15 +115,6 @@ For IMPORTANT/NICE_TO_HAVE questions with good defaults, offer:
 
 **Do NOT just print questions and wait for "yes"** - use the AskUserQuestion tool.
 
-**CAPTURE for Design Discovery:**
-
-As each question is answered, record in "Key Decisions Made" table:
-- Question asked
-- User's answer
-- Implication for requirements/anti-patterns
-
-This preserves the Socratic Q&A for future reference during task creation and obstacle handling.
-
 ---
 
 ### 2. Exploring Approaches
@@ -138,26 +129,6 @@ Task
   subagent_type: "Explore"
   prompt: "Find how authentication is currently implemented and what patterns are used"
 ```
-
-**IMPORTANT: Capture research findings for Design Discovery**
-
-As you research, note down:
-- Codebase findings: file paths, patterns discovered, relevant code
-- External findings: API capabilities, library constraints, doc URLs
-- These will populate the "Research Findings" section of the epic
-
-**CAPTURE for Design Discovery:**
-
-- **Research Deep-Dives**: For each major research topic, document:
-  - Question explored
-  - Sources consulted with key findings
-  - Conclusion and how it informed the design
-- **Dead-End Paths**: When you abandon an approach during research:
-  - Why you explored it (what made it seem viable)
-  - What investigation revealed
-  - Why abandoned (specific reason linking to requirements/constraints)
-
-Dead-end documentation prevents wasted re-investigation when obstacles arise later.
 
 **Propose 2-3 approaches with trade-offs:**
 
@@ -194,16 +165,6 @@ I recommend option 1 because [specific reason, especially codebase consistency].
 **Show research findings:**
 - "Based on codebase investigation: auth/ uses passport.js..."
 - "API docs show OAuth flow requires..."
-- Demonstrate how design builds on existing code
-
-**CAPTURE for Design Discovery:**
-
-When user raises concerns, hesitations, or "what if" questions:
-- Record in "Open Concerns Raised" section
-- Document how each was addressed or deferred
-- Example: "What if Google OAuth is down?" → "Graceful degradation to error message"
-
-These concerns often resurface during implementation - having the resolution documented prevents re-debating.
 
 ---
 
@@ -280,32 +241,10 @@ TaskCreate
     - [uncertainties to resolve during implementation]
     - [decisions deferred to execution phase]
 
-    ## Design Discovery (Reference Context)
-
-    > This section preserves detailed context from brainstorming for task creation.
-    > Reference when defining tasks, handling obstacles, or validating decisions.
-
-    ### Key Decisions Made
-    | Question | User Answer | Implication |
-    |----------|-------------|-------------|
-    | [question] | [answer] | [implication] |
-
-    ### Research Deep-Dives
-    #### [Topic: e.g., OAuth Library Selection]
-    **Question explored:** [What question drove this research?]
-    **Sources consulted:**
-    - [Source 1] - [key finding]
-    **Findings:** [Detailed findings]
-    **Conclusion:** [How this informed the design]
-
-    ### Dead-End Paths
-    #### [Path: e.g., Custom JWT Implementation]
-    **Why explored:** [What made this seem worth investigating]
-    **Investigation:** [What was researched/tried]
-    **Why abandoned:** [Specific reason - links to requirements/anti-patterns]
-
-    ### Open Concerns Raised
-    - [concern] → [resolution]
+    ## Design Discovery (Optional - for complex features)
+    Key decisions: [question] → [answer] → [implication]
+    Dead-ends: [path] → [why abandoned]
+    Concerns raised: [concern] → [resolution]
   activeForm: "Planning [feature name]"
 ```
 
@@ -420,111 +359,10 @@ The executing-plans skill will:
 This approach avoids brittle upfront planning - each task adapts to what we learn.
 ```
 
-## Task Tool Reference
+## Research Protocol
 
-### TaskCreate
-
-```
-TaskCreate
-  subject: "Brief imperative title"
-  description: "Full markdown with requirements, steps, code"
-  activeForm: "Present participle for spinner"
-```
-
-**Epic example:**
-```
-TaskCreate
-  subject: "Epic: OAuth Authentication"
-  description: |
-    ## Requirements (IMMUTABLE)
-    - Users authenticate via Google OAuth2
-    - Tokens stored in httpOnly cookies (NOT localStorage)
-
-    ## Success Criteria (MUST ALL BE TRUE)
-    - [ ] Login redirects to Google and back
-    - [ ] Tokens in httpOnly cookies
-    - [ ] Integration tests pass WITHOUT mocking OAuth
-    - [ ] All tests passing
-    - [ ] Pre-commit hooks passing
-
-    ## Anti-Patterns (FORBIDDEN)
-    - NO localStorage tokens (reason: XSS vulnerability)
-    - NO mocking OAuth in integration tests (reason: defeats validation)
-  activeForm: "Planning OAuth authentication"
-```
-
-**Task example:**
-```
-TaskCreate
-  subject: "Configure Google OAuth provider"
-  description: |
-    ## Goal
-    Set up Google OAuth credentials and basic passport strategy.
-
-    ## Implementation
-    1. Study auth/strategies/local.ts:1-30 for strategy pattern
-    2. Write test: OAuth callback returns user profile
-    3. Add passport-google-oauth20 to package.json
-    4. Create auth/strategies/google.ts following local.ts pattern
-
-    ## Success Criteria
-    - [ ] passport-google-oauth20 installed
-    - [ ] auth/strategies/google.ts exists
-    - [ ] OAuth strategy registered in passport config
-    - [ ] Tests passing
-  activeForm: "Configuring OAuth provider"
-```
-
-### TaskUpdate
-
-```
-TaskUpdate
-  taskId: "the-task-id"
-  status: "pending" | "in_progress" | "completed"
-  description: "Updated description if needed"
-```
-
-### TaskGet
-
-```
-TaskGet
-  taskId: "the-task-id"
-```
-
-Use to read full task details including success criteria.
-
-### TaskList
-
-```
-TaskList
-```
-
-Returns all tasks with status. Use to verify epic and subtasks.
-
-## Research Agents
-
-### Use Explore agent when:
-- Understanding how existing features work
-- Finding where specific functionality lives
-- Identifying patterns to follow
-- Verifying assumptions about structure
-- Checking if feature already exists
-
-```
-Task
-  subagent_type: "Explore"
-  prompt: "Find existing authentication patterns in this codebase"
-```
-
-### Use WebSearch when:
-- Finding current API documentation
-- Researching library capabilities
-- Comparing technology options
-- Understanding community recommendations
-
-### Research protocol:
-1. Codebase pattern exists → Use it (unless clearly unwise)
-2. No codebase pattern → Research external patterns
+1. Codebase pattern exists → Use it (Explore agent)
+2. No codebase pattern → Research external patterns (WebSearch)
 3. Research yields nothing → Ask user for direction
 
 ## Examples
@@ -598,175 +436,15 @@ TaskCreate
 - "Tokens stored securely" too vague
 - Mocking defeats the purpose of integration tests
 
-### Good: Epic With Anti-Patterns and Design Rationale
+### Good: Follow the Template in Section 4
 
-```
-TaskCreate
-  subject: "Epic: OAuth Authentication"
-  description: |
-    ## Requirements (IMMUTABLE)
-    - Users authenticate via Google OAuth2
-    - Tokens stored in httpOnly cookies (NOT localStorage)
-    - Integrates with existing User model at db/models/user.ts
-
-    ## Success Criteria (MUST ALL BE TRUE)
-    - [ ] Login redirects to Google and back
-    - [ ] Tokens in httpOnly cookies
-    - [ ] Token refresh works automatically
-    - [ ] Integration tests pass WITHOUT mocking OAuth
-    - [ ] All tests passing
-    - [ ] Pre-commit hooks passing
-
-    ## Anti-Patterns (FORBIDDEN)
-    - NO localStorage tokens (reason: XSS vulnerability)
-    - NO new user model (reason: must use existing db/models/user.ts)
-    - NO mocking OAuth in integration tests (reason: defeats validation)
-    - NO skipping token refresh (reason: explicit user requirement)
-
-    ## Approach
-    Extend existing passport.js setup at auth/passport-config.ts with
-    Google OAuth2 strategy. Use passport-google-oauth20 library.
-    Store tokens in httpOnly cookies via express-session.
-    Integrate with existing User model for profile storage.
-
-    ## Architecture
-    - auth/strategies/google.ts - New OAuth strategy
-    - auth/passport-config.ts - Register strategy (existing)
-    - db/models/user.ts - Add googleId field (existing)
-    - routes/auth.ts - OAuth callback routes
-
-    ## Design Rationale
-
-    ### Problem
-    Users currently have no SSO option - must create accounts manually.
-    Manual signup has 40% abandonment rate. Google OAuth reduces friction.
-
-    ### Research Findings
-    **Codebase:**
-    - auth/passport-config.ts:1-50 - Existing passport setup, uses sessions
-    - auth/strategies/local.ts:1-30 - Pattern for adding strategies
-    - db/models/user.ts:1-80 - User model, already has email field
-
-    **External:**
-    - passport-google-oauth20 - Official Google strategy, 2M weekly downloads
-    - Google OAuth2 docs - Requires client ID, callback URL, scopes
-
-    ### Approaches Considered
-
-    #### 1. Extend passport.js with google-oauth20 - CHOSEN
-    **What it is:** Add passport-google-oauth20 strategy to existing setup.
-    Reuses session-based auth, follows existing pattern in auth/strategies/.
-
-    **Investigation:**
-    - Reviewed auth/passport-config.ts - existing passport setup
-    - Checked auth/strategies/local.ts - pattern for adding strategies
-    - passport-google-oauth20 npm - 2M weekly downloads, maintained
-
-    **Pros:**
-    - Matches existing codebase pattern (auth/strategies/)
-    - Session handling already works
-    - Well-documented, large community
-
-    **Cons:**
-    - Adds npm dependency
-
-    **Chosen because:** Consistent with existing pattern, minimal changes
-
-    #### 2. Custom JWT-based OAuth - REJECTED
-    **What it is:** Implement OAuth from scratch using JWTs instead of sessions.
-
-    **Why explored:** User mentioned 'maybe we should use JWTs'
-
-    **Investigation:**
-    - Counted files using req.session - 15 files would need rewriting
-    - Reviewed existing session middleware - deeply integrated
-
-    **Pros:**
-    - No new dependencies
-    - Stateless (scalability)
-
-    **Cons:**
-    - Would require rewriting 15 files
-    - Security complexity
-    - Breaks existing pattern
-
-    **REJECTED BECAUSE:** Scope creep - OAuth shouldn't require rewriting auth.
-
-    **DO NOT REVISIT UNLESS:** Full auth system rewrite in separate epic.
-
-    ### Scope Boundaries
-    **In scope:**
-    - Google OAuth login/signup
-    - Token storage in httpOnly cookies
-    - Profile sync with User model
-
-    **Out of scope:**
-    - Other OAuth providers (deferred to future epic)
-    - Account linking (deferred)
-
-    ### Open Questions
-    - Should failed OAuth create partial user record? (decide during impl)
-    - Token refresh: silent vs prompt? (default to silent)
-
-    ## Design Discovery (Reference Context)
-
-    ### Key Decisions Made
-    | Question | User Answer | Implication |
-    |----------|-------------|-------------|
-    | Token storage? | httpOnly cookies | Anti-pattern: NO localStorage |
-    | New or existing user model? | Existing | Must add googleId field |
-    | Session duration? | 24h inactive | Need refresh token logic |
-    | OAuth down fallback? | Error message | No fallback auth needed |
-
-    ### Research Deep-Dives
-
-    #### OAuth Library Selection
-    **Question explored:** Which OAuth library to use?
-    **Sources consulted:**
-    - passport-google-oauth20 npm - 2M weekly downloads
-    - google-auth-library npm - official but lower-level
-
-    **Findings:**
-    - passport-google-oauth20 matches existing passport setup
-    - Built-in session serialization
-
-    **Conclusion:** Use passport-google-oauth20 for consistency
-
-    ### Dead-End Paths
-
-    #### Custom JWT Implementation
-    **Why explored:** User mentioned JWTs
-    **Investigation:** Counted 15 files using req.session
-    **Why abandoned:** Scope creep, breaks existing pattern
-
-    ### Open Concerns Raised
-    - 'What if Google OAuth is down?' → Graceful error message
-    - 'Should we support account linking?' → Deferred to future epic
-  activeForm: "Planning OAuth authentication"
-```
-
-**Why it works:**
-- Requirements concrete and specific
+See the epic template in "Creating the Epic Task" above. Key elements that make it work:
+- Requirements are concrete and specific
 - Forbidden patterns explicit with reasoning
-- Can't rationalize away requirements
-- Rejected approaches documented for obstacle handling
-- Design Discovery preserves full context
-
-## Key Principles
-
-- **One question at a time** - Don't overwhelm
-- **Multiple choice preferred** - Easier to answer when possible
-- **Research before proposing** - Use Explore agent to understand context
-- **YAGNI ruthlessly** - Remove unnecessary features from all designs
-- **Explore alternatives** - Propose 2-3 approaches before settling
-- **Incremental validation** - Present design in sections, validate each
-- **Epic is contract** - Requirements immutable, tasks adapt
-- **Anti-patterns prevent shortcuts** - Explicit forbidden patterns stop rationalization
-- **One task only** - Subsequent tasks created iteratively (not upfront)
+- Rejected approaches documented with "DO NOT REVISIT UNLESS"
+- Design Discovery preserves context for obstacle handling
 
 ## Critical Rules
-
-### Rules That Have No Exceptions
 
 1. **Use AskUserQuestion tool** → Don't just print questions and wait
 2. **Research BEFORE proposing** → Use Explore agent to understand context
@@ -776,35 +454,10 @@ TaskCreate
 6. **Create ONLY first task** → Subsequent tasks created iteratively
 7. **Apply task refinement** → Before handoff to executing-plans
 
-### Common Excuses
-
-All of these mean: **STOP. Follow the process.**
-
-| Excuse | Reality |
-|--------|---------|
-| "Requirements obvious, don't need questions" | Questions reveal hidden complexity |
-| "I know this pattern, don't need research" | Research might show better way |
-| "Can plan all tasks upfront" | Plans become brittle as you learn |
-| "Anti-patterns section overkill" | Prevents rationalization under pressure |
-| "Epic can evolve" | Requirements contract, tasks evolve |
-| "Can just print questions" | Use AskUserQuestion tool - more interactive |
-| "Task refinement overkill" | First task sets pattern for entire epic |
-
-## Anti-patterns
-
-**Don't:**
-- Skip research, propose approach without checking codebase
-- Create full task tree upfront
-- Create epic without anti-patterns section
-- Use open-ended questions when multiple choice works
-- Print questions instead of using AskUserQuestion tool
-
-**Do:**
-- Research codebase first (Explore agent)
-- Create only first task, iterate from there
-- Include anti-patterns with reasoning
-- Use AskUserQuestion tool for all clarifying questions
-- Document rejected approaches with DO NOT REVISIT conditions
+**Common rationalizations (all mean STOP, follow the process):**
+- "Requirements obvious" → Questions reveal hidden complexity
+- "I know this pattern" → Research might show better way
+- "Can plan all tasks upfront" → Plans become brittle as you learn
 
 ## Verification Checklist
 
@@ -823,32 +476,6 @@ Before handing off to executing-plans:
 - [ ] First task has detailed implementation checklist
 - [ ] Applied task refinement (2-5 min, explicit paths, testable criteria)
 
-## Resources
-
-**When stuck:**
-- User gives vague answer → Ask follow-up multiple choice question
-- Research yields nothing → Ask user for direction explicitly
-- Too many approaches → Narrow to top 2-3, explain why others eliminated
-- User changes requirements mid-design → Acknowledge, return to understanding phase
-
 ## Integration
 
-**This skill is called by:**
-- User requests for new features
-- Beginning of greenfield development
-
-**This skill calls:**
-- Explore agent (understand existing code)
-- `gambit:execute-plan` (handoff after design approved)
-
-**Workflow:**
-```
-gambit:brainstorm
-    → Create epic with immutable requirements
-    → Create first task
-    → Apply task refinement
-gambit:execute-plan
-    → Execute first task
-    → Create next task based on learnings
-    → Repeat until epic complete
-```
+**Calls:** Explore agent, then hands off to `gambit:executing-plans`
