@@ -11,6 +11,8 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** Tools first, fixes second. Find root cause with evidence before proposing any fix.
 
+**Iron Law:** NO fixes without root cause evidence first. NO closing without a regression test. Think you know the fix? Prove it with evidence BEFORE writing code. No exceptions.
+
 **Announce at start:** "I'm using gambit:debugging to investigate this systematically."
 
 ## Rigidity Level

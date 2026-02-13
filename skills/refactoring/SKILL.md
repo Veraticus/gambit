@@ -11,6 +11,8 @@ Refactoring changes code structure without changing behavior. Tests must stay gr
 
 **Core principle:** Change → Test → Commit. Repeat until complete. Tests green at every step.
 
+**Iron Law:** NO changes without passing tests BEFORE and AFTER. Tests fail? STOP. Undo. Make a smaller change. "I'll test at the end" = you're not refactoring. No exceptions.
+
 **Announce at start:** "I'm using gambit:refactoring to restructure this code safely."
 
 ## Rigidity Level

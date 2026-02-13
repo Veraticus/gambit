@@ -37,6 +37,10 @@ HIGH FREEDOM - Adapt questioning to context. But always:
 
 **Key:** Epic = contract (immutable), Tasks = adaptive (created as you learn)
 
+<HARD-GATE>
+Do NOT write any code, invoke any implementation skill, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY idea regardless of perceived simplicity. No exceptions.
+</HARD-GATE>
+
 ## When to Use
 
 - User describes a new feature to implement

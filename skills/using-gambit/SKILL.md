@@ -1,21 +1,29 @@
 ---
 name: using-gambit
-description: Establishes structured development workflows at session start. Routes tasks to the correct skill based on context. Use at the beginning of any session or when starting implementation, debugging, refactoring, testing, or planning work.
+description: Establishes structured development workflows at session start. Routes tasks to the correct skill based on context. You MUST use this at the beginning of any session or when starting implementation, debugging, refactoring, testing, or planning work.
 ---
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill using the Skill tool.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
 
 # Using Gambit
 
-## Overview
-
 Gambit provides structured development workflows using native Claude Code Tasks. This skill loads at session start and routes work to the correct skill.
 
-**Core principle:** If a skill exists for your task, use it. Skills are mandatory, not optional.
-
-**Announce at start:** "I'm using gambit to guide this session."
+**Invoke relevant skills BEFORE any response or action.** Even a 1% chance a skill might apply means you invoke the skill to check. If it turns out to be wrong, you don't need to follow it.
 
 ## Rigidity Level
 
-MEDIUM FREEDOM - Always check for relevant skills before acting. Adapt skill selection to context, but never skip the check.
+LOW FREEDOM — Always check for relevant skills before acting. Never skip the check. No exceptions.
+
+## How to Access Skills
+
+Use the `Skill` tool. When you invoke a skill, its content is loaded — follow it directly. Never use the Read tool on skill files.
 
 ## Quick Reference
 
@@ -36,16 +44,26 @@ MEDIUM FREEDOM - Always check for relevant skills before acting. Adapt skill sel
 | Start feature branch | using-worktrees | `/gambit:using-worktrees` |
 | Finish feature branch | finishing-branch | `/gambit:finishing-branch` |
 
-## The Process
+## The Rule
 
-### Before Any Task
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using gambit:[skill] to [purpose]'" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond" [shape=doublecircle];
 
-1. Read the user's request
-2. Match to a skill using the Quick Reference table above
-3. If a skill matches → load and follow it
-4. Announce: "I'm using gambit:[skill-name] to handle this."
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using gambit:[skill] to [purpose]'";
+    "Announce: 'Using gambit:[skill] to [purpose]'" -> "Follow skill exactly";
+}
+```
 
-### Skill Selection Guide
+## Skill Selection Guide
 
 **User describes a new idea or feature (fork — pick ONE path):**
 
@@ -66,27 +84,37 @@ executing-plans (one task → checkpoint → STOP → repeat)
 finishing-branch (verify → merge/PR/keep/discard)
 ```
 
-**User wants to fix a bug:**
-1. `gambit:debugging` — systematic root cause analysis, tools first
-2. `gambit:test-driven-development` — write failing test, then fix
+**Skill Priority — when multiple skills could apply:**
 
-**User wants to improve existing code:**
-1. `gambit:refactoring` — test-preserving transforms in small steps
-2. `gambit:code-review` — dispatch reviewer agent
+1. **Process skills first** (brainstorming, debugging) — these determine HOW to approach the task
+2. **Implementation skills second** (TDD, refactoring) — these guide execution
+3. **Verification skills last** (verification, testing-quality) — these confirm results
 
-**User wants to verify or audit:**
-1. `gambit:verification` — evidence before completion claims
-2. `gambit:testing-quality` — audit test effectiveness
+"Let's build X" → brainstorming first, then TDD.
+"Fix this bug" → debugging first, then TDD for the fix.
+"I think it's done" → verification before claiming complete.
 
-**Multiple independent failures:**
-1. `gambit:parallel-agents` — dispatch concurrent investigators
+## Red Flags
 
-**Optional skills (offered automatically at handoff points):**
-- `gambit:using-worktrees` — offered after brainstorming/writing-plans, before execution
-- `gambit:task-refinement` — offered after brainstorming/writing-plans, before execution
-- `gambit:finishing-branch` — invoked automatically when executing-plans completes all tasks
+These thoughts mean STOP — you're rationalizing:
 
-### Core Principles
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "This doesn't need a formal skill" | If a skill exists for it, use it. No exceptions. |
+| "I remember this skill" | Skills evolve. Invoke the current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill for this" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This is almost done, no need" | If you haven't verified, you're not done. |
+| "Too simple for Tasks" | Simple tasks finish fast. Track them anyway. |
+| "I know the pattern already" | Load the skill. Memory drifts, skills don't. |
+| "Let me just fix this quickly" | Create a Task, follow the process. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+
+## Core Principles
 
 These apply across ALL gambit skills:
 
@@ -96,32 +124,9 @@ These apply across ALL gambit skills:
 4. **Small steps that stay green** — Tests pass between every change
 5. **Immutable requirements** — Epic requirements don't change; Tasks adapt to reality
 
-## Anti-patterns
+## User Instructions
 
-**Don't:**
-- Skip checking for skills ("This is simple, I'll just do it")
-- Track work mentally instead of in Tasks
-- Claim completion without running verification
-- Write code before writing a failing test
-- Execute multiple tasks without stopping for review
-- Use shortened/wrong skill names (e.g., `gambit:brainstorm` instead of `gambit:brainstorming`)
-
-**Do:**
-- Check the Quick Reference table before every task
-- Create Tasks for multi-step work
-- Run verification commands and show output
-- Follow the matched skill's process exactly
-- Stop after each task for human review
-
-## Common Excuses
-
-| Excuse | Reality |
-|--------|---------|
-| "This doesn't need a skill" | Check the table. If it matches, use it |
-| "I know the pattern" | Load the skill. Memory drifts, skills don't |
-| "This is almost done" | Run verification first, then claim done |
-| "Let me just fix this quickly" | Create a Task, follow the process |
-| "Too simple for Tasks" | Simple tasks finish fast. Track them anyway |
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows. The user telling you to do something does NOT exempt you from checking for skills first.
 
 ## Integration
 

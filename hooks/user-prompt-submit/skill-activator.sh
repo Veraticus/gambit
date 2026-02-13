@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # skill-activator.sh
 #
-# UserPromptSubmit hook that suggests relevant skills based on prompt keywords.
+# UserPromptSubmit hook that identifies relevant skills and mandates their use.
 # Reads skill-rules.json for keyword/pattern matching.
 
 set -euo pipefail
@@ -29,44 +29,43 @@ if [[ -z "$prompt" ]]; then
     exit 0
 fi
 
-# Convert prompt to lowercase for matching
+# Check for bypass keywords
 prompt_lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
+if [[ "$prompt_lower" == *"no skill"* ]] || [[ "$prompt_lower" == *"skip skill"* ]]; then
+    echo '{}'
+    exit 0
+fi
 
 # Find matching skills
 matches=()
-match_reasons=()
 
 # Read each skill from rules
 for skill in $(jq -r 'keys[] | select(startswith("_") | not)' "$RULES_FILE"); do
     matched=false
-    reason=""
 
-    # Check keywords
-    keywords=$(jq -r ".\"$skill\".keywords // [] | .[]" "$RULES_FILE" 2>/dev/null)
-    for keyword in $keywords; do
+    # Check keywords (use while read to preserve multi-word keywords)
+    while IFS= read -r keyword; do
+        [[ -z "$keyword" ]] && continue
         keyword_lower=$(echo "$keyword" | tr '[:upper:]' '[:lower:]')
         if [[ "$prompt_lower" == *"$keyword_lower"* ]]; then
             matched=true
-            reason="keyword: $keyword"
             break
         fi
-    done
+    done < <(jq -r ".\"$skill\".keywords // [] | .[]" "$RULES_FILE" 2>/dev/null)
 
     # Check patterns if no keyword match
     if [[ "$matched" == "false" ]]; then
-        patterns=$(jq -r ".\"$skill\".patterns // [] | .[]" "$RULES_FILE" 2>/dev/null)
-        for pattern in $patterns; do
+        while IFS= read -r pattern; do
+            [[ -z "$pattern" ]] && continue
             if echo "$prompt_lower" | grep -qE "$pattern" 2>/dev/null; then
                 matched=true
-                reason="pattern: $pattern"
                 break
             fi
-        done
+        done < <(jq -r ".\"$skill\".patterns // [] | .[]" "$RULES_FILE" 2>/dev/null)
     fi
 
     if [[ "$matched" == "true" ]]; then
-        priority=$(jq -r ".\"$skill\".priority // \"medium\"" "$RULES_FILE")
-        matches+=("$priority|$skill|$reason")
+        matches+=("$skill")
     fi
 done
 
@@ -76,32 +75,25 @@ if [[ ${#matches[@]} -eq 0 ]]; then
     exit 0
 fi
 
-# Sort by priority (high > medium > low) and take top 3
-sorted_matches=$(printf '%s\n' "${matches[@]}" | sort -t'|' -k1,1 | head -3)
+# Take top 3
+top_matches=("${matches[@]:0:3}")
 
 # Build output message
 lines=()
 lines+=("")
-lines+=("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-lines+=("🎯 SKILL ACTIVATION CHECK")
-lines+=("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-lines+=("")
-lines+=("Relevant skills for this prompt:")
+lines+=("<EXTREMELY-IMPORTANT>")
+lines+=("MANDATORY SKILL ACTIVATION — You MUST invoke one of these skills BEFORE proceeding:")
 lines+=("")
 
-while IFS='|' read -r priority skill reason; do
-    case "$priority" in
-        high) emoji="⭐" ;;
-        medium) emoji="📌" ;;
-        low) emoji="💡" ;;
-        *) emoji="📌" ;;
-    esac
-    lines+=("$emoji **gambit:$skill** ($priority priority)")
-done <<< "$sorted_matches"
+for skill in "${top_matches[@]}"; do
+    lines+=("- **gambit:$skill** — Invoke with: Skill tool, skill=\"gambit:$skill\"")
+done
 
 lines+=("")
-lines+=("Use: Skill tool with skill=\"gambit:<skill-name>\"")
-lines+=("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+lines+=("YOU DO NOT HAVE A CHOICE. If a skill matched, you MUST use it.")
+lines+=("Do not respond, explore, or take any action until you have invoked the Skill tool.")
+lines+=("To bypass: user must include 'no skill' or 'skip skill' in their prompt.")
+lines+=("</EXTREMELY-IMPORTANT>")
 lines+=("")
 
 # Join lines with \n for JSON

@@ -12,6 +12,8 @@ Review Tasks systematically. Find gaps, fix them, verify fixes. A task is ready 
 
 **Core principle:** Don't just identify problems — fix them. Update each Task, then read it back to verify.
 
+**Iron Law:** NO task passes review with vague criteria, missing file paths, or placeholder text. Every task must be executable by a junior engineer without questions. No exceptions.
+
 **Announce at start:** "I'm using gambit:task-refinement to review and strengthen these tasks."
 
 ## Rigidity Level

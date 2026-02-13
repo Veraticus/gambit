@@ -1,6 +1,17 @@
 # Gambit Hooks
 
-Bash hooks for Claude Code. Fast startup (~5ms).
+Bash hooks for Claude Code lifecycle events. Fast startup (~5ms).
+
+## Design Philosophy
+
+Gambit achieves skill compliance through **strong prompting, not mechanical enforcement**. This follows the approach proven by [superpowers](https://github.com/obra/superpowers): authority language with `<EXTREMELY-IMPORTANT>` tags, explicit rationalization blocking, and mandatory framing drive Claude to invoke skills without needing PreToolUse blockers.
+
+The hooks reinforce this by:
+- **SessionStart** — Injecting the full `using-gambit` skill with mandatory activation language
+- **UserPromptSubmit** — Matching prompts to skills and presenting matches as non-negotiable
+- **PostToolUse/PreToolUse/Stop** — Tracking state and providing contextual nudges
+
+Every skill match is mandatory. There are no priority tiers — if a keyword matches, Claude must invoke the skill. Users bypass with "no skill" or "skip skill" in their prompt.
 
 ## Installation
 
@@ -53,189 +64,94 @@ For manual installation, add to your project's `.claude/settings.json`:
 }
 ```
 
+## Skill Activation Chain
+
+```
+Session starts
+  → inject-using-gambit.sh loads using-gambit skill with <EXTREMELY_IMPORTANT> tags
+  → Claude sees: "IF A SKILL APPLIES, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT."
+
+User sends prompt
+  → skill-activator.sh matches keywords/patterns from skill-rules.json
+  → If match found: outputs <EXTREMELY-IMPORTANT> mandatory activation directive
+  → If "no skill"/"skip skill" in prompt: bypasses silently
+  → Claude must invoke the Skill tool before proceeding
+
+Claude works
+  → track-edits.sh logs file modifications
+  → block-pre-existing-checks.sh prevents wasted git archaeology
+
+Claude stops
+  → gentle-reminders.sh checks for TDD/verification/commit gaps
+```
+
 ## Available Hooks
 
-### SessionStart
+### SessionStart: inject-using-gambit.sh
 
-#### inject-using-gambit.sh
+Injects the full `using-gambit` skill into context at session start.
 
-Injects the `using-gambit` skill content into context at session start.
-
-**Behavior:**
 - Reads `skills/using-gambit/SKILL.md`
-- Wraps content in `<EXTREMELY_IMPORTANT>` tags
-- Ensures Claude knows about gambit skills from the start
+- Wraps in `<EXTREMELY_IMPORTANT>` tags
+- Contains the 1% threshold rule, Red Flags rationalization table, and skill routing flowchart
 
-**Why:**
-Claude needs to know about available skills to use them. This hook ensures skill awareness without relying on Claude to remember to check.
+### UserPromptSubmit: skill-activator.sh
 
----
+Matches prompts to skills and mandates activation.
 
-### UserPromptSubmit
+- Matches keywords and regex patterns from `skill-rules.json`
+- Returns up to 3 matching skills wrapped in `<EXTREMELY-IMPORTANT>` tags
+- Every match is mandatory — no priority tiers, no soft suggestions
+- Bypass: user includes "no skill" or "skip skill" in their prompt
 
-#### skill-activator.sh
-
-Suggests relevant skills based on keywords in the user's prompt.
-
-**Behavior:**
-- Reads prompt text from stdin
-- Matches against keywords/patterns in `skill-rules.json`
-- Returns top 3 matching skills by priority
-- Shows activation guidance
-
-**Configuration:**
-Edit `skill-rules.json` to customize keyword triggers:
+**Configuration** — edit `skill-rules.json`:
 
 ```json
 {
   "debugging": {
-    "priority": "high",
-    "type": "workflow",
     "keywords": ["bug", "broken", "failing", "error"],
     "patterns": ["test.*fail", "doesn't work"]
   }
 }
 ```
 
-**Why:**
-Users often describe problems without knowing which skill applies. This hook bridges the gap between natural language and skill activation.
+Keywords are case-insensitive substring matches. Multi-word keywords (e.g., "code review") match as complete phrases. Patterns are regex matched via `grep -E`.
 
----
+### PostToolUse: track-edits.sh
 
-### PostToolUse
+Logs Edit, Write, and MultiEdit tool calls to `context/edit-log.txt`. Records timestamp, tool name, and file path. Auto-rotates at 500 lines. Used by `gentle-reminders.sh` to detect TDD gaps (source edits without test edits).
 
-#### track-edits.sh
+### PreToolUse: block-pre-existing-checks.sh
 
-Tracks which files were edited during the session.
+Blocks Claude from checking out old commits to verify if failures are "pre-existing." Only activates in repos with pre-commit hooks (`.pre-commit-config.yaml`, `.git/hooks/pre-commit`, `lefthook.yml`), since those guarantee the previous commit was clean.
 
-**Behavior:**
-- Logs Edit, Write, and MultiEdit tool calls to `context/edit-log.txt`
-- Records timestamp, tool name, and file path
-- Auto-rotates log at 500 lines
+### Stop: gentle-reminders.sh
 
-**Used by:**
-`gentle-reminders.sh` reads this log to give accurate feedback about which files were edited.
-
-**Why:**
-Parsing Claude's response text for edit mentions is unreliable. Tracking actual tool calls gives accurate data for TDD and commit reminders.
-
----
-
-### PreToolUse
-
-#### block-pre-existing-checks.sh
-
-Prevents Claude from investigating git history to check if test failures are "pre-existing."
-
-**Behavior:**
-- Checks if repo has pre-commit hooks (`.pre-commit-config.yaml`, `.git/hooks/pre-commit`, `lefthook.yml`)
-- If no pre-commit hooks: allows everything
-- If pre-commit hooks exist: blocks commands that look like "checkout old commit + run tests"
-
-**Smarts:**
-- Reads the `description` field to understand Claude's intent
-- Pattern matches on keywords like "pre-existing", "before changes", "already broken"
-- Falls back to command pattern matching (git checkout + test command)
-
-**Why:**
-Pre-commit hooks guarantee the previous commit was clean. If tests fail, it's from current changes. Fix directly instead of wasting time investigating history.
-
----
-
-### Stop
-
-#### gentle-reminders.sh
-
-Shows contextual reminders when Claude stops responding.
-
-**Behavior:**
-- Reads edit log from `track-edits.sh` to know which files were edited
-- Analyzes Claude's response for completion claims
-- Checks if verification was mentioned
-- Shows relevant reminders (max 3)
-
-**Reminders:**
-- 💭 TDD reminder if code edited without tests
-- ✅ Verification reminder if claiming "done" without running tests
-- 💾 Commit reminder if many files edited
-
-**Why:**
-Gentle nudges help maintain discipline without blocking workflow. Non-blocking - always exits 0.
-
----
+Non-blocking contextual reminders when Claude's turn ends:
+- TDD reminder if source files edited without test files
+- Verification reminder if claiming "done" without test evidence
+- Commit reminder if 3+ files edited
 
 ## Dependencies
 
 - `jq` (for JSON parsing)
 - `bash` 4.0+
 
-## Writing New Hooks
-
-Hooks read JSON from stdin, optionally write JSON to stdout.
-
-### Input Formats
-
-**PreToolUse:**
-```json
-{
-  "session_id": "abc123",
-  "tool_name": "Bash",
-  "tool_input": {
-    "command": "git checkout abc123 && go test ./...",
-    "description": "Check if failure existed before my changes"
-  }
-}
-```
-
-**UserPromptSubmit:**
-```json
-{
-  "prompt": "Fix the bug in the login flow",
-  "session_id": "abc123"
-}
-```
-
-**Stop:**
-```json
-{
-  "response": "I've implemented the feature and it's ready.",
-  "session_id": "abc123"
-}
-```
-
-### Output Formats
-
-**To block (PreToolUse only):**
-```json
-{
-  "decision": "block",
-  "reason": "Explanation shown to Claude"
-}
-```
-
-**To inject context:**
-```json
-{
-  "additionalContext": "Context message shown to Claude"
-}
-```
-
-**To allow (no output needed):**
-Exit with code 0 and no output.
-
-## Performance
-
-Bash + jq hooks start in ~5ms. For hooks that run on every tool call or prompt, startup time matters.
-
 ## Testing Hooks
 
 ```bash
-# Test skill-activator
-echo '{"prompt": "Fix this bug"}' | ./hooks/user-prompt-submit/skill-activator.sh
+# Skill activator — should match debugging
+echo '{"prompt": "I found a bug in the login"}' | ./hooks/user-prompt-submit/skill-activator.sh
 
-# Test block-pre-existing-checks
+# Skill activator — should match nothing
+echo '{"prompt": "What time is it?"}' | ./hooks/user-prompt-submit/skill-activator.sh
+
+# Skill activator — bypass
+echo '{"prompt": "Fix this typo, no skill"}' | ./hooks/user-prompt-submit/skill-activator.sh
+
+# Block pre-existing checks
 echo '{"tool_name": "Bash", "tool_input": {"command": "git checkout HEAD~1 && go test", "description": "check pre-existing"}}' | ./hooks/pre-tool-use/block-pre-existing-checks.sh
 
-# Test gentle-reminders
+# Gentle reminders
 echo '{"response": "Done! The feature is complete."}' | ./hooks/stop/gentle-reminders.sh
 ```

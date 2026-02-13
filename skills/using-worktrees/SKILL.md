@@ -11,6 +11,8 @@ Git worktrees create isolated workspaces sharing the same repository. No switchi
 
 **Core principle:** Discover location → verify safety → create → setup environment → verify baseline → report.
 
+**Iron Law:** NO skipping baseline verification. Tests must pass in the new worktree BEFORE reporting ready. No exceptions.
+
 **Announce at start:** "I'm using gambit:using-worktrees to set up an isolated workspace."
 
 ## Rigidity Level

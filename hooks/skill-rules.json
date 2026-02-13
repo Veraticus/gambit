@@ -1,87 +1,63 @@
 {
-  "_comment": "Skill activation rules. Keywords are case-insensitive substring matches.",
+  "_comment": "Skill activation rules. Keywords are case-insensitive substring matches. Every match is mandatory — no priority tiers.",
 
   "debugging": {
-    "priority": "high",
-    "type": "workflow",
-    "keywords": ["bug", "broken", "failing", "error", "crash", "fix", "debug", "investigate"],
+    "keywords": ["bug", "broken", "failing", "error", "crash", "debug", "investigate"],
     "patterns": ["test.*fail", "doesn't work", "not working", "unexpected"]
   },
 
   "test-driven-development": {
-    "priority": "high",
-    "type": "workflow",
     "keywords": ["tdd", "test first", "red green", "write test", "failing test", "test driven"],
-    "patterns": ["add.*test", "implement.*with test", "test.*driven", "red.*green.*refactor", "write.*failing", "need.*test"]
+    "patterns": ["implement.*with test", "test.*driven", "red.*green.*refactor", "write.*failing"]
   },
 
   "refactoring": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["refactor", "restructure", "reorganize", "clean up", "simplify"],
-    "patterns": ["extract.*method", "move.*to", "rename"]
+    "keywords": ["refactor", "restructure", "reorganize", "clean up code"],
+    "patterns": ["extract.*method", "move.*to.*class"]
   },
 
   "code-review": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["review", "check my", "look over", "feedback"],
-    "patterns": ["code review", "review.*code", "pr review"]
+    "keywords": ["code review", "review my code", "look over my code", "review this pr"],
+    "patterns": ["review.*code", "pr review"]
   },
 
   "brainstorming": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["design", "architect", "plan", "approach", "how should"],
-    "patterns": ["best way to", "how would you", "what approach"]
+    "keywords": ["design this", "architect", "how should I build", "what approach"],
+    "patterns": ["best way to build", "how would you implement", "what approach.*for"]
   },
 
   "writing-plans": {
-    "priority": "medium",
-    "type": "workflow",
     "keywords": ["create plan", "write plan", "implementation plan", "task breakdown"],
     "patterns": ["plan.*implement", "break.*down.*task"]
   },
 
   "executing-plans": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["execute plan", "implement plan", "start implementing"],
-    "patterns": ["follow.*plan", "implement.*from plan"]
+    "keywords": ["execute plan", "implement plan", "start implementing", "continue implementing"],
+    "patterns": ["follow.*plan", "implement.*from plan", "next task"]
   },
 
   "parallel-agents": {
-    "priority": "low",
-    "type": "workflow",
-    "keywords": ["parallel", "concurrent", "multiple failures", "independent"],
-    "patterns": ["3\\+.*fail", "several.*broken", "multiple.*issue"]
+    "keywords": ["parallel investigation", "concurrent failures", "multiple independent failures"],
+    "patterns": ["3\\+.*fail", "several.*broken.*independent"]
   },
 
   "verification": {
-    "priority": "high",
-    "type": "workflow",
-    "keywords": ["verify", "check", "confirm", "make sure", "validate"],
-    "patterns": ["before.*commit", "ready.*merge", "done.*implement"]
+    "keywords": ["verify passing", "confirm tests pass", "validate completion"],
+    "patterns": ["before.*commit", "ready.*merge", "is it done"]
   },
 
   "testing-quality": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["test quality", "audit tests", "tautological", "coverage gaming", "weak assertions", "test effectiveness"],
-    "patterns": ["test.*quality", "audit.*test", "coverage.*high.*bug", "test.*catching"]
+    "keywords": ["test quality", "audit tests", "tautological test", "coverage gaming", "weak assertions", "test effectiveness"],
+    "patterns": ["test.*quality", "audit.*test", "coverage.*high.*bug"]
   },
 
   "task-refinement": {
-    "priority": "medium",
-    "type": "workflow",
-    "keywords": ["refine", "review plan", "review tasks", "strengthen", "task quality"],
-    "patterns": ["review.*task", "refine.*plan", "check.*task", "ready.*implement"]
+    "keywords": ["refine tasks", "review plan quality", "strengthen tasks", "task quality"],
+    "patterns": ["review.*task.*quality", "refine.*plan", "ready.*to implement"]
   },
 
   "finishing-branch": {
-    "priority": "low",
-    "type": "workflow",
-    "keywords": ["finish branch", "merge", "pr", "pull request", "done with feature"],
-    "patterns": ["ready.*merge", "create.*pr", "open.*pull request"]
+    "keywords": ["finish branch", "done with feature", "ready to merge"],
+    "patterns": ["create.*pull request", "open.*pr"]
   }
 }

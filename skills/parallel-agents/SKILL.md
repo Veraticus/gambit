@@ -11,6 +11,8 @@ When facing 3+ independent failures, dispatch one agent per problem domain concu
 
 **Core principle:** Independence verification BEFORE dispatch. Single message dispatch for true parallelism.
 
+**Iron Law:** NO dispatch without verifying independence first. ALL agents dispatched in a SINGLE message or they run sequentially. No exceptions.
+
 **Announce at start:** "I'm using gambit:parallel-agents to investigate these independent failures concurrently."
 
 ## Rigidity Level

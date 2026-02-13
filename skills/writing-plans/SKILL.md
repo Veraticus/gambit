@@ -12,6 +12,8 @@ Create implementation plans as native Claude Code Tasks. Each task: exact file p
 
 **Core principle:** Verify assumptions with the codebase first, then write definitive steps.
 
+**Iron Law:** No task without verified file paths and a verification command. No plan without codebase investigation first. No exceptions.
+
 **Announce at start:** "I'm using gambit:writing-plans to create the implementation plan."
 
 ## Rigidity Level
