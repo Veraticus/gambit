@@ -26,6 +26,7 @@ MEDIUM FREEDOM — Follow task structure and verification pattern strictly. Adap
 | **Verify Codebase** | Explore agent for broad investigation; Read/Glob for targeted checks | Write definitive steps, NEVER conditional |
 | **Create Subtasks** | `TaskCreate` for each, `TaskUpdate` with `addBlockedBy` | Bite-sized (2-5 min each) |
 | **Present Plan** | Show COMPLETE plan before asking approval | User reviews whole plan first |
+| **Chain Forward** | Ask next step, invoke chosen skill | Chain continues automatically |
 
 ## When to Use
 
@@ -191,13 +192,34 @@ Show the FULL plan before asking for approval:
 - Discovered: [unexpected findings incorporated]
 ```
 
-**THEN ask:** "Plan approved? Run `/gambit:executing-plans` to begin."
+**THEN ask:** "Plan approved?" Wait for user approval before proceeding to Step 5.
 
 ### 5. After Approval
 
-All Tasks are created with proper dependencies. Report:
+All Tasks are created with proper dependencies.
 
-"Plan created. N tasks ready for execution. Run `/gambit:executing-plans` to begin."
+**REQUIRED: Use AskUserQuestion to offer next steps, then invoke the chosen skill directly.**
+
+```
+AskUserQuestion
+  questions:
+    - question: "Plan created with N tasks. How should we proceed?"
+      header: "Next step"
+      options:
+        - label: "Start executing (Recommended)"
+          description: "Begin implementing with gambit:executing-plans"
+        - label: "Set up worktree first"
+          description: "Create isolated workspace with gambit:using-worktrees"
+        - label: "Refine tasks first"
+          description: "Strengthen task quality with gambit:task-refinement"
+      multiSelect: false
+```
+
+**After user responds, invoke the chosen skill directly using the Skill tool.** Do not just tell the user to run it — load and follow the skill immediately.
+
+- "Start executing" → `Skill skill="gambit:executing-plans"`
+- "Set up worktree first" → `Skill skill="gambit:using-worktrees"` (then executing-plans after)
+- "Refine tasks first" → `Skill skill="gambit:task-refinement"` (then executing-plans after)
 
 ## Task Quality Checklist
 
@@ -234,4 +256,7 @@ Each task must pass these checks:
 
 **This skill calls:**
 - Explore agent (verify codebase assumptions)
-- `gambit:executing-plans` (offered after plan approval)
+- AskUserQuestion → invokes one of:
+  - `gambit:executing-plans` (default)
+  - `gambit:using-worktrees` (optional, before execution)
+  - `gambit:task-refinement` (optional, before execution)

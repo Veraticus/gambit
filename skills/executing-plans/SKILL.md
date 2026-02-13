@@ -83,16 +83,21 @@ Before executing ANY task, read the epic with `TaskGet`.
 **Execute the steps in the task description:**
 
 Task descriptions contain bite-sized steps. For each:
-1. Follow TDD cycle (test → fail → implement → pass)
+1. Follow TDD cycle: write test → watch it FAIL → write minimal code → watch it PASS → refactor → commit
+   - **Iron law: no production code without a failing test first.** Wrote code before the test? Delete it. Start over. Don't keep it as "reference."
+   - If test passes immediately, STOP — test doesn't catch the new behavior. Fix the test.
+   - GREEN means minimal: no features the test doesn't exercise, no error handling it doesn't check.
 2. Run verifications exactly as specified
 3. Commit working changes
 
-**Pre-completion verification:**
+**Pre-completion verification (FRESH evidence required):**
 - All steps in description completed?
-- Tests passing? (Run them — don't assert)
+- Tests passing? Run the FULL test command NOW — previous runs don't count after code changes
+- Read complete output, check pass/fail counts and exit code
 - Changes committed?
+- State claim WITH evidence: "Tests pass. [Ran: X, Output: Y/Y passed, exit 0]"
 
-Mark complete with `TaskUpdate` only after ALL steps verified.
+Mark complete with `TaskUpdate` only after ALL steps verified with fresh evidence.
 
 #### When Hitting Obstacles
 
@@ -208,12 +213,17 @@ When all subtasks completed:
 
 ### Task Summary
 [TaskList showing all completed]
-
-### Next
-Use `/gambit:finishing-branch` to merge, create PR, or cleanup.
 ```
 
 Mark epic complete with `TaskUpdate`.
+
+**Then invoke finishing-branch directly using the Skill tool:**
+
+```
+Skill skill="gambit:finishing-branch"
+```
+
+Do not tell the user to run it manually — invoke it and follow its process immediately.
 
 ---
 
@@ -299,6 +309,7 @@ Before closing epic:
 - [ ] ALL success criteria verified with evidence
 - [ ] ALL anti-patterns avoided
 - [ ] Epic marked complete with `TaskUpdate`
+- [ ] Invoked `gambit:finishing-branch` directly via Skill tool
 
 ## Integration
 
@@ -309,4 +320,4 @@ Before closing epic:
 **Calls:**
 - `gambit:test-driven-development` during implementation
 - `gambit:verification` before claiming task complete
-- `gambit:finishing-branch` after epic complete
+- `gambit:finishing-branch` (invoked directly when all tasks complete)

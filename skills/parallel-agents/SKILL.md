@@ -1,13 +1,13 @@
 ---
 name: parallel-agents
-description: Use when facing 3+ independent failures that can be investigated without shared state - dispatches multiple agents concurrently to investigate and fix problems in parallel
+description: Dispatches multiple agents concurrently to investigate independent failures. Use when facing 3+ independent problems that can be fixed without shared state — verifies independence first, dispatches all in single message, checks conflicts after.
 ---
 
 # Parallel Agent Dispatch
 
 ## Overview
 
-When facing 3+ independent failures, dispatch one agent per problem domain to investigate concurrently. Verify independence first, dispatch all in single message, wait for all agents, check conflicts, verify integration.
+When facing 3+ independent failures, dispatch one agent per problem domain concurrently. Verify independence first, dispatch all in single message, wait for all agents, check conflicts, verify integration.
 
 **Core principle:** Independence verification BEFORE dispatch. Single message dispatch for true parallelism.
 
@@ -15,22 +15,22 @@ When facing 3+ independent failures, dispatch one agent per problem domain to in
 
 ## Rigidity Level
 
-MEDIUM FREEDOM - Follow the 6-step process strictly. Independence verification mandatory. Parallel dispatch in single message required. Adapt agent prompt content to problem domain.
+MEDIUM FREEDOM — Follow the 6-step process strictly. Independence verification mandatory. Parallel dispatch in single message required. Adapt agent prompt content to problem domain.
 
 ## Quick Reference
 
 | Step | Action | STOP If |
 |------|--------|---------|
 | 1 | Identify domains | < 3 independent domains |
-| 2 | Create agent tasks | Prompts incomplete |
+| 2 | Create agent prompts | Prompts incomplete |
 | 3 | Dispatch in SINGLE message | - |
-| 4 | Monitor progress | Agent stuck > 5 min |
+| 4 | Wait for all agents | Agent stuck > 5 min |
 | 5 | Review results | Conflicts found |
 | 6 | Verify integration | Tests fail |
 
 **Why 3+?** With only 2 failures, coordination overhead often exceeds sequential time.
 
-**Critical:** Dispatch all agents in single message with multiple Task() calls, or they run sequentially.
+**Critical:** Dispatch all agents in a single message with multiple Task() calls, or they run sequentially.
 
 ## When to Use
 
@@ -55,52 +55,23 @@ MEDIUM FREEDOM - Follow the 6-step process strictly. Independence verification m
 
 ### Step 1: Identify Independent Domains
 
-**Test for independence:**
+**Test for independence with 3 questions:**
 
-1. **Ask:** "If I fix failure A, does it affect failure B?"
-   - If NO → Independent
-   - If YES → Related, investigate together
+1. **"If I fix failure A, does it affect failure B?"**
+   - NO → Independent
+   - YES → Related, investigate together
 
-2. **Check:** "Do failures touch same code/files?"
-   - If NO → Likely independent
-   - If YES → Check if different functions/areas
+2. **"Do failures touch same code/files?"**
+   - NO → Likely independent
+   - YES → Check if different functions/areas
 
-3. **Verify:** "Do failures share error patterns?"
-   - If NO → Independent
-   - If YES → Might be same root cause
+3. **"Do failures share error patterns?"**
+   - NO → Independent
+   - YES → Might be same root cause
 
-**Example independence check:**
+**If < 3 independent domains: STOP.** Investigate sequentially instead.
 
-```
-Failure 1: Authentication tests failing (auth_test.go)
-Failure 2: Database query tests failing (db_test.go)
-Failure 3: API endpoint tests failing (api_test.go)
-
-Check: Does fixing auth affect db queries? NO
-Check: Does fixing db affect API? YES - API uses db
-
-Result: 2 independent domains:
-  Domain 1: Authentication (auth_test.go)
-  Domain 2: Database + API (db_test.go + api_test.go together)
-
-NOT 3 domains - don't use parallel dispatch.
-```
-
-**Another example:**
-
-```
-Failure 1: Tool abort tests failing (timing issues)
-Failure 2: Batch completion tests failing (state management)
-Failure 3: Tool approval tests failing (race conditions)
-
-Check: Do these share code? Different test files, different modules
-Check: Same error pattern? No - different symptoms
-Check: Fix one affects others? No - isolated functionality
-
-Result: 3 independent domains ✓
-```
-
-**Create coordination Task to track the parallel work:**
+**Create coordination Task:**
 
 ```
 TaskCreate
@@ -117,9 +88,9 @@ TaskCreate
     - Domain 1 vs 3: [why independent]
 
     ## Agent Status
-    - [ ] Agent 1 ([Domain 1]): dispatched / returned / result summary
-    - [ ] Agent 2 ([Domain 2]): dispatched / returned / result summary
-    - [ ] Agent 3 ([Domain 3]): dispatched / returned / result summary
+    - [ ] Agent 1 ([Domain 1]): dispatched / returned / result
+    - [ ] Agent 2 ([Domain 2]): dispatched / returned / result
+    - [ ] Agent 3 ([Domain 3]): dispatched / returned / result
 
     ## Progress
     - [ ] All agents dispatched (single message)
@@ -129,19 +100,7 @@ TaskCreate
   activeForm: "Coordinating parallel investigation"
 ```
 
-**Mark in progress:**
-
-```
-TaskUpdate
-  taskId: "[coordination-task-id]"
-  status: "in_progress"
-```
-
-**Why track with a Task (not mental tracking):**
-- See all agent statuses at a glance with TaskGet
-- Document which agents fixed what
-- Track conflicts and integration decisions
-- Provides audit trail for complex investigations
+Then: `TaskUpdate taskId: "[id]" status: "in_progress"`
 
 ---
 
@@ -149,12 +108,12 @@ TaskUpdate
 
 Each agent prompt must have:
 
-1. **Specific scope:** One test file or subsystem
-2. **Clear goal:** Make these tests pass
-3. **Constraints:** Don't change other code
-4. **Expected output:** Summary of what you found and fixed
+1. **Specific scope** — one test file or subsystem
+2. **Clear goal** — make these tests pass
+3. **Constraints** — don't change code outside scope
+4. **Expected output** — summary of findings and fixes
 
-**Good agent prompt example:**
+**Good prompt structure:**
 
 ```markdown
 Fix the 3 failing tests in src/agents/tool_abort_test.go:
@@ -180,32 +139,16 @@ Constraints:
 Return: Summary of root cause and what you fixed.
 ```
 
-**What makes this good:**
-- Specific test failures listed
-- Context provided (timing/race conditions)
-- Clear methodology (read, identify, fix)
-- Constraints (don't just increase timeouts)
-- Output format (summary)
-
-**Bad prompts:**
-
-❌ **Too broad:** "Fix all the tests"
-✅ **Specific:** "Fix tool_abort_test.go"
-
-❌ **No context:** "Fix the race condition"
-✅ **Context:** Paste the error messages and test names
-
-❌ **No constraints:** Agent might refactor everything
-✅ **Constraints:** "Do NOT change production code"
+**Bad prompts:** Too broad ("Fix all the tests"), no context ("Fix the race condition"), no constraints (agent might refactor everything).
 
 ---
 
 ### Step 3: Dispatch All Agents in SINGLE Message
 
-**CRITICAL:** You must dispatch all agents in a SINGLE message with multiple Task() calls.
+**CRITICAL:** All agents in ONE message with multiple Task() calls.
 
 ```
-// ✅ CORRECT - Single message with multiple parallel tasks
+// CORRECT - Single message, parallel execution
 Task
   subagent_type: "general-purpose"
   description: "Fix tool_abort_test.go failures"
@@ -220,54 +163,23 @@ Task
   subagent_type: "general-purpose"
   description: "Fix tool_approval_test.go failures"
   prompt: "[prompt 3]"
-
-// All three run concurrently
 ```
 
 ```
-// ❌ WRONG - Sequential messages
+// WRONG - Sequential messages
 Task prompt1
 [Wait for response]
-Task prompt2  // This is sequential, not parallel!
+Task prompt2  // Sequential, not parallel!
 ```
 
 ---
 
-### Step 4: Monitor Progress
+### Step 4: Wait for All Agents
 
-As agents work:
-- Note which agents have completed
-- Note which are still running
-- Don't start integration until ALL agents done
-
-**Check agent progress with TaskOutput:**
-
-```
-TaskOutput
-  task_id: "[agent-task-id]"
-  block: false
-  timeout: 5000
-```
-
-This returns current status without waiting for completion.
-
-**If an agent gets stuck (>5 minutes):**
-
-1. Check TaskOutput to see what it's doing:
-   ```
-   TaskOutput
-     task_id: "[stuck-agent-id]"
-     block: false
-     timeout: 5000
-   ```
-2. If stuck on wrong path: KillShell and retry with clearer prompt
-3. If needs context from other domain: Wait for other agent, then restart with context
-4. If hit real blocker: Investigate blocker yourself, then retry
-
-**If agent completes with errors:**
-- Read the full output with `block: true`
-- Determine if it's a real failure or needs refinement
-- Consider retrying with more context from what it learned
+- Don't start integration until ALL agents complete
+- Check progress with `TaskOutput task_id: "[id]" block: false`
+- If agent stuck > 5 minutes: check TaskOutput, retry with clearer prompt
+- If agent needs context from another domain: wait for that agent, then restart with context
 
 ---
 
@@ -275,58 +187,32 @@ This returns current status without waiting for completion.
 
 **When all agents return:**
 
-1. **Read each summary carefully**
-   - What was the root cause?
-   - What did the agent change?
-   - Were there any uncertainties?
-
-2. **Check for conflicts**
+1. **Read each summary** — root cause, changes made, uncertainties
+2. **Check for conflicts:**
    - Did multiple agents edit same files?
    - Did agents make contradictory assumptions?
    - Are there integration points between domains?
-
 3. **Integration strategy:**
-   - If no conflicts: Apply all changes
-   - If conflicts: Resolve manually before applying
-   - If assumptions conflict: Verify with user
-
-4. **Document what happened**
-   - Which agents fixed what
-   - Any conflicts found
-   - Integration decisions made
-
-**Conflict detection example:**
-
-```
-Agent 1: "Fixed timeout issue by increasing wait time to 5000ms"
-- File: src/executor.go, DEFAULT_TIMEOUT = 5000
-
-Agent 3: "Fixed timing issue by reducing wait time to 1000ms"
-- File: src/executor.go, DEFAULT_TIMEOUT = 1000
-
-CONFLICT DETECTED:
-- Same file, same constant
-- Contradictory changes
-
-Resolution: Investigate why both agents had different needs.
-Maybe need separate timeouts for different operations.
-```
+   - No conflicts → apply all changes
+   - Conflicts → resolve manually before applying
+   - Contradictory assumptions → verify with user
 
 ---
 
 ### Step 6: Verify Integration
 
-**Run full test suite:**
+Run full test suite (not just the fixed tests):
 
 ```
 Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./..."
+  subagent_type: "general-purpose"
+  description: "Run full test suite"
+  prompt: "Run: [test command]. Report pass/fail counts and any failures."
 ```
 
 **Decision tree:**
-- All pass? → Mark coordination Task complete
-- Failures? → Identify which agent's change caused regression
+- All pass → mark coordination Task complete
+- Failures → identify which agent's change caused regression
 
 **Update coordination Task:**
 
@@ -334,15 +220,13 @@ Task
 TaskUpdate
   taskId: "[coordination-task-id]"
   description: |
-    [Original description]
-
     ## Results
     - Agent 1: Fixed [X] in [files]
     - Agent 2: Fixed [Y] in [files]
     - Agent 3: Fixed [Z] in [files]
 
     ## Conflicts
-    [None / Description of conflicts and resolution]
+    [None / Description and resolution]
 
     ## Integration
     All tests pass. Changes integrated successfully.
@@ -355,23 +239,23 @@ TaskUpdate
 
 ### Rules That Have No Exceptions
 
-1. **Verify independence first** → Test with 3 questions before dispatching
-2. **3+ domains required** → 2 failures: do sequentially, overhead exceeds benefit
-3. **Single message dispatch** → All agents in one message with multiple Task() calls
-4. **Wait for ALL agents** → Don't integrate until all complete
-5. **Check conflicts manually** → Read summaries, verify no contradictions
-6. **Verify integration** → Run full suite yourself, don't trust agents
+1. **Verify independence first** — 3 questions before dispatching
+2. **3+ domains required** — 2 failures: do sequentially
+3. **Single message dispatch** — all agents in one message with multiple Task() calls
+4. **Wait for ALL agents** — don't integrate until all complete
+5. **Check conflicts manually** — read summaries, verify no contradictions
+6. **Verify integration** — run full suite yourself, don't trust agents
 
 ### Common Excuses
 
-All of these mean: **STOP. Follow the process.**
+All mean: **STOP. Follow the process.**
 
 | Excuse | Reality |
 |--------|---------|
 | "Just 2 failures, can still parallelize" | Overhead exceeds benefit, do sequentially |
 | "Probably independent, will dispatch and see" | Verify independence FIRST |
-| "Can dispatch sequentially to save syntax" | WRONG - must dispatch in single message |
-| "Agent failed, but others succeeded - ship it" | All agents must succeed or re-investigate |
+| "Can dispatch sequentially to save syntax" | Must dispatch in single message |
+| "Agent failed, but others succeeded" | All agents must succeed or re-investigate |
 | "Conflicts are minor, can ignore" | Resolve all conflicts explicitly |
 | "Can skip verification, agents ran tests" | Agents can make mistakes, YOU verify |
 
@@ -379,167 +263,11 @@ All of these mean: **STOP. Follow the process.**
 
 ## Examples
 
-### Bad: Dispatch Sequentially
-
-```
-# Developer sees 3 independent failures
-
-Task prompt1
-[Wait for response from agent 1]
-
-Task prompt2
-[Wait for response from agent 2]
-
-Task prompt3
-[Wait for response from agent 3]
-
-# Total time: Sum of all three (sequential)
-# No parallelization benefit
-```
-
-### Good: Dispatch in Single Message
-
-```
-# All in ONE message:
-
-Task
-  subagent_type: "general-purpose"
-  prompt: "[prompt 1]"
-
-Task
-  subagent_type: "general-purpose"
-  prompt: "[prompt 2]"
-
-Task
-  subagent_type: "general-purpose"
-  prompt: "[prompt 3]"
-
-# All three run concurrently
-# Total time: Max(agent1, agent2, agent3) instead of Sum
-```
-
-### Bad: Assume Independence
-
-```
-# 3 test failures:
-# - API endpoint tests failing
-# - Database query tests failing
-# - Cache invalidation tests failing
-
-# Thinks: "Different subsystems, must be independent"
-# Dispatches 3 agents immediately without checking
-
-# All three failures caused by same root cause: schema change
-# Agents make conflicting fixes based on different assumptions
-# Integration fails
-```
-
-### Good: Verify Independence First
-
-```
-# 3 test failures observed
-
-Check: Does fixing API affect database?
-- API uses database
-- If database schema changes, API breaks
-- YES - related
-
-Check: Does fixing database affect cache?
-- Cache stores database results
-- YES - related
-
-Check: Same error pattern?
-- All mention "column not found"
-- YES - shared root cause
-
-Result: NOT INDEPENDENT
-These are one problem (schema change) manifesting in 3 places.
-
-Solution: Single agent investigates all three together.
-```
-
-### Bad: Integrate Without Checking Conflicts
-
-```
-# 3 agents complete
-
-Agent 1: "Increased timeout to 5000ms"
-Agent 2: "Added mutex lock"
-Agent 3: "Reduced timeout to 1000ms"
-
-Developer: "All succeeded, ship it"
-[Applies all changes without reading]
-
-# Agent 1 and 3 changed same constant with different values
-# Final code has inconsistent state
-# Tests still fail
-```
-
-### Good: Check for Conflicts
-
-```
-# Review each agent's changes
-
-Agent 1: timeout = 5000ms in executor.go
-Agent 2: added mutex in executor.go
-Agent 3: timeout = 1000ms in executor.go
-
-CONFLICT: Agent 1 and 3 both edited timeout
-
-Investigation:
-- Agent 1's tests were slow due to unrelated issue
-- Agent 3 found correct timeout value
-- Fix Agent 1's slow tests separately
-
-Resolution:
-- Apply Agent 2's mutex ✓
-- Apply Agent 3's 1000ms timeout ✓
-- Fix Agent 1's slow tests (don't apply 5000ms)
-```
-
----
-
-## Failure Modes
-
-### Agent Gets Stuck
-
-**Symptoms:** No progress after 5+ minutes
-
-**Recovery:**
-1. Check TaskOutput to see what it's doing
-2. If stuck on wrong path: Cancel and retry with clearer prompt
-3. If needs context from other domain: Wait for other agent, then restart
-4. If hit blocker: Investigate yourself, then retry
-
-### Agents Return Conflicting Fixes
-
-**Symptoms:** Same code edited differently
-
-**Recovery:**
-1. Don't apply either fix automatically
-2. Read both fixes carefully
-3. Identify the conflict point
-4. Resolve manually based on which assumption is correct
-5. Consider if domains should be merged
-
-### Integration Breaks Other Tests
-
-**Symptoms:** Fixed tests pass, others fail
-
-**Recovery:**
-1. Identify which agent's change caused regression
-2. Read agent's summary - did they mention this?
-3. Evaluate if change is correct but tests need updating
-4. Or if change broke something, refine the fix
-
-### False Independence
-
-**Symptoms:** Fixing one domain revealed it affected another
-
-**Recovery:**
-1. Merge the domains
-2. Have one agent investigate both together
-3. Learn: Better independence test needed upfront
+See [REFERENCE.md](REFERENCE.md) for detailed good/bad examples including:
+- Independence verification (correct rejection vs false assumption)
+- Sequential vs parallel dispatch
+- Conflict detection and resolution
+- Integration verification
 
 ---
 
@@ -548,14 +276,14 @@ Resolution:
 Before completing parallel agent work:
 
 - [ ] Verified independence with 3 questions (fix A affects B? same code? same error?)
-- [ ] 3+ independent domains identified (not 2 or fewer)
+- [ ] 3+ independent domains identified
 - [ ] Created focused agent prompts (scope, goal, constraints, output)
-- [ ] Dispatched all agents in single message (multiple Task() calls)
-- [ ] Waited for ALL agents to complete (didn't integrate early)
-- [ ] Read all agent summaries carefully
+- [ ] Dispatched all agents in single message
+- [ ] Waited for ALL agents to complete
+- [ ] Read all agent summaries
 - [ ] Checked for conflicts (same files, contradictory assumptions)
-- [ ] Resolved any conflicts manually before integration
-- [ ] Ran full test suite (not just fixed tests)
+- [ ] Resolved any conflicts manually
+- [ ] Ran full test suite
 - [ ] Documented which agents fixed what
 - [ ] Coordination Task marked complete
 
@@ -568,19 +296,15 @@ Before completing parallel agent work:
 **This skill calls:**
 - `gambit:debugging` (how to investigate individual failures)
 - `gambit:verification` (verify integration)
-- test-runner agent (run tests without context pollution)
-- general-purpose agents (for parallel investigation)
+- general-purpose agents (`subagent_type: "general-purpose"`) for parallel investigation and test running
 
-**This skill is called when:**
-- Multiple independent test failures
-- Multiple subsystems broken
-- Need to parallelize investigation
+**Called by:**
+- When multiple independent test failures detected
+- When multiple subsystems broken independently
 
 **Workflow:**
 ```
 Multiple failures detected
-    ↓
-gambit:parallel-agents (this skill)
     ↓
 Step 1: Verify independence (3+ domains)
     ↓
@@ -588,7 +312,7 @@ Step 2: Create agent prompts
     ↓
 Step 3: Dispatch in SINGLE message
     ↓
-Step 4: Monitor progress
+Step 4: Wait for all agents
     ↓
 Step 5: Review results, check conflicts
     ↓
@@ -596,24 +320,3 @@ Step 6: Verify integration
     ↓
 All failures resolved
 ```
-
----
-
-## Resources
-
-**Independence verification questions:**
-- "If I fix A, does it affect B?"
-- "Do they touch same code/files?"
-- "Do they share error patterns?"
-
-**Agent prompt structure:**
-- Specific scope (one test file/module)
-- Clear goal (make tests pass)
-- Constraints (don't change other code)
-- Expected output (summary of findings)
-
-**When stuck:**
-- Agent not making progress → Check TaskOutput, retry clearer prompt
-- Conflicts after dispatch → Domains weren't independent, merge and retry
-- Integration fails tests → Identify which agent caused regression
-- < 3 domains → Don't use parallel dispatch, investigate sequentially

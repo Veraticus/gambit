@@ -47,10 +47,24 @@ MEDIUM FREEDOM - Always check for relevant skills before acting. Adapt skill sel
 
 ### Skill Selection Guide
 
-**User describes a new idea or feature:**
-1. `gambit:brainstorming` — refine into epic Task with immutable requirements
-2. `gambit:writing-plans` — create Tasks with dependencies
-3. `gambit:executing-plans` — work through Tasks one at a time
+**User describes a new idea or feature (fork — pick ONE path):**
+
+```
+├─ Idea is vague or evolving → gambit:brainstorming
+│  Creates epic + first task via Socratic questioning.
+│  Brainstorming will ask: worktree? refine tasks? → then routes to executing-plans.
+│
+└─ Requirements already clear → gambit:writing-plans
+   Creates epic + ALL subtasks with dependencies upfront.
+   Writing-plans will ask: worktree? refine tasks? → then routes to executing-plans.
+```
+
+**After either path, the flow continues automatically:**
+```
+executing-plans (one task → checkpoint → STOP → repeat)
+    ↓ all tasks done
+finishing-branch (verify → merge/PR/keep/discard)
+```
 
 **User wants to fix a bug:**
 1. `gambit:debugging` — systematic root cause analysis, tools first
@@ -67,9 +81,10 @@ MEDIUM FREEDOM - Always check for relevant skills before acting. Adapt skill sel
 **Multiple independent failures:**
 1. `gambit:parallel-agents` — dispatch concurrent investigators
 
-**Feature work lifecycle:**
-1. `gambit:using-worktrees` — create isolated worktree
-2. `gambit:finishing-branch` — merge, PR, or discard
+**Optional skills (offered automatically at handoff points):**
+- `gambit:using-worktrees` — offered after brainstorming/writing-plans, before execution
+- `gambit:task-refinement` — offered after brainstorming/writing-plans, before execution
+- `gambit:finishing-branch` — invoked automatically when executing-plans completes all tasks
 
 ### Core Principles
 

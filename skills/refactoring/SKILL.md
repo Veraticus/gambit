@@ -15,7 +15,9 @@ Refactoring changes code structure without changing behavior. Tests must stay gr
 
 ## Rigidity Level
 
-MEDIUM FREEDOM - Follow the change→test→commit cycle strictly. Adapt specific refactoring patterns to your language and codebase. Never proceed with failing tests.
+MEDIUM FREEDOM — Follow the change→test→commit cycle strictly. Adapt specific refactoring patterns to your language and codebase. Never proceed with failing tests.
+
+Violating the cycle is violating the skill. "I'll test at the end" means you're not refactoring safely.
 
 ## Quick Reference
 
@@ -55,23 +57,21 @@ MEDIUM FREEDOM - Follow the change→test→commit cycle strictly. Adapt specifi
 
 ```
 Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./..."
+  subagent_type: "general-purpose"
+  description: "Run test suite"
+  prompt: "Run: [test command for this project]. Report pass/fail counts and any failures."
 ```
 
-**Verify:** ALL tests pass.
+**ALL tests must pass.**
 
-**Decision tree:**
-- All pass? → Go to Step 2
-- Any fail? → **STOP. Fix failing tests FIRST, then refactor.**
+- All pass → Go to Step 2
+- Any fail → **STOP. Fix failing tests FIRST, then refactor.**
 
-**Why:** Failing tests mean you can't detect if refactoring breaks things.
+Failing tests mean you can't detect if refactoring breaks things.
 
 ---
 
 ### Step 2: Create Refactoring Task
-
-Track the refactoring work:
 
 ```
 TaskCreate
@@ -81,8 +81,7 @@ TaskCreate
     [What structure change you're making]
 
     ## Why
-    - [Reason 1: duplication, complexity, etc.]
-    - [Reason 2]
+    - [Reason: duplication, complexity, etc.]
 
     ## Approach
     1. [Transformation 1]
@@ -94,19 +93,10 @@ TaskCreate
     - [ ] No behavior changes
     - [ ] Code is cleaner/simpler
     - [ ] Each commit is small and safe
-
-    ## Anti-patterns
-    - ❌ Changing behavior while refactoring
-    - ❌ Multiple transformations before testing
-    - ❌ "While I'm here" improvements
   activeForm: "Refactoring code"
 ```
 
-```
-TaskUpdate
-  taskId: "[task-id]"
-  status: "in_progress"
-```
+Then: `TaskUpdate taskId: "[id]" status: "in_progress"`
 
 ---
 
@@ -127,38 +117,7 @@ The smallest transformation that compiles.
 - "While I'm here" improvements
 - Touching more than 2-3 files
 
-**Example transformation:**
-
-```go
-// BEFORE
-func createUser(name, email string) (*User, error) {
-    if email == "" {
-        return nil, errors.New("email required")
-    }
-    if !strings.Contains(email, "@") {
-        return nil, errors.New("invalid email")
-    }
-    // ... rest of function
-}
-
-// AFTER - ONE small change (extract email validation)
-func createUser(name, email string) (*User, error) {
-    if err := validateEmail(email); err != nil {
-        return nil, err
-    }
-    // ... rest of function
-}
-
-func validateEmail(email string) error {
-    if email == "" {
-        return errors.New("email required")
-    }
-    if !strings.Contains(email, "@") {
-        return errors.New("invalid email")
-    }
-    return nil
-}
-```
+**The test:** If you can't describe the change in one sentence, it's too big. Split it.
 
 ---
 
@@ -168,23 +127,20 @@ After EVERY small change:
 
 ```
 Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./..."
+  subagent_type: "general-purpose"
+  description: "Run test suite"
+  prompt: "Run: [test command for this project]. Report pass/fail counts and any failures."
 ```
 
-**Verify:** ALL tests still pass.
+**ALL tests must still pass.**
 
-**Decision tree:**
-- All pass? → Go to Step 5
-- Any fail? → **STOP. Undo and try smaller change.**
+- All pass → Go to Step 5
+- Any fail → **STOP. Undo and try smaller change.**
 
 **If tests fail:**
 
 ```bash
 # Undo the change
-git restore src/file.go
-
-# Or if multiple files
 git checkout -- .
 ```
 
@@ -202,17 +158,8 @@ Then:
 Commit each safe transformation:
 
 ```bash
-git add src/user.go
-git commit -m "$(cat <<'EOF'
-refactor: extract email validation to function
-
-No behavior change. All tests pass.
-
-Task: [task-id]
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-EOF
-)"
+git add [changed files]
+git commit -m "refactor: [one-sentence description of transformation]"
 ```
 
 **Why commit so often:**
@@ -225,15 +172,12 @@ EOF
 
 ### Step 6: Repeat Until Complete
 
-Repeat steps 3-5 for each small transformation:
+Repeat steps 3-5 for each small transformation. Track progress:
 
 ```
-1. Extract validateEmail() ✓ (committed)
-2. Extract validateName() ✓ (committed)
-3. Create UserValidator struct ✓ (committed)
-4. Move validations into UserValidator ✓ (committed)
-5. Update createUser to use validator ✓ (committed)
-6. Remove old inline validations ✓ (committed)
+1. Extract validateEmail() → test → commit ✓
+2. Extract validateName() → test → commit ✓
+3. Move validations to new file → test → commit ✓
 ```
 
 **Pattern:** change → test → commit (repeat)
@@ -246,24 +190,21 @@ After all transformations complete:
 
 ```
 Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./... && golangci-lint run"
+  subagent_type: "general-purpose"
+  description: "Run full test suite and linter"
+  prompt: "Run: [test command] && [lint command]. Report all results."
 ```
 
 **Checklist:**
 - [ ] All tests pass
 - [ ] No new warnings
 - [ ] No behavior changes
-- [ ] Code is cleaner/simpler
 - [ ] Each commit is small and safe
 
 **Review the changes:**
 
 ```bash
-# See all refactoring commits
 git log --oneline | head -10
-
-# Review full diff from start
 git diff [start-sha]..HEAD
 ```
 
@@ -273,8 +214,6 @@ git diff [start-sha]..HEAD
 TaskUpdate
   taskId: "[task-id]"
   description: |
-    [Original description]
-
     ## Completed
     - [List of transformations made]
     - All tests pass (verified)
@@ -292,52 +231,13 @@ TaskUpdate
 - Changes are incremental
 - Business logic stays same
 - Can transform in small, safe steps
-- Each step independently valuable
 
 ### When to Rewrite
 - No tests exist (write tests first, then refactor)
 - Fundamental architecture change needed
-- Easier to rebuild than modify
-- Requirements changed significantly
 - After 3+ failed refactoring attempts
 
 **Rule:** If you need to change test assertions (not just add tests), you're rewriting, not refactoring.
-
-### Strangler Fig Pattern (Hybrid)
-
-**When to use:**
-- Need to replace system but can't tolerate downtime
-- Want incremental migration with monitoring
-- System too large to refactor in one go
-
-**How it works:**
-
-```
-Legacy: Monolithic UserService (5000 LOC)
-Goal: Extract into separate module
-
-Step 1 (Transform):
-- Create new UserValidator module
-- Implement validation logic
-- Tests pass in isolation
-
-Step 2 (Coexist):
-- Add routing layer (facade)
-- Route validation calls to new module
-- Route other calls to legacy
-- Monitor both
-
-Step 3 (Eliminate):
-- Once confident, migrate more functionality
-- Remove from legacy
-- Repeat until legacy empty
-```
-
-**Benefits:**
-- Incremental replacement reduces risk
-- Legacy continues operating during transition
-- Can pause/rollback at any point
-- Each step independently valuable
 
 ---
 
@@ -350,6 +250,15 @@ Step 3 (Eliminate):
 3. **One transformation at a time** → Multiple changes = impossible to debug failures
 4. **Run tests after EVERY change** → Delayed testing doesn't tell you which change broke it
 5. **If tests fail 3+ times, question approach** → Might need to rewrite instead, or add tests first
+6. **No scope creep, even if asked** → If asked to add type hints, docstrings, or other improvements during refactoring, explain that those are separate commits AFTER the structural refactoring is complete. Recommend and explain why, then follow user's final decision.
+
+### Handling User Override
+
+If the user explicitly asks to batch changes or skip steps:
+1. **Explain the risk clearly** — "Batching N changes means if tests break, we debug all N instead of one"
+2. **Recommend the incremental approach** — offer partial progress if time-constrained
+3. **Separate structural changes from cosmetic ones** — ALWAYS push back on mixing refactoring with type hints, docstrings, comments, or formatting. These are different categories of work.
+4. **Follow user's final decision** on batch size, but never combine structural + cosmetic in one pass
 
 ### Common Excuses
 
@@ -364,138 +273,8 @@ All of these mean: **STOP. Return to the change→test→commit cycle.**
 | "Easier to do all at once" | Easier to debug one change than ten |
 | "Tests will fail temporarily but I'll fix them" | Tests must stay green. No exceptions. |
 | "While I'm here, I'll also..." | Scope creep during refactoring = disaster |
-
----
-
-## Examples
-
-### Bad: Big-Bang Refactoring
-
-```
-# Changes made all at once:
-- Renamed 15 functions across 5 files
-- Extracted 3 new classes
-- Moved code between 10 files
-- Reorganized module structure
-
-# Then runs tests
-$ go test ./...
-... 23 test failures ...
-
-# Now what? Which change broke what?
-# Can't identify. Must revert everything.
-# 3 hours of work lost.
-```
-
-**Why it fails:**
-- Can't identify which change broke tests
-- Reverting means losing ALL work
-- Fixing requires debugging entire refactoring
-
-### Good: Incremental Refactoring
-
-```
-# Step 1
-Extract validateEmail() → test → commit ✓
-
-# Step 2
-Extract validateName() → test → commit ✓
-
-# Step 3 (test fails!)
-Move validation to new file → test → FAIL
-Undo: git restore .
-Try smaller: Just move one function → test → pass → commit ✓
-
-# Step 4
-Move second function → test → commit ✓
-
-# Result: 4 commits, each reviewable, each safe
-# If step 3 had broken something, knew exactly which change
-```
-
-### Bad: Changing Behavior While "Refactoring"
-
-```go
-// Original
-func validateEmail(email string) error {
-    if email == "" {
-        return errors.New("email required")
-    }
-    if !strings.Contains(email, "@") {
-        return errors.New("invalid email")
-    }
-    return nil
-}
-
-// "Refactored" - but added behavior!
-func validateEmail(email string) error {
-    if email == "" {
-        return errors.New("email required")
-    }
-    if !strings.Contains(email, "@") {
-        return errors.New("invalid email")
-    }
-    // NEW: Added validation
-    if !strings.Contains(email, ".") {
-        return errors.New("invalid email domain")
-    }
-    return nil
-}
-```
-
-**Why it fails:**
-- This changes behavior (now rejects emails like "user@localhost")
-- Tests might pass if they don't cover this case
-- Not refactoring - this is modifying functionality
-- Do separately: refactor first, then add feature
-
-### Bad: Refactoring Without Tests
-
-```go
-// Legacy code with no tests
-func processPayment(amount float64, userID int64) error {
-    // 200 lines of complex payment logic
-    // Multiple edge cases
-    // No tests exist
-}
-
-// Developer refactors without tests:
-// - Extracts 5 methods
-// - Renames variables
-// - Simplifies conditionals
-// - "Looks good to me!"
-
-// Deploys to production
-// Payments fail for amounts over $1000
-// Edge case handling was accidentally changed
-```
-
-**Why it fails:**
-- No tests to verify behavior preserved
-- Complex logic has hidden edge cases
-- Subtle behavior changes go unnoticed
-- Breaks in production, not development
-
-### Good: Write Tests First, Then Refactor
-
-```go
-// BEFORE refactoring: Write tests documenting current behavior
-
-func TestProcessPayment_ValidAmount(t *testing.T) { ... }
-func TestProcessPayment_ZeroAmount(t *testing.T) { ... }
-func TestProcessPayment_LargeAmount(t *testing.T) { ... }  // The $1000+ case!
-func TestProcessPayment_NegativeAmount(t *testing.T) { ... }
-func TestProcessPayment_InvalidUser(t *testing.T) { ... }
-
-// Run tests → all pass (documenting current behavior)
-
-// NOW refactor with tests as safety net:
-// Extract method → test → commit
-// Rename → test → commit
-// Simplify → test → commit
-
-// Tests catch any behavior changes immediately
-```
+| "Just adding docstrings/comments/type hints" | Separate commit. Cosmetic ≠ structural. |
+| "User said to batch it" | Explain risk, recommend incremental, separate structural from cosmetic |
 
 ---
 
@@ -520,51 +299,44 @@ Before marking refactoring complete:
 
 ---
 
+## Examples
+
+See [REFERENCE.md](REFERENCE.md) for detailed good/bad examples including:
+- Big-Bang refactoring vs incremental approach
+- Changing behavior while "refactoring"
+- Refactoring without tests
+- Strangler Fig Pattern for large migrations
+- Common refactoring patterns catalog
+
+---
+
 ## Integration
 
 **This skill requires:**
 - Tests exist (use `gambit:test-driven-development` to write tests first if none exist)
 - `gambit:verification` (for final verification)
-- test-runner agent (for running tests without context pollution)
+- general-purpose agent (`subagent_type: "general-purpose"`) for running tests
 
-**This skill is called when:**
-- Improving code structure after features complete
-- Preparing code for new features
-- Reducing duplication
-- Simplifying complex code
+**Called by:**
+- When improving code structure after features complete
+- When preparing code for new features
+- When reducing duplication
+
+**Calls:**
+- `gambit:test-driven-development` (if tests need writing first)
+- `gambit:verification` (final check)
 
 **Workflow:**
 ```
 Want to improve code structure
     ↓
-gambit:refactoring (this skill)
-    ↓
 Step 1: Verify tests pass
     ↓
 Step 2: Create Task
     ↓
-Step 3-6: Change → Test → Commit (repeat)
+Steps 3-6: Change → Test → Commit (repeat)
     ↓
 Step 7: Final verification
     ↓
 Code improved, tests still green
 ```
-
----
-
-## Resources
-
-**Common refactoring patterns:**
-- Extract Method: Pull code into new function
-- Extract Class: Pull related methods into new type
-- Inline: Replace function call with body
-- Rename: Make names clearer
-- Move: Relocate code to better location
-- Replace Conditional with Polymorphism: Use interfaces
-
-**When stuck:**
-- Tests fail after change → Undo (git restore), make smaller change
-- 3+ failures → Question if refactoring is right approach
-- No tests exist → Use `gambit:test-driven-development` to write tests first
-- Unsure how small → If it touches more than one function/file, too big
-- Behavior needs to change → Stop refactoring, do feature work separately

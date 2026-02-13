@@ -1,21 +1,21 @@
 ---
 name: using-worktrees
-description: Use when starting feature work that needs isolation - creates git worktrees with smart directory selection, safety verification, and environment setup
+description: Creates isolated git worktrees for feature work. Use when starting branches, working on multiple features, or needing workspace isolation with environment setup and baseline verification.
 ---
 
 # Using Git Worktrees
 
 ## Overview
 
-Git worktrees create isolated workspaces sharing the same repository, allowing work on multiple branches simultaneously without switching.
+Git worktrees create isolated workspaces sharing the same repository. No switching branches, no stashing, no conflicts with in-progress work.
 
-**Core principle:** Systematic directory selection + safety verification + environment setup = reliable isolation.
+**Core principle:** Discover location → verify safety → create → setup environment → verify baseline → report.
 
 **Announce at start:** "I'm using gambit:using-worktrees to set up an isolated workspace."
 
 ## Rigidity Level
 
-LOW FREEDOM - Follow the 6-step process exactly. No skipping steps. Explicit STOP points must halt execution.
+LOW FREEDOM - Follow the 8-step process exactly. No skipping steps. STOP points halt execution until resolved.
 
 ## Quick Reference
 
@@ -30,6 +30,8 @@ LOW FREEDOM - Follow the 6-step process exactly. No skipping steps. Explicit STO
 | 7 | Verify clean baseline | Tests fail AND user says investigate |
 | 8 | Report ready | - |
 
+**Directory priority:** Existing dir > CLAUDE.md preference > Ask user
+
 ## When to Use
 
 - Starting feature work that needs isolation from main workspace
@@ -37,27 +39,21 @@ LOW FREEDOM - Follow the 6-step process exactly. No skipping steps. Explicit STO
 - Working on multiple features simultaneously
 - Experimenting without affecting main workspace
 
-**Don't use for:**
-- Quick fixes that don't need isolation
-- Single-file changes
-- When user explicitly wants to work in current directory
+**Don't use for:** quick fixes, single-file changes, when user explicitly wants current directory
 
 ## The Process
 
 ### Step 1: Check Existing Directories
-
-**Run these commands in order:**
 
 ```bash
 ls -d .worktrees 2>/dev/null     # Check first (preferred, hidden)
 ls -d worktrees 2>/dev/null      # Check second (alternative)
 ```
 
-**Decision tree:**
-- `.worktrees/` exists → Use it, go to Step 4
-- `worktrees/` exists (and no .worktrees) → Use it, go to Step 4
-- Both exist → Use `.worktrees/`, go to Step 4
-- Neither exists → Go to Step 2
+- `.worktrees/` exists → Use it, skip to Step 4
+- `worktrees/` exists (no .worktrees) → Use it, skip to Step 4
+- Both exist → Use `.worktrees/`, skip to Step 4
+- Neither exists → Step 2
 
 ---
 
@@ -67,16 +63,14 @@ ls -d worktrees 2>/dev/null      # Check second (alternative)
 grep -i "worktree" CLAUDE.md 2>/dev/null
 ```
 
-**Decision tree:**
-- CLAUDE.md specifies worktree location → Use that location, go to Step 4
-- CLAUDE.md exists but no worktree preference → Go to Step 3
-- No CLAUDE.md → Go to Step 3
+- Specifies location → Use it, go to Step 4
+- No preference or no CLAUDE.md → Step 3
 
 ---
 
 ### Step 3: Ask User for Preference
 
-**REQUIRED: Use AskUserQuestion tool**
+**REQUIRED: Use AskUserQuestion tool.**
 
 ```
 AskUserQuestion
@@ -99,91 +93,69 @@ AskUserQuestion
 
 ### Step 4: Verify Directory is Gitignored
 
-**For project-local directories (.worktrees or worktrees) ONLY:**
+**Project-local directories only** (.worktrees or worktrees). Skip for global (~/.worktrees/).
 
 ```bash
-git check-ignore -q .worktrees 2>/dev/null
-# OR
-git check-ignore -q worktrees 2>/dev/null
+git check-ignore -q .worktrees 2>/dev/null  # or worktrees
 ```
 
-**Decision tree:**
-- Exit code 0 (ignored) → Go to Step 5
-- Exit code 1 (not ignored) → Fix it immediately:
+- Exit 0 (ignored) → Step 5
+- Exit 1 (not ignored) → Fix immediately:
 
 ```bash
-# Add to .gitignore
 echo ".worktrees/" >> .gitignore
-# OR
-echo "worktrees/" >> .gitignore
-
-# Commit the change
-git add .gitignore
-git commit -m "chore: add worktree directory to gitignore"
+git add .gitignore && git commit -m "chore: add worktree directory to gitignore"
 ```
 
 **STOP if commit fails.** Do not create worktree with unignored directory.
-
-**For global directory (~/.worktrees/):**
-- Skip this step entirely - outside project, no gitignore needed
 
 ---
 
 ### Step 5: Create Worktree
 
-**Determine full path:**
+Determine branch name from user request (e.g., "auth feature" → `feature/auth`).
 
 ```bash
-# Get project name
-project=$(basename "$(git rev-parse --show-toplevel)")
-
 # Set path based on location choice
-# For .worktrees:
-path=".worktrees/$BRANCH_NAME"
+path=".worktrees/$BRANCH_NAME"           # project-local
+path="$HOME/.worktrees/$project/$BRANCH_NAME"  # global
 
-# For worktrees:
-path="worktrees/$BRANCH_NAME"
-
-# For global:
-path="$HOME/.worktrees/$project/$BRANCH_NAME"
-```
-
-**Create worktree:**
-
-```bash
 git worktree add "$path" -b "$BRANCH_NAME"
 ```
 
-**STOP if git command fails.** Report error and ask user how to proceed.
+**STOP if git command fails.** Report error and ask user.
 
-**Verify creation:**
+Verify:
 
 ```bash
-cd "$path"
-git status  # Should show clean working tree on new branch
+cd "$path" && git status  # Clean working tree on new branch
 ```
 
 ---
 
 ### Step 6: Run Environment Setup
 
-**Detection order - run FIRST matching setup:**
+**Detect project type and run FIRST match:**
 
-#### 6a. Devenv/Nix Projects
+| Priority | Detection | Setup Command |
+|----------|-----------|---------------|
+| 1 | `devenv.nix` or `.envrc` | See devenv workflow below |
+| 2 | `package.json` | `npm install` / `yarn install` / `pnpm install` (match lockfile) |
+| 3 | `Cargo.toml` | `cargo build` |
+| 4 | `pyproject.toml` with `tool.poetry` | `poetry install` |
+| 5 | `requirements.txt` | `pip install -r requirements.txt` |
+| 6 | `go.mod` | `go mod download` |
+| None | No match | Report "No recognized project type. Skipping setup." |
 
-**Check:**
-```bash
-[ -f devenv.nix ] || [ -f .envrc ]
-```
+#### Devenv Database Handling
 
-**If devenv detected:**
+If devenv detected, check for database usage:
 
-1. Check if project uses a database:
 ```bash
 grep -l "DATABASE_URL\|postgres\|mysql" devenv.nix .envrc 2>/dev/null
 ```
 
-2. If database detected, **REQUIRED: Ask about database strategy:**
+**If database found, REQUIRED: Ask about strategy:**
 
 ```
 AskUserQuestion
@@ -198,98 +170,10 @@ AskUserQuestion
       multiSelect: false
 ```
 
-**STOP: Wait for user response.**
+**STOP: Wait for response.**
 
-3. Execute based on choice:
-
-**For shared database:**
-```bash
-cd "$path"
-direnv allow 2>/dev/null || devenv shell
-```
-
-**For isolated database:**
-```bash
-cd "$path"
-createdb "${project}_${BRANCH_NAME}"
-echo "DATABASE_URL=postgres://localhost/${project}_${BRANCH_NAME}" > .env.local
-direnv allow 2>/dev/null || devenv shell
-# Run migrations (project-specific - check Makefile or CLAUDE.md)
-```
-
-4. **Go to Step 7** (skip other setup types)
-
-#### 6b. Node.js Projects
-
-**Check:**
-```bash
-[ -f package.json ]
-```
-
-**If found:**
-```bash
-npm install
-# OR if yarn.lock exists:
-yarn install
-# OR if pnpm-lock.yaml exists:
-pnpm install
-```
-
-**Go to Step 7.**
-
-#### 6c. Rust Projects
-
-**Check:**
-```bash
-[ -f Cargo.toml ]
-```
-
-**If found:**
-```bash
-cargo build
-```
-
-**Go to Step 7.**
-
-#### 6d. Python Projects
-
-**Check:**
-```bash
-[ -f pyproject.toml ] || [ -f requirements.txt ]
-```
-
-**If found:**
-```bash
-# Poetry
-if [ -f pyproject.toml ] && grep -q "tool.poetry" pyproject.toml; then
-    poetry install
-# Pip
-elif [ -f requirements.txt ]; then
-    pip install -r requirements.txt
-fi
-```
-
-**Go to Step 7.**
-
-#### 6e. Go Projects
-
-**Check:**
-```bash
-[ -f go.mod ]
-```
-
-**If found:**
-```bash
-go mod download
-```
-
-**Go to Step 7.**
-
-#### 6f. No Recognized Project Type
-
-**If none of the above match:**
-- Report: "No recognized project type. Skipping dependency installation."
-- Go to Step 7
+- **Shared:** `direnv allow 2>/dev/null || devenv shell`
+- **Isolated:** Create database, write `.env.local`, allow direnv, run migrations
 
 ---
 
@@ -297,77 +181,68 @@ go mod download
 
 **REQUIRED: Run tests to establish baseline.**
 
-**Detect test command:**
-
 | Project Type | Test Command |
 |--------------|--------------|
 | Node.js | `npm test` |
 | Rust | `cargo test` |
-| Python | `pytest` or `python -m pytest` |
+| Python | `pytest` |
 | Go | `go test ./...` |
 | Devenv | Check Makefile for `test` target |
 
-**Run tests:**
-
-```bash
-# Example for Go project
-go test ./...
-```
-
-**Decision tree based on result:**
-
-- **All tests pass** → Go to Step 8
-- **Tests fail** → Present options:
+- **All pass** → Step 8
+- **Tests fail** → Present options to user:
 
 ```
 Tests failing (N failures) in fresh worktree.
-
 [Show first 3-5 failures]
 
 These failures exist in the base branch. Options:
 1. Proceed anyway (failures are known/expected)
 2. Investigate before proceeding
 3. Cancel worktree creation
-
-Which option?
 ```
 
-**If user selects "Investigate":**
-- **STOP.** Do not proceed until user resolves or changes choice.
-
-**If user selects "Cancel":**
-```bash
-cd ..
-git worktree remove "$path"
-```
-- **STOP.** Report cancellation.
-
-**If user selects "Proceed":**
-- Continue to Step 8, noting known failures.
+- **Investigate** → STOP until resolved
+- **Cancel** → `git worktree remove "$path"`, STOP
+- **Proceed** → Continue to Step 8, noting known failures
 
 ---
 
-### Step 8: Report Ready
+### Step 8: Report and Chain Forward
 
-**Format:**
 ```
 Worktree ready at <full-absolute-path>
 Branch: <branch-name>
 Tests: <N> passing, <M> failures (if any)
 Environment: <devenv/npm/cargo/pip/go/none>
-
-Ready to implement <feature-name>
 ```
 
-**Example:**
-```
-Worktree ready at /home/dev/myproject/.worktrees/feature-auth
-Branch: feature-auth
-Tests: 47 passing, 0 failures
-Environment: devenv (shared database)
+**Always use full absolute path.** User needs it for navigation.
 
-Ready to implement OAuth authentication
+**Then chain to the next skill automatically.** If tasks exist (invoked from brainstorming/writing-plans handoff), invoke executing-plans directly:
+
 ```
+Skill skill="gambit:executing-plans"
+```
+
+If no tasks exist yet (invoked standalone), ask the user:
+
+```
+AskUserQuestion
+  questions:
+    - question: "Worktree ready. What's next?"
+      header: "Next step"
+      options:
+        - label: "Plan the work"
+          description: "Design and create tasks with gambit:brainstorming"
+        - label: "Start executing"
+          description: "Execute existing tasks with gambit:executing-plans"
+      multiSelect: false
+```
+
+Then invoke the chosen skill directly using the Skill tool.
+
+---
 
 ## Critical Rules
 
@@ -382,35 +257,17 @@ Ready to implement OAuth authentication
 
 ### Common Excuses
 
-All of these mean: **STOP. Follow the process.**
+All mean: **STOP. Follow the process.**
 
 | Excuse | Reality |
 |--------|---------|
 | "Directory is probably ignored" | RUN git check-ignore to verify |
 | "Tests probably pass" | RUN tests to verify |
-| "Same as last time, don't need to ask" | ASK - user preferences can change |
-| "Small feature, don't need isolation" | User requested worktree - create it |
-| "Can fix gitignore later" | FIX NOW - prevents accidents |
+| "Same as last time, don't need to ask" | ASK — user preferences can change |
+| "Small feature, don't need isolation" | User requested worktree — create it |
+| "Can fix gitignore later" | FIX NOW — prevents accidents |
 
-## Anti-patterns
-
-**Never:**
-- Create worktree without verifying it's ignored (project-local)
-- Skip baseline test verification
-- Proceed with failing tests without asking
-- Assume directory location when ambiguous
-- Skip CLAUDE.md check
-- Assume database strategy for devenv projects
-- Report relative paths (always use absolute)
-
-**Always:**
-- Follow directory priority: existing > CLAUDE.md > ask
-- Verify directory is ignored for project-local
-- Use AskUserQuestion tool for all questions
-- Auto-detect and run appropriate project setup
-- Ask about database strategy for devenv projects
-- Verify clean test baseline
-- Report full absolute path, branch, and test status
+---
 
 ## Verification Checklist
 
@@ -420,121 +277,42 @@ Before reporting ready:
 - [ ] Checked CLAUDE.md for preference
 - [ ] Asked user if no existing preference (using AskUserQuestion)
 - [ ] Verified directory is gitignored (project-local only)
-- [ ] Added to .gitignore and committed if needed
-- [ ] Created worktree with branch (git command succeeded)
-- [ ] Detected environment type
-- [ ] Asked about database strategy (devenv only, using AskUserQuestion)
-- [ ] Ran environment setup
+- [ ] Created worktree with branch
+- [ ] Detected environment type and ran setup
+- [ ] Asked about database strategy (devenv with database only)
 - [ ] Ran tests to verify baseline
 - [ ] Got permission if tests failed
 - [ ] Reported full absolute path, branch, test status, environment
 
+---
+
 ## Examples
 
-### Good: Complete Workflow
+See [REFERENCE.md](REFERENCE.md) for detailed good/bad examples including:
+- Complete workflow with devenv database handling
+- Skipping gitignore verification (and consequences)
+- Proceeding with failing tests silently (and consequences)
 
-```
-Claude: "I'm using gambit:using-worktrees to set up an isolated workspace."
-
-Step 1: Check existing directories
-$ ls -d .worktrees 2>/dev/null
-.worktrees
-
-Step 4: Verify gitignored (skipped 2-3, directory exists)
-$ git check-ignore -q .worktrees && echo "ignored"
-ignored
-
-Step 5: Create worktree
-$ git worktree add .worktrees/auth -b feature/auth
-Preparing worktree (new branch 'feature/auth')
-HEAD is now at abc123 Previous commit
-
-Step 6: Environment setup
-$ [ -f devenv.nix ] && echo "devenv"
-devenv
-$ grep -l "DATABASE_URL" devenv.nix
-devenv.nix
-
-[AskUserQuestion about database strategy]
-User selects: Share database
-
-$ cd .worktrees/auth && direnv allow
-direnv: loading .envrc
-
-Step 7: Verify baseline
-$ go test ./...
-ok  	myproject/...	0.847s
-47 tests passed
-
-Step 8: Report
-Worktree ready at /home/dev/myproject/.worktrees/auth
-Branch: feature/auth
-Tests: 47 passing, 0 failures
-Environment: devenv (shared database)
-
-Ready to implement OAuth authentication
-```
-
-### Bad: Skip Ignore Verification
-
-```
-[Check .worktrees/ - doesn't exist]
-[Create .worktrees/feature directly without checking ignore]  # WRONG
-
-# Later...
-$ git status
-Untracked files:
-  .worktrees/feature/node_modules/
-  .worktrees/feature/src/
-  ... (hundreds of files)
-```
-
-**Why it fails:**
-- Worktree contents pollute git status
-- Risk of accidentally committing worktree
-- Hard to undo without losing work
-
-### Bad: Proceed with Failing Tests Silently
-
-```
-[Create worktree]
-[Run tests - 3 failures]
-[Continue without asking]  # WRONG
-
-# Later...
-[Implement feature]
-[Run tests - 5 failures]
-# Which 2 failures are new? Can't tell.
-```
-
-**Why it fails:**
-- Can't distinguish new bugs from pre-existing
-- Wastes time debugging inherited failures
-- Uncertain baseline undermines confidence
+---
 
 ## Integration
 
-**This skill is called by:**
-- `gambit:brainstorming` (after design approved)
-- Any skill needing isolated workspace
+**Called by:**
+- `gambit:brainstorming` (optional, user chooses at handoff)
+- `gambit:writing-plans` (optional, user chooses at handoff)
+- User via `/gambit:using-worktrees`
 
-**This skill pairs with:**
-- `gambit:finishing-branch` - REQUIRED for cleanup after work complete
-- `gambit:executing-plans` - Work happens in this worktree
+**Calls:**
+- `gambit:executing-plans` (invoked directly after worktree setup, if tasks exist)
+- `gambit:brainstorming` (if invoked standalone with no tasks)
+
+**Pairs with:**
+- `gambit:finishing-branch` — handles worktree cleanup after work complete
 
 **Workflow:**
 ```
-gambit:brainstorming
-    → Design approved
-gambit:using-worktrees
-    → Check directories (Step 1-3)
-    → Verify gitignore (Step 4)
-    → Create worktree (Step 5)
-    → Environment setup (Step 6)
-    → Verify baseline (Step 7)
-    → Report ready (Step 8)
-gambit:executing-plans
-    → Implement in worktree
-gambit:finishing-branch
-    → Merge/PR/cleanup worktree
+gambit:brainstorming ─┐
+                      ├→ gambit:using-worktrees → gambit:executing-plans
+gambit:writing-plans ─┘                                    ↓
+                                                 gambit:finishing-branch
 ```

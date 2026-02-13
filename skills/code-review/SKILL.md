@@ -7,17 +7,15 @@ description: Use for requesting and receiving code reviews - dispatch reviewer a
 
 ## Overview
 
-Code review requires technical evaluation, not emotional performance. Request reviews early, receive feedback with rigor.
+Code review requires technical evaluation, not emotional performance. Verify before implementing. Push back with evidence.
 
-**Core principles:**
-- **Requesting:** Review early, review often. Catch issues before they cascade.
-- **Receiving:** Verify before implementing. Technical correctness over social comfort.
+**Core principle:** Every piece of feedback must be verified against the codebase before implementation. Actions over words.
 
 **Announce at start:** "I'm using gambit:code-review to [request/receive] review."
 
 ## Rigidity Level
 
-MEDIUM FREEDOM - Follow the self-review checklist strictly before requesting. Verify all feedback before implementing. Adapt review scope to context. No performative agreement.
+MEDIUM FREEDOM — Follow the self-review checklist strictly before requesting. Verify ALL feedback before implementing ANY. Adapt review scope to context. No performative agreement.
 
 ## Quick Reference
 
@@ -34,11 +32,23 @@ MEDIUM FREEDOM - Follow the self-review checklist strictly before requesting. Ve
 | Step | Action | STOP If |
 |------|--------|---------|
 | 1 | Read complete feedback | - |
-| 2 | Restate requirement in own words | Any item unclear |
-| 3 | Verify against codebase | Feedback breaks things |
+| 2 | Verify EACH item against codebase | Can't verify without more info |
+| 3 | Clarify ALL unclear items | Any item unclear |
 | 4 | Implement one item at a time | Tests fail |
 
-**Forbidden responses:** "You're absolutely right!", "Great point!", "Thanks for catching that!"
+## The Iron Law
+
+```
+NO IMPLEMENTING FEEDBACK WITHOUT VERIFYING IT FIRST
+```
+
+Verification means running commands — reading code, grepping for usage, running tests. Not thinking about it. Not assuming.
+
+- Reviewer says "remove X" → `grep -r "X"` to check if it's used
+- Reviewer says "change pattern" → read the code, understand WHY current pattern exists
+- Reviewer says "fix edge case" → write a test proving the edge case fails
+
+**Forbidden responses:** "You're absolutely right!", "Great point!", "Thanks for catching that!", "Let me implement that now" (before verification)
 
 ---
 
@@ -60,22 +70,21 @@ MEDIUM FREEDOM - Follow the self-review checklist strictly before requesting. Ve
 
 **BEFORE dispatching reviewer, verify:**
 
-```bash
-# Run all automated checks
+```
 Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: go test ./... && golangci-lint run"
+  subagent_type: "general-purpose"
+  description: "Run automated checks"
+  prompt: "Run: [project test command] && [project lint command]. Report pass/fail counts and any failures."
 ```
 
 **Automated checks:**
 - [ ] All tests pass
 - [ ] No linter warnings
-- [ ] No TODOs without issue numbers: `grep -r "TODO" src/ | grep -v "#"`
-- [ ] No stub implementations: `grep -r "unimplemented\|todo!\|panic" src/`
-- [ ] No unsafe patterns in production: `grep -r "\.unwrap()\|\.expect(" src/`
+- [ ] No TODOs without issue numbers
+- [ ] No stub implementations (search for `unimplemented`, `todo!`, `panic("not implemented")`, `raise NotImplementedError`, etc. as appropriate for the language)
 
 **Code quality self-check:**
-- [ ] Error handling proper (Result/Option, not panic)
+- [ ] Error handling proper (not panicking/crashing on bad input)
 - [ ] Edge cases handled (empty, nil, boundaries)
 - [ ] Names clear (would junior understand in 6 months?)
 - [ ] No "while I'm here" changes mixed in
@@ -85,44 +94,28 @@ Task
 
 ### Step 2: Dispatch Code-Reviewer Agent
 
-**First, get git SHAs:**
+Get the commit range, then dispatch. See [REFERENCE.md](REFERENCE.md) for the full dispatch template.
 
 ```bash
 BASE_SHA=$(git rev-parse HEAD~N)  # or origin/main for full branch diff
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**Then dispatch with this template:**
-
 ```
 Task
   subagent_type: "feature-dev:code-reviewer"
   description: "Review [brief description]"
   prompt: |
-    Review the changes in this commit range:
+    Review the changes between {BASE_SHA} and {HEAD_SHA}.
 
     ## What Was Implemented
-    {WHAT_WAS_IMPLEMENTED}
     [Brief description of what you built]
 
     ## Requirements
-    {PLAN_OR_REQUIREMENTS}
-    [What it should do - from Task or epic]
-
-    ## Commit Range
-    Base: {BASE_SHA}
-    Head: {HEAD_SHA}
+    [What it should do — from Task or epic]
 
     ## Specific Concerns
-    {CONCERNS}
     [Areas you're uncertain about]
-
-    ## Review Focus
-    - Does implementation match requirements?
-    - Are there bugs, edge cases missed?
-    - Is error handling sufficient?
-    - Are tests meaningful (not tautological)?
-    - Is code clear and maintainable?
 
     Return findings as:
     - Critical: [Must fix before merge]
@@ -130,15 +123,6 @@ Task
     - Minor: [Note for future]
     - Strengths: [What's done well]
 ```
-
-**Template placeholders:**
-| Placeholder | Description |
-|-------------|-------------|
-| `{WHAT_WAS_IMPLEMENTED}` | What you just built |
-| `{PLAN_OR_REQUIREMENTS}` | What it should do (from Task) |
-| `{BASE_SHA}` | Starting commit |
-| `{HEAD_SHA}` | Ending commit |
-| `{CONCERNS}` | Areas you're uncertain about |
 
 ### Step 3: Act on Feedback
 
@@ -150,10 +134,7 @@ Task
 | **Important** | Fix before proceeding to next Task. |
 | **Minor** | Note for later. OK to defer. |
 
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
+**If reviewer is wrong:** Push back with technical reasoning. Show code/tests that prove it works.
 
 ---
 
@@ -165,80 +146,73 @@ Task
 WHEN receiving feedback:
 
 1. READ: Complete feedback without reacting
-2. UNDERSTAND: Restate requirement in own words (or ask)
-3. VERIFY: Check against codebase reality
+2. VERIFY: Check EACH item against the actual codebase
+3. CLARIFY: Ask about ALL unclear items before implementing ANY
 4. EVALUATE: Technically sound for THIS codebase?
 5. RESPOND: Technical acknowledgment or reasoned pushback
 6. IMPLEMENT: One item at a time, test each
 ```
 
-### Forbidden Responses
+### Step 1: Read Without Reacting
 
-**NEVER:**
-- "You're absolutely right!" (performative)
-- "Great point!" / "Excellent feedback!" (performative)
-- "Thanks for catching that!" (performative)
-- "Let me implement that now" (before verification)
+Read all feedback items. Do NOT:
+- Start implementing the first item before reading the rest
+- React emotionally (items may be related or contradictory)
+- Use performative language
 
-**INSTEAD:**
-- Restate the technical requirement
-- Ask clarifying questions
-- Push back with technical reasoning if wrong
-- Just start working (actions > words)
+### Step 2: Verify Against Codebase
 
-### Handling Unclear Feedback
+**BEFORE implementing ANYTHING, verify EACH item:**
 
-**IF any item is unclear:**
+For each piece of feedback, run verification:
+
+```bash
+# "Remove this function" → Check if it's used
+grep -r "functionName" src/
+
+# "Change this pattern" → Understand why current pattern exists
+# Read the code, read the git history
+
+# "Fix this edge case" → Verify the edge case actually fails
+# Write a quick test or run the scenario
+```
+
+**Ask for each item:**
+1. Technically correct for THIS codebase?
+2. Would it break existing functionality?
+3. Is there a reason for the current implementation?
+4. Does reviewer understand full context?
+
+### Step 3: Clarify Unclear Items
+
+**IF any item is unclear: STOP. Do not implement anything yet.**
 
 ```
-STOP - do not implement anything yet
-ASK for clarification on unclear items
+❌ WRONG: Implement items 1,2,3 now, ask about 4,5 later
+✅ RIGHT: "I understand items 1,2,3. Need clarification on 4 and 5 before proceeding."
 ```
 
 **Why:** Items may be related. Partial understanding = wrong implementation.
 
-**Example:**
-```
-Reviewer: "Fix items 1-6"
-You understand 1,2,3,6. Unclear on 4,5.
+### Step 4: Evaluate and Respond
 
-❌ WRONG: Implement 1,2,3,6 now, ask about 4,5 later
-✅ RIGHT: "I understand items 1,2,3,6. Need clarification on 4 and 5 before proceeding."
-```
+**For each verified item:**
 
-### Verifying Feedback Before Implementing
+| Verdict | Response |
+|---------|----------|
+| Correct | Just fix it. Or: "Fixed. [Brief description]" |
+| Wrong | Push back with evidence: code, tests, grep results |
+| Partially right | "Agree with X, but Y would break Z. How about W?" |
+| Need more info | "Can't verify without [X]. Should I investigate?" |
 
-**BEFORE implementing external feedback:**
-
-1. **Check:** Technically correct for THIS codebase?
-2. **Check:** Breaks existing functionality?
-3. **Check:** Reason for current implementation?
-4. **Check:** Works on all platforms/versions?
-5. **Check:** Does reviewer understand full context?
-
-**IF suggestion seems wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove current approach works
-
-**IF can't easily verify:**
-- Say so: "I can't verify this without [X]. Should I investigate?"
-
-**IF conflicts with prior architectural decisions:**
-- Stop and discuss before implementing
-
-### YAGNI Check for "Professional" Features
-
-**IF reviewer suggests "implementing properly":**
+**YAGNI check:** If reviewer suggests adding features, check if the code is actually used:
 
 ```bash
-# Check if feature is actually used
 grep -r "functionName" src/
+# If unused: "Nothing calls this. Remove it (YAGNI)?"
 ```
 
-- If unused: "This function isn't called. Remove it (YAGNI)?"
-- If used: Then implement properly
-
-### Implementation Order
+### Step 5: Implement One at a Time
 
 **FOR multi-item feedback:**
 
@@ -248,31 +222,28 @@ grep -r "functionName" src/
    - Simple fixes (typos, imports)
    - Complex fixes (refactoring, logic)
 3. Test each fix individually
-4. Verify no regressions
+4. Verify no regressions after each
 
 ### When to Push Back
 
 **Push back when:**
-- Suggestion breaks existing functionality
-- Reviewer lacks full context
-- Violates YAGNI (unused feature)
-- Technically incorrect for this stack
-- Legacy/compatibility reasons exist
-- Conflicts with architectural decisions
+- Suggestion breaks existing functionality → show failing test
+- Reviewer lacks full context → provide missing context
+- Violates YAGNI (unused feature) → show grep proving unused
+- Technically incorrect for this stack → explain constraint
+- Conflicts with architectural decisions → stop and discuss
 
 **How to push back:**
-- Use technical reasoning, not defensiveness
-- Ask specific questions
+- Technical reasoning, not defensiveness
 - Reference working tests/code
+- Ask specific questions
 - Escalate if architectural
 
 ### Acknowledging Correct Feedback
 
-**When feedback IS correct:**
-
 ```
 ✅ "Fixed. [Brief description of what changed]"
-✅ "Good catch - [specific issue]. Fixed in [location]."
+✅ "Good catch — [specific issue]. Fixed in [location]."
 ✅ [Just fix it and show in the code]
 
 ❌ "You're absolutely right!"
@@ -280,19 +251,15 @@ grep -r "functionName" src/
 ❌ "Thanks for catching that!"
 ```
 
-**Why no performative agreement:** Actions speak. Just fix it. The code itself shows you heard.
+Actions speak. Just fix it. The code itself shows you heard.
 
 ### Correcting Your Pushback
 
 **If you pushed back and were wrong:**
 
 ```
-✅ "You were right - I checked [X] and it does [Y]. Implementing now."
-✅ "Verified and you're correct. My understanding was wrong because [reason]. Fixing."
-
-❌ Long apology
-❌ Defending why you pushed back
-❌ Over-explaining
+✅ "You were right — I checked [X] and it does [Y]. Implementing now."
+❌ Long apology or defending why you pushed back
 ```
 
 State the correction factually and move on.
@@ -304,119 +271,32 @@ State the correction factually and move on.
 ### Rules That Have No Exceptions
 
 1. **Run self-review checklist before requesting** → Don't waste reviewer time on obvious issues
-2. **No performative agreement** → Technical acknowledgment or pushback only
-3. **Verify feedback before implementing** → Check if it breaks things
-4. **Clarify unclear items FIRST** → Don't implement partial understanding
+2. **Verify ALL feedback before implementing ANY** → Check against codebase with tools, not assumptions
+3. **No performative agreement** → Technical acknowledgment or pushback only
+4. **Clarify ALL unclear items FIRST** → Don't implement partial understanding
 5. **Test each fix individually** → One at a time, verify no regressions
-6. **Push back with technical reasoning** → Not defensiveness, not blind acceptance
+6. **Push back with technical evidence** → Not defensiveness, not blind acceptance
 
-### Common Mistakes
+### Common Excuses
 
-| Mistake | Fix |
-|---------|-----|
-| Performative agreement | State requirement or just act |
-| Blind implementation | Verify against codebase first |
-| Batch without testing | One at a time, test each |
-| Assuming reviewer is right | Check if breaks things |
-| Avoiding pushback | Technical correctness > comfort |
-| Partial implementation | Clarify all items first |
-| Skip self-review | Always run checklist before requesting |
+All mean: **STOP. Return to the verification step.**
 
----
-
-## Examples
-
-### Bad: Performative Agreement
-
-```
-Reviewer: "Remove legacy code"
-
-❌ "You're absolutely right! Let me remove that..."
-[Removes code without checking if it's actually unused]
-[Build breaks because legacy code was still called]
-```
-
-### Good: Technical Verification
-
-```
-Reviewer: "Remove legacy code"
-
-✅ "Checking..."
-$ grep -r "legacyFunction" src/
-src/handler.go:45: result := legacyFunction(data)
-
-"legacyFunction is still called at handler.go:45. Should I:
-A) Update handler to use new function, then remove legacy?
-B) Keep legacy for now until handler is migrated?
-C) Something else?"
-```
-
-### Bad: Blind Implementation
-
-```
-Reviewer: "Use async/await pattern here"
-
-[Implements async/await without checking]
-[Breaks because caller doesn't handle promises]
-[Introduces race condition in tests]
-```
-
-### Good: Verify Then Implement
-
-```
-Reviewer: "Use async/await pattern here"
-
-✅ "Checking callers..."
-$ grep -r "functionName" src/
-3 callers found, all synchronous
-
-"Converting to async would require updating 3 callers:
-- handler.go:45
-- service.go:78
-- batch.go:112
-
-Want me to update all callers, or keep synchronous for now?"
-```
-
-### YAGNI Example
-
-```
-Reviewer: "Implement proper metrics tracking with database, date filters, CSV export"
-
-✅ "Checking usage..."
-$ grep -r "metricsEndpoint" src/
-[no results]
-
-"Nothing calls metricsEndpoint. Remove it (YAGNI)?
-Or is there usage I'm missing?"
-```
-
-### Unclear Feedback Example
-
-```
-Reviewer: "Fix items 1-6"
-
-Items 1,2,3,6: Clear
-Items 4,5: Unclear what specifically to change
-
-❌ WRONG:
-"Fixing 1,2,3,6 now..."
-[Implements partial, asks about 4,5 after]
-
-✅ RIGHT:
-"I understand items 1,2,3,6. Need clarification on 4 and 5:
-- Item 4 mentions 'proper error handling' - which function?
-- Item 5 says 'update tests' - add new tests or modify existing?
-
-Will implement all 6 once clarified."
-```
+| Excuse | Reality |
+|--------|---------|
+| "Reviewer is senior, they must be right" | Seniority ≠ infallibility. Verify. |
+| "It's a simple change, just do it" | Simple changes break things too. Verify. |
+| "No time for back-and-forth" | Wrong implementation wastes MORE time. Verify. |
+| "I'll verify after implementing" | Then you'll rationalize it works. Verify FIRST. |
+| "Feedback looks reasonable" | Looking reasonable ≠ being correct. Verify. |
+| "Just this once, skip verification" | "Just this once" is how bugs ship |
+| "Thank you for the thorough review!" | Performative. Just verify and act. |
 
 ---
 
 ## Verification Checklist
 
 ### Before Requesting Review
-- [ ] All tests pass (verified with test-runner)
+- [ ] All tests pass (verified with actual command)
 - [ ] No linter warnings
 - [ ] No TODOs without issue numbers
 - [ ] No stub implementations
@@ -427,10 +307,9 @@ Will implement all 6 once clarified."
 
 ### After Receiving Review
 - [ ] Read complete feedback without reacting
-- [ ] Restated unclear items (or asked for clarification)
-- [ ] Verified feedback against codebase
-- [ ] Evaluated if technically sound
-- [ ] Pushed back on incorrect suggestions (with reasoning)
+- [ ] Verified EACH item against codebase (with tools)
+- [ ] Asked for clarification on ALL unclear items
+- [ ] Pushed back on incorrect suggestions (with evidence)
 - [ ] Implemented one item at a time
 - [ ] Tested after each fix
 - [ ] Verified no regressions
@@ -439,14 +318,25 @@ Will implement all 6 once clarified."
 
 ---
 
+## Examples
+
+See [REFERENCE.md](REFERENCE.md) for detailed good/bad examples including:
+- Performative agreement vs technical verification
+- Blind implementation vs verify-then-implement
+- YAGNI check on suggested features
+- Handling unclear multi-item feedback
+- Full dispatch template with all placeholders
+
+---
+
 ## Integration
 
 **This skill calls:**
 - `gambit:verification` (for self-review verification)
-- feature-dev:code-reviewer agent (for requesting review)
-- test-runner agent (for running tests)
+- feature-dev:code-reviewer agent (`subagent_type: "feature-dev:code-reviewer"`) for requesting review
+- general-purpose agent (`subagent_type: "general-purpose"`) for running automated checks
 
-**This skill is called by:**
+**Called by:**
 - `gambit:executing-plans` (after each Task)
 - Before merging to main
 - When stuck and need fresh perspective
@@ -455,39 +345,13 @@ Will implement all 6 once clarified."
 ```
 Complete Task
     ↓
-gambit:code-review (requesting)
-    ↓
-Self-review checklist
+Self-review checklist (pass automated checks)
     ↓
 Dispatch code-reviewer agent
     ↓
 Receive feedback
     ↓
-gambit:code-review (receiving)
-    ↓
-Verify → Implement → Test
+Read → Verify each item → Clarify unclear → Implement one-at-a-time → Test each
     ↓
 Ready for next Task
 ```
-
----
-
-## Resources
-
-**Self-review patterns:**
-- Run automated checks FIRST
-- Check edge cases: empty, nil, max, unicode
-- Ask "would junior understand this in 6 months?"
-- Check test meaningfulness (not tautological)
-
-**When to push back:**
-- Breaks existing functionality → Show failing test
-- YAGNI → Show grep proving unused
-- Wrong for this stack → Explain constraint
-- Lacks context → Provide missing context
-
-**When stuck:**
-- Feedback unclear → Ask before implementing
-- Feedback seems wrong → Verify, then push back with evidence
-- Feedback breaks things → Report what breaks, ask how to proceed
-- Multiple items → Clarify all, then implement in order

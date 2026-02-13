@@ -31,9 +31,9 @@ HIGH FREEDOM - Adapt questioning to context. But always:
 | 3 | Propose 2-3 approaches | Recommended option |
 | 4 | Present design in sections | Validated architecture |
 | 5 | Create epic Task | Immutable requirements + anti-patterns |
-| 6 | Create ONLY first subtask | Ready for executing-plans |
+| 6 | Create ONLY first subtask | Ready for execution |
 | 7 | Apply task refinement | Corner cases covered |
-| 8 | Hand off to executing-plans | Iterative execution begins |
+| 8 | Ask next step, invoke skill | Chain continues automatically |
 
 **Key:** Epic = contract (immutable), Tasks = adaptive (created as you learn)
 
@@ -208,13 +208,28 @@ Update the task with any missing details before proceeding.
 
 ### 7. Handoff
 
-```
-Epic created with immutable requirements.
-First task ready and refined.
+**REQUIRED: Use AskUserQuestion to offer next steps, then invoke the chosen skill directly.**
 
-Ready to start? I'll use gambit:executing-plans to work through this iteratively.
-Each task adapts to what we learn — no brittle upfront planning.
 ```
+AskUserQuestion
+  questions:
+    - question: "Epic and first task ready. How should we proceed?"
+      header: "Next step"
+      options:
+        - label: "Start executing (Recommended)"
+          description: "Begin implementing with gambit:executing-plans"
+        - label: "Set up worktree first"
+          description: "Create isolated workspace with gambit:using-worktrees"
+        - label: "Refine tasks first"
+          description: "Strengthen task quality with gambit:task-refinement"
+      multiSelect: false
+```
+
+**After user responds, invoke the chosen skill directly using the Skill tool.** Do not just tell the user to run it — load and follow the skill immediately.
+
+- "Start executing" → `Skill skill="gambit:executing-plans"`
+- "Set up worktree first" → `Skill skill="gambit:using-worktrees"` (then executing-plans after)
+- "Refine tasks first" → `Skill skill="gambit:task-refinement"` (then executing-plans after)
 
 ## Examples
 
@@ -270,7 +285,8 @@ TaskCreate subject: "Epic: OAuth"
 4. **Epic requirements IMMUTABLE** — tasks adapt, requirements don't
 5. **Include anti-patterns** — prevents watering down under pressure
 6. **Create ONLY first task** — subsequent tasks created iteratively
-7. **Apply task refinement** — before handoff to executing-plans
+7. **Apply task refinement** — before handoff
+8. **Invoke next skill directly** — don't tell user to run it manually
 
 **Common rationalizations (all mean STOP, follow the process):**
 - "Requirements obvious" → Questions reveal hidden complexity
@@ -287,7 +303,12 @@ TaskCreate subject: "Epic: OAuth"
 - [ ] Rejected approaches have DO NOT REVISIT UNLESS
 - [ ] Created ONLY first task (not full tree)
 - [ ] Task refined: scoped, self-contained, explicit, testable
+- [ ] Asked user next step via AskUserQuestion (execute/worktree/refine)
+- [ ] Invoked chosen skill directly via Skill tool
 
 ## Integration
 
-**Calls:** Explore agent → hands off to `gambit:executing-plans`
+**Calls:** Explore agent → AskUserQuestion → invokes one of:
+- `gambit:executing-plans` (default)
+- `gambit:using-worktrees` (optional, before execution)
+- `gambit:task-refinement` (optional, before execution)

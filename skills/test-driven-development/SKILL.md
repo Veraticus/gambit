@@ -1,34 +1,34 @@
 ---
 name: test-driven-development
-description: Use when implementing features or fixing bugs - enforces RED-GREEN-REFACTOR cycle requiring tests to fail before writing code
+description: Enforces RED-GREEN-REFACTOR cycle requiring tests to fail before writing production code. Use when implementing features, fixing bugs, adding functions, or writing any code that needs tests.
 ---
 
 # Test-Driven Development
 
 ## Overview
 
-Write the test first. Watch it fail. Write minimal code to pass.
+Write the test first. Watch it fail. Write minimal code to pass. Refactor. Commit.
 
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
 
-**Announce at start:** "I'm using gambit:test-driven-development to implement this with the RED-GREEN-REFACTOR cycle."
+**Announce at start:** "I'm using gambit:test-driven-development to implement this with RED-GREEN-REFACTOR."
 
 ## Rigidity Level
 
-LOW FREEDOM - Follow these exact steps in order. Do not adapt.
+LOW FREEDOM — Follow these exact steps in order. Do not adapt, skip, or reorder.
 
 Violating the letter of the rules is violating the spirit of the rules.
 
 ## Quick Reference
 
-| Phase | Action | Command Example | Expected Result |
-|-------|--------|-----------------|-----------------|
-| **RED** | Write failing test | `go test ./...` | FAIL (feature missing) |
-| **Verify RED** | Confirm correct failure | Check error message | "function not found" or assertion fails |
-| **GREEN** | Write minimal code | Implement feature | Test passes |
-| **Verify GREEN** | All tests pass | `go test ./...` | All green, no warnings |
-| **REFACTOR** | Clean up code | Improve while green | Tests still pass |
-| **COMMIT** | Commit increment | `git commit` | Behavior captured |
+| Phase | Action | Expected Result |
+|-------|--------|-----------------|
+| **RED** | Write one failing test | Test FAILS with expected message |
+| **Verify RED** | Run test, read failure | Fails because feature missing (not typo) |
+| **GREEN** | Write minimal code | Test passes |
+| **Verify GREEN** | Run ALL tests | All green, no regressions |
+| **REFACTOR** | Clean up while green | Tests still pass |
+| **COMMIT** | Commit the increment | Behavior captured |
 
 ## The Iron Law
 
@@ -36,229 +36,200 @@ Violating the letter of the rules is violating the spirit of the rules.
 NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
 ```
 
-Write code before the test? Delete it. Start over.
+Wrote code before the test? **Delete it. Start over.**
 
-**No exceptions:**
 - Don't keep it as "reference"
 - Don't "adapt" it while writing tests
 - Don't look at it
 - Delete means delete
 
-Implement fresh from tests. Period.
+Fresh implementation from tests. No exceptions.
 
 ## When to Use
 
-**Always:**
-- New features
-- Bug fixes
-- Refactoring with behavior changes
-- Any production code
+**Always when writing production code:**
+- New features or functions
+- Bug fixes (test reproduces the bug first)
+- Behavior changes during refactoring
+- Any code that should have test coverage
 
-**Exceptions (ask your human partner):**
+**Exceptions (confirm with your human partner):**
 - Throwaway prototypes (will be deleted)
-- Generated code
+- Generated code (output, not generators)
 - Configuration files
 
-Thinking "skip TDD just this once"? Stop. That's rationalization.
+### TDD vs Executing-Plans
+
+These skills are complementary, not competing:
+
+| | TDD | Executing-Plans |
+|---|---|---|
+| **Scope** | Single function or behavior | Multi-task epic |
+| **Controls** | HOW code is written | WHICH task, WHEN to stop |
+| **Cycle** | RED → GREEN → REFACTOR → COMMIT | Load → Execute → Checkpoint → STOP |
+| **Checkpoints** | After each test passes | After each task completes |
+| **Relationship** | Called BY executing-plans | Calls TDD during execution |
+
+TDD is a coding discipline used WITHIN task execution. Executing-plans decides WHAT to build; TDD decides HOW to build it.
 
 ## The Process
 
-### 1. RED - Write Failing Test
+### 1. RED — Write One Failing Test
 
-Write one minimal test showing what should happen.
-
-**Good example:**
-```go
-func TestRetryOperation_RetriesThreeTimes(t *testing.T) {
-    attempts := 0
-    operation := func() error {
-        attempts++
-        if attempts < 3 {
-            return errors.New("fail")
-        }
-        return nil
-    }
-
-    err := RetryOperation(operation)
-
-    assert.NoError(t, err)
-    assert.Equal(t, 3, attempts)
-}
-```
-
-**Bad example:**
-```go
-func TestRetry(t *testing.T) {
-    mock := &MockOperation{}
-    mock.On("Do").Return(nil)
-    RetryOperation(mock.Do)
-    mock.AssertCalled(t, "Do")
-}
-```
-Vague name, tests mock not code.
+Write a single test for **one behavior**. Not two. Not "and."
 
 **Requirements:**
-- Test one behavior only ("and" in name? Split it)
-- Clear name describing behavior
-- Use real code (no mocks unless unavoidable)
+- Test ONE behavior ("and" in name? Split it)
+- Name describes the behavior: `test_rejects_empty_email`, not `test_email`
+- Use real objects, not mocks (unless external dependency)
+- Assert on behavior, not implementation details
 
-### 2. Verify RED - Watch It Fail
+**Run the test. Read the failure message.**
 
-**MANDATORY. Never skip.**
-
-```bash
-go test ./path/to/package -run TestName
-```
-
-Confirm:
+Confirm ALL THREE:
 - Test **fails** (not errors with syntax issues)
-- Failure message is expected ("function not found" or assertion fails)
-- Fails because feature missing (not typos)
+- Failure message matches expectation ("function not found" or assertion mismatch)
+- Fails because feature is MISSING, not because of typos
 
-**If test passes:** You're testing existing behavior. Fix the test.
-**If test errors:** Fix syntax error, re-run until it fails correctly.
+**If test passes immediately:** Your test is wrong. It tests existing behavior, not new behavior. Fix the test before continuing.
 
-### 3. GREEN - Write Minimal Code
+**If test has syntax errors:** Fix syntax, re-run until you get a proper assertion failure.
 
-Write simplest code to pass the test. Nothing more.
+### 2. GREEN — Write Minimal Code
 
-**Good example:**
-```go
-func RetryOperation(fn func() error) error {
-    var lastErr error
-    for i := 0; i < 3; i++ {
-        if err := fn(); err != nil {
-            lastErr = err
-            continue
-        }
-        return nil
-    }
-    return lastErr
-}
-```
+Write the **simplest** code that makes the test pass. Nothing more.
 
-**Bad example (YAGNI):**
-```go
-func RetryOperation(fn func() error, opts ...RetryOption) error {
-    config := &RetryConfig{
-        MaxRetries: 3,
-        Backoff:    ExponentialBackoff,
-        OnRetry:    nil,
-    }
-    // Don't add features the test doesn't require!
-}
-```
+**Minimal means:**
+- No features the test doesn't exercise
+- No error handling the test doesn't check
+- No type annotations the test doesn't require
+- No docstrings or comments
+- Hardcoded values are fine if only one test exercises the case
 
-Don't add features, refactor other code, or "improve" beyond the test.
-
-### 4. Verify GREEN - Watch It Pass
-
-**MANDATORY.**
-
-```bash
-go test ./path/to/package -run TestName
-```
-
-Confirm:
+**Run ALL tests** (not just the new one). Confirm:
 - New test passes
-- All other tests still pass
-- No errors or warnings
+- All existing tests still pass
+- No warnings or errors
 
-**If test fails:** Fix code, not test.
-**If other tests fail:** Fix now before proceeding.
+**If new test fails:** Fix code, not test.
+**If other tests break:** Fix regressions NOW, before continuing.
 
-### 5. REFACTOR - Clean Up
+### 3. REFACTOR — Clean Up While Green
 
-**Only after green:**
+Only after ALL tests pass:
 - Remove duplication
 - Improve names
-- Extract helpers
+- Extract helpers if repeated
+- Simplify logic
 
-Keep tests green. Don't add behavior.
+**Run tests after each refactoring change.** If tests break, undo the refactoring step.
 
-### 6. Commit
+Do NOT add behavior during refactoring. No new features, no new edge cases. Those are new RED cycles.
 
-After green, commit the increment:
+### 4. COMMIT — Capture the Increment
 
 ```bash
-git add path/to/test.go path/to/implementation.go
-git commit -m "feat(module): add retry operation with 3 attempts"
+git add [test file] [implementation file]
+git commit -m "feat(module): [behavior description]"
 ```
 
-**Commit message should describe the behavior, not the test.**
+Commit message describes the **behavior**, not the test.
 
-### 7. Repeat
+### 5. REPEAT
 
-Next failing test for next feature.
+Next behavior → next failing test → next minimal implementation.
 
-## Workflow Checklists
+Each RED-GREEN-REFACTOR-COMMIT cycle should be small — one behavior at a time.
 
-### For Each New Feature
+## Bug Fix Workflow
 
-- [ ] Write one failing test (RED)
-- [ ] Run test, confirm it fails correctly (expected reason)
-- [ ] Write minimal code to pass (GREEN)
-- [ ] Run test, confirm it passes
-- [ ] Run ALL tests, confirm no regressions
-- [ ] Refactor if needed (staying green)
-- [ ] Commit
+Bug fixes follow TDD too. The test reproduces the bug.
 
-### For Each Bug Fix
+1. **RED:** Write test that exercises the buggy input/behavior
+2. **Verify RED:** Run test — confirms the bug exists (test fails)
+3. **GREEN:** Fix the bug with minimal change
+4. **Verify GREEN:** Run ALL tests — bug fixed, no regressions
+5. **COMMIT:** The regression test permanently guards against this bug
 
-- [ ] Write test reproducing the bug (RED)
-- [ ] Run test, confirm it fails (reproduces bug)
-- [ ] Fix the bug (minimal change)
-- [ ] Run test, confirm it passes (bug fixed)
-- [ ] Run ALL tests, confirm no regressions
-- [ ] Commit
+## Example: Feature with TDD
 
-### For Each Refactoring
+**Task:** Add email validation that rejects empty strings and missing @ symbols.
 
-- [ ] Confirm tests exist and pass BEFORE refactoring
-- [ ] Make one small refactoring change
-- [ ] Run tests, confirm still green
-- [ ] Repeat until refactoring complete
-- [ ] Commit
+**RED:**
+```python
+def test_rejects_empty_email():
+    result = validate_email("")
+    assert result is False
+```
 
-## Why Order Matters
+**Verify RED:**
+```
+$ pytest -k test_rejects_empty_email
+FAILED: NameError: name 'validate_email' is not defined
+```
+Good — fails because function doesn't exist.
 
-**"I'll write tests after to verify it works"**
+**GREEN:**
+```python
+def validate_email(email):
+    if not email:
+        return False
+    return True
+```
+Minimal. Only handles the case the test checks.
 
-Tests written after code pass immediately. Passing immediately proves nothing:
-- Might test wrong thing
-- Might test implementation, not behavior
-- Might miss edge cases you forgot
-- You never saw it catch the bug
+**Verify GREEN:**
+```
+$ pytest
+4 passed
+```
 
-Test-first forces you to see the test fail, proving it actually tests something.
+**Next RED** (new behavior):
+```python
+def test_rejects_missing_at_symbol():
+    result = validate_email("userexample.com")
+    assert result is False
+```
 
-**"I already manually tested all the edge cases"**
+**Verify RED → GREEN → Verify GREEN → REFACTOR → COMMIT → REPEAT.**
 
-Manual testing is ad-hoc. You think you tested everything but:
-- No record of what you tested
-- Can't re-run when code changes
-- Easy to forget cases under pressure
-- "It worked when I tried it" ≠ comprehensive
+## Testing Anti-Patterns
 
-Automated tests are systematic. They run the same way every time.
+### Never Test Mock Behavior
 
-**"Deleting X hours of work is wasteful"**
+```
+BAD:  assert mock.was_called()        # Tests plumbing, not behavior
+GOOD: assert result == expected_value  # Tests actual output
+```
 
-Sunk cost fallacy. The time is already gone. Your choice now:
-- Delete and rewrite with TDD (X more hours, high confidence)
-- Keep it and add tests after (30 min, low confidence, likely bugs)
+### Never Add Test-Only Code to Production
 
-The "waste" is keeping code you can't trust.
+```
+BAD:  def reset(self): ...  # Only used in tests, dangerous in prod
+GOOD: Test utilities handle setup/teardown externally
+```
 
-**"TDD is dogmatic, being pragmatic means adapting"**
+### Never Mock Without Understanding
 
-TDD IS pragmatic:
-- Finds bugs before commit (faster than debugging after)
-- Prevents regressions (tests catch breaks immediately)
-- Documents behavior (tests show how to use code)
-- Enables refactoring (change freely, tests catch breaks)
+Before mocking any dependency:
+1. What side effects does the real code have?
+2. Does this test depend on those side effects?
+3. If yes → mock at a lower level, not this method
 
-"Pragmatic" shortcuts = debugging in production = slower.
+## Red Flags — STOP and Start Over
+
+- Wrote code before test
+- Test passes immediately
+- Can't explain why test failed
+- Adding features during GREEN beyond what test requires
+- Tests added "later"
+- Rationalizing "just this once"
+- "I already manually tested it"
+- "Keep as reference" or "adapt existing code"
+- "Already spent X hours, deleting is wasteful"
+- "This is different because..."
+
+**All of these mean: Delete code. Start over with RED.**
 
 ## Common Rationalizations
 
@@ -266,146 +237,16 @@ TDD IS pragmatic:
 |--------|---------|
 | "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
 | "I'll test after" | Tests passing immediately prove nothing. |
-| "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-| "Already manually tested" | Ad-hoc ≠ systematic. No record, can't re-run. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
-| "Need to explore first" | Fine. Throw away exploration, start with TDD. |
-| "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
-| "TDD will slow me down" | TDD faster than debugging. Pragmatic = test-first. |
-| "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
-
-## Red Flags - STOP and Start Over
-
-- Code before test
-- Test after implementation
-- Test passes immediately
-- Can't explain why test failed
-- Tests added "later"
-- Rationalizing "just this once"
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "Keep as reference" or "adapt existing code"
-- "Already spent X hours, deleting is wasteful"
-- "TDD is dogmatic, I'm being pragmatic"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
-
-## Testing Anti-Patterns
-
-When adding mocks or test utilities, avoid these patterns:
-
-### Never Test Mock Behavior
-
-```go
-// BAD: Testing that mock exists
-func TestHandler(t *testing.T) {
-    mock := &MockService{}
-    handler := NewHandler(mock)
-    assert.NotNil(t, handler.service) // Tests mock, not behavior
-}
-
-// GOOD: Test real behavior
-func TestHandler_ProcessesRequest(t *testing.T) {
-    service := NewTestService()
-    handler := NewHandler(service)
-    result, err := handler.Process("data")
-    assert.NoError(t, err)
-    assert.Equal(t, expected, result)
-}
-```
-
-### Never Add Test-Only Methods to Production
-
-```go
-// BAD: Reset() only used in tests
-type Connection struct { pool *Pool }
-func (c *Connection) Reset() { c.pool.Clear() } // Dangerous in production!
-
-// GOOD: Test utilities handle cleanup
-// test_utils.go
-func CleanupConnection(c *Connection) {
-    c.pool.ClearTestData()
-}
-```
-
-### Never Mock Without Understanding
-
-Before mocking any method:
-1. Ask: "What side effects does the real method have?"
-2. Ask: "Does this test depend on any of those side effects?"
-3. If depends on side effects: Mock at lower level, not this method
-
-## Example: Bug Fix with TDD
-
-**Bug:** Empty email accepted when it should be rejected.
-
-**RED:**
-```go
-func TestSubmitForm_RejectsEmptyEmail(t *testing.T) {
-    result := SubmitForm(FormData{Email: ""})
-    assert.Equal(t, "Email required", result.Error)
-}
-```
-
-**Verify RED:**
-```bash
-$ go test ./... -run TestSubmitForm_RejectsEmptyEmail
-FAIL: expected "Email required", got ""
-```
-
-**GREEN:**
-```go
-func SubmitForm(data FormData) FormResult {
-    if strings.TrimSpace(data.Email) == "" {
-        return FormResult{Error: "Email required"}
-    }
-    // ... rest of form processing
-    return FormResult{}
-}
-```
-
-**Verify GREEN:**
-```bash
-$ go test ./... -run TestSubmitForm_RejectsEmptyEmail
-PASS
-```
-
-**REFACTOR:** Extract validation if multiple fields need it.
+| "Already manually tested" | Ad-hoc ≠ systematic. Can't re-run. |
+| "Deleting X hours is wasteful" | Sunk cost. Unverified code is debt. |
+| "Need to explore first" | Fine. Throw away exploration, start with RED. |
+| "Test is hard to write" | Hard to test = hard to use. Simplify the design. |
+| "TDD slows me down" | TDD is faster than debugging in production. |
+| "This is different because..." | It's not. RED-GREEN-REFACTOR. |
 
 ## Language-Specific Commands
 
-### Go
-```bash
-go test ./...                           # All tests
-go test ./path/to/package -run TestName # Single test
-go test ./... -v                        # Verbose output
-go test ./... -cover                    # With coverage
-```
-
-### TypeScript (Vitest)
-```bash
-npm test                               # All tests
-npm test -- -t "test name"             # Single test
-npm test -- --coverage                 # With coverage
-```
-
-### Rust
-```bash
-cargo test                             # All tests
-cargo test test_name                   # Single test
-cargo test -- --nocapture              # With output
-```
-
-### Python
-```bash
-pytest                                 # All tests
-pytest -k "test_name"                  # Single test
-pytest --cov                           # With coverage
-```
+See [REFERENCE.md](REFERENCE.md) for test runner commands by language (Go, TypeScript, Rust, Python, Ruby, etc.).
 
 ## Verification Checklist
 
@@ -414,49 +255,24 @@ Before marking work complete:
 - [ ] Every new function/method has a test
 - [ ] Watched each test **fail** before implementing
 - [ ] Each test failed for expected reason (feature missing, not typo)
-- [ ] Wrote minimal code to pass each test
+- [ ] Wrote minimal code to pass each test (no extras)
 - [ ] All tests pass with no warnings
 - [ ] Tests use real code (mocks only if unavoidable)
-- [ ] Edge cases and errors covered
-- [ ] No test-only methods added to production classes
+- [ ] Edge cases covered as separate RED-GREEN cycles
+- [ ] Changes committed after each green cycle
 
 **Can't check all boxes?** You skipped TDD. Start over.
 
-## When Stuck
-
-| Problem | Solution |
-|---------|----------|
-| Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner. |
-| Test too complicated | Design too complicated. Simplify interface. |
-| Must mock everything | Code too coupled. Use dependency injection. |
-| Test setup huge | Extract helpers. Still complex? Simplify design. |
-
 ## Integration
 
-**This skill is called by:**
-- `gambit:executing-plans` (when implementing tasks)
-- `gambit:fixing-bugs` (write failing test reproducing bug)
+**Called by:**
+- `gambit:executing-plans` (when implementing task steps)
+- `gambit:debugging` (write failing test reproducing bug)
 
-**This skill calls:**
-- `gambit:verification` (running tests to verify)
-- test-runner agent (run tests, return summary only)
+**Calls:**
+- `gambit:verification` (running tests to verify RED and GREEN)
 
 **Workflow:**
 ```
-Write failing test (RED)
-    → Verify it fails for right reason
-    → Write minimal code (GREEN)
-    → Verify all tests pass
-    → Refactor (stay green)
-    → Commit
-    → Next test
+RED (write test) → Verify fail → GREEN (minimal code) → Verify pass → REFACTOR → COMMIT → REPEAT
 ```
-
-## Final Rule
-
-```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
-
-No exceptions without your human partner's permission.

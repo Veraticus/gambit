@@ -11,8 +11,8 @@
   "test-driven-development": {
     "priority": "high",
     "type": "workflow",
-    "keywords": ["tdd", "test first", "red green", "write test"],
-    "patterns": ["add.*test", "implement.*with test", "test.*driven"]
+    "keywords": ["tdd", "test first", "red green", "write test", "failing test", "test driven"],
+    "patterns": ["add.*test", "implement.*with test", "test.*driven", "red.*green.*refactor", "write.*failing", "need.*test"]
   },
 
   "refactoring": {
@@ -62,6 +62,20 @@
     "type": "workflow",
     "keywords": ["verify", "check", "confirm", "make sure", "validate"],
     "patterns": ["before.*commit", "ready.*merge", "done.*implement"]
+  },
+
+  "testing-quality": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["test quality", "audit tests", "tautological", "coverage gaming", "weak assertions", "test effectiveness"],
+    "patterns": ["test.*quality", "audit.*test", "coverage.*high.*bug", "test.*catching"]
+  },
+
+  "task-refinement": {
+    "priority": "medium",
+    "type": "workflow",
+    "keywords": ["refine", "review plan", "review tasks", "strengthen", "task quality"],
+    "patterns": ["review.*task", "refine.*plan", "check.*task", "ready.*implement"]
   },
 
   "finishing-branch": {
