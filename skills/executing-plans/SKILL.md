@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Executes Tasks one at a time with mandatory human checkpoints. Reviews learnings, then STOPS for user review before continuing.
+description: Executes Tasks one at a time with mandatory human checkpoints between each. Loads epic context, runs ONE task, presents checkpoint summary, then STOPS. Use when an epic Task exists with subtasks ready for implementation, when resuming work after a previous checkpoint, or when iteratively building a feature.
 user_invokable: true
 ---
 
@@ -8,450 +8,305 @@ user_invokable: true
 
 ## Overview
 
-Execute Tasks one at a time with mandatory human checkpoints. Load epic → Execute ONE task → Review learnings → STOP. User reviews implementation, then runs command again to continue.
+Execute Tasks one at a time with mandatory human checkpoints. Load epic → Execute ONE task → Present checkpoint → STOP. User reviews, then invokes again to continue.
 
-**Core principle:** Epic requirements are immutable. Tasks adapt to reality. STOP after each task for human oversight.
+**Core principle:** Epic requirements are immutable. Tasks adapt to reality. STOP after each task for human oversight — no exceptions.
 
 **Announce at start:** "I'm using gambit:executing-plans to implement this task."
 
 ## Rigidity Level
 
-LOW FREEDOM — Follow exact process: load epic, execute ONE task, review, STOP.
+LOW FREEDOM — Follow exact process: load epic, execute ONE task, checkpoint, STOP.
 
 Do not skip checkpoints or verification. Epic requirements never change. Tasks adapt to discoveries.
 
 ## Quick Reference
 
-| Step | Tool | Purpose |
-|------|------|---------|
-| **Check State** | `TaskList` | Find in-progress or ready tasks |
-| **Load Epic** | `TaskGet taskId` on epic | Read immutable requirements |
-| **Start Task** | `TaskUpdate taskId status="in_progress"` | Mark task active |
-| **Execute** | Follow steps in task description | TDD cycle, verify each step |
-| **Complete Task** | `TaskUpdate taskId status="completed"` | After ALL steps done |
-| **Review** | `TaskGet` on epic | Check learnings against requirements |
-| **STOP** | Present summary | User reviews, runs command again |
+| Step | Action | Critical Rule |
+|------|--------|---------------|
+| **0. Check State** | `TaskList` | Task state tells you where to resume — never ask |
+| **1. Load Epic** | `TaskGet` on epic | Requirements are IMMUTABLE |
+| **2. Execute ONE Task** | Mark in_progress → follow steps → mark completed | TDD cycle, verify each step |
+| **3. Create Next Task** | `TaskCreate` based on learnings | Reflect reality, not original assumptions |
+| **4. Checkpoint** | Present summary | STOP — no exceptions |
 
-**Critical:** One task → STOP → User reviews → Next task. No batching. No continuing without checkpoint.
-
-## Task Tool Reference
-
-### TaskList
-
-Lists all tasks with status, owner, and blockers. Use to find ready tasks.
-
-```
-TaskList
-```
-
-Returns tasks showing:
-- `id` — Task identifier
-- `subject` — Task title
-- `status` — "pending", "in_progress", or "completed"
-- `blockedBy` — List of task IDs that must complete first
-
-**Ready task:** status="pending" AND blockedBy is empty
-
-### TaskGet
-
-Retrieves full task details including description.
-
-```
-TaskGet
-  taskId: "the-task-id"
-```
-
-### TaskUpdate
-
-Updates task status or dependencies.
-
-```
-TaskUpdate
-  taskId: "the-task-id"
-  status: "in_progress"  # or "completed"
-```
-
-### TaskCreate
-
-Creates a new task (used if discoveries require new work).
-
-```
-TaskCreate
-  subject: "Handle edge case discovered during implementation"
-  description: "Full description..."
-  activeForm: "Handling edge case"
-```
-
-Then set dependency:
-```
-TaskUpdate
-  taskId: "new-task-id"
-  addBlockedBy: ["current-task-id"]
-```
+**Iron Law:** One task → Checkpoint → STOP → User reviews → Next task. No batching. No "just one more."
 
 ## When to Use
 
-After `gambit:writing-plans` creates epic with Tasks.
-
-Symptoms:
 - Epic Task exists with subtasks ready to execute
-- Need to implement features iteratively
-- Requirements clear, implementation adapts to reality
+- Resuming implementation after a previous checkpoint
+- Need to implement features iteratively with human oversight
+- After `gambit:writing-plans` or `gambit:brainstorming` creates tasks
+
+**Don't use when:**
+- No epic exists → use `gambit:brainstorming` or `gambit:writing-plans`
+- Debugging a bug → use `gambit:debugging`
+- Single quick fix → just do it
 
 ## The Process
 
 ### 0. Resumption Check (Every Invocation)
 
-When this skill is invoked, first check state:
+Run `TaskList` and analyze:
 
-```
-TaskList
-```
-
-**Analyze the output:**
-
-- **Fresh start:** All tasks "pending", none "in_progress" → Proceed to Step 1
-- **Resume in-progress:** Found task with status="in_progress" → Resume at Step 2
-- **Start next:** All previous completed, next is "pending" with empty blockedBy → Step 2
-- **All done:** All subtasks "completed" → Step 4 (final check)
+- **Fresh start:** All tasks "pending", none "in_progress" → Step 1
+- **Resume in-progress:** Found task with status="in_progress" → Step 2
+- **Start next:** Previous completed, next "pending" with empty blockedBy → Step 1 then 2
+- **All done:** All subtasks "completed" → Step 5 (final validation)
 
 **Do NOT ask "where did we leave off?"** — Task state tells you exactly where to resume.
 
+---
+
 ### 1. Load Epic Context
 
-Before executing ANY task, load the epic:
-
-```
-TaskGet
-  taskId: "epic-task-id"
-```
+Before executing ANY task, read the epic with `TaskGet`.
 
 **Extract and keep in mind:**
 - Requirements (IMMUTABLE — never water these down)
 - Success criteria (validation checklist)
 - Anti-patterns (FORBIDDEN shortcuts)
-- Architecture approach
+- Approaches Considered (what was already REJECTED and why)
 
-**Why:** Requirements prevent rationalizing shortcuts when blocked.
+**Why:** Requirements prevent rationalizing shortcuts when implementation gets hard.
+
+---
 
 ### 2. Execute Current Ready Task
 
-**Find and start the task:**
-
-```
-TaskList
-```
-
-Identify ready task (status="pending", blockedBy=[]).
-
-```
-TaskUpdate
-  taskId: "ready-task-id"
-  status: "in_progress"
-```
-
-**Load full details:**
-
-```
-TaskGet
-  taskId: "ready-task-id"
-```
+**Find and claim:**
+1. `TaskList` → identify ready task (status="pending", blockedBy=[])
+2. `TaskUpdate` → mark in_progress
+3. `TaskGet` → load full task details
 
 **Execute the steps in the task description:**
 
-Task descriptions contain 4-8 bite-sized steps. Execute each:
-
-1. Follow TDD cycle (test → fail → implement → pass → commit)
+Task descriptions contain bite-sized steps. For each:
+1. Follow TDD cycle (test → fail → implement → pass)
 2. Run verifications exactly as specified
-3. Use test-runner agent to avoid context pollution:
-
-```
-Task
-  subagent_type: "hyperpowers:test-runner"
-  prompt: "Run: npm test -- tests/models/user.test.ts"
-```
+3. Commit working changes
 
 **Pre-completion verification:**
 - All steps in description completed?
-- Tests passing?
+- Tests passing? (Run them — don't assert)
 - Changes committed?
 
-**Mark complete:**
+Mark complete with `TaskUpdate` only after ALL steps verified.
 
-```
-TaskUpdate
-  taskId: "ready-task-id"
-  status: "completed"
-```
+#### When Hitting Obstacles
 
-### 2a. When Hitting Obstacles
+**CRITICAL: Check epic BEFORE switching approaches.**
 
-**CRITICAL: Check epic before switching approaches.**
-
-1. Re-read epic (`TaskGet`) for "Approaches Considered" and "Anti-patterns"
+1. Re-read epic with `TaskGet` — check "Approaches Considered" and "Anti-patterns"
 2. If alternative was already REJECTED, note original rejection reason
 3. Only switch if rejection reason no longer applies AND user approves
 
 **Never water down requirements to "make it easier."**
 
-### 2b. When Discoveries Require New Work
+#### When Discoveries Require New Work
 
 If implementation reveals unexpected work:
 
-1. **Create new task** with same rigor as initial planning (full detail, no placeholders)
-2. **Set dependency** on current task via `TaskUpdate addBlockedBy`
-3. **Refine** - ensure it's 2-5 min, explicit paths, testable criteria
-4. **Document** in STOP checkpoint that new task was added
+1. Create new task with `TaskCreate` — full detail, no placeholders
+2. Set dependency with `TaskUpdate addBlockedBy`
+3. Ensure it's bite-sized (2-5 min), has explicit paths, testable criteria
+4. Document in checkpoint summary that new task was added
 
-### 3. Review and Adapt
+---
 
-After completing task:
+### 3. Create Next Task
 
-**Review questions:**
-1. What did we learn?
-2. Discovered existing functionality, blockers, limitations?
-3. Moving toward epic success criteria?
+After completing a task, create the NEXT task based on what you learned. This is how executing-plans differs from writing-plans: tasks are created iteratively as reality unfolds, not all upfront.
+
+**Review what you learned:**
+1. What did we discover during implementation?
+2. What existing functionality, blockers, or limitations appeared?
+3. Are we still moving toward epic success criteria?
 4. What's the logical next step?
-
-**Re-read epic:**
-
-```
-TaskGet
-  taskId: "epic-task-id"
-```
-
-**Check remaining tasks:**
-
-```
-TaskList
-```
 
 **Three cases:**
 
-**A) Next task still valid** → Note for summary, proceed to STOP
+**A) Clear next step** → Create task with `TaskCreate`, set dependencies, proceed to checkpoint
 
-**B) Next task now redundant:**
-- Discovery makes planned work unnecessary
-- Document why in summary
-- Can mark completed with note:
-```
-TaskUpdate
-  taskId: "redundant-task-id"
-  status: "completed"
-  description: "SKIPPED: Discovered existing implementation in lib/auth.ts"
-```
+**B) Planned next task now redundant:**
+- Discovery makes it unnecessary
+- Document why in checkpoint
+- Mark completed with note: "SKIPPED: [reason]"
+- Create the actual next task if one exists
 
 **C) Need to adjust approach:**
-- Document learnings in summary
+- Document learnings in checkpoint
 - Let user decide how to adapt
+
+**Task quality check** (same as writing-plans):
+- Scoped: 2-5 minutes of work
+- Self-contained: Can execute without asking questions
+- Explicit: All file paths specified
+- Testable: Has verification command with expected output
+
+---
 
 ### 4. STOP Checkpoint (Mandatory)
 
-**Present summary to user:**
+**Present this summary, then STOP:**
 
 ```markdown
-## Task Complete — Checkpoint
+## Checkpoint
 
 ### What Was Done
 - [Summary of implementation]
 - [Key decisions made]
 
-### Task Status
-```
-TaskList output showing current state
-```
-
 ### Learnings
 - [Discoveries during implementation]
 - [Anything that affects future tasks]
+
+### Task Status
+[TaskList output — completed, in-progress, pending]
 
 ### Epic Progress
 - [X/Y success criteria met]
 - [What remains]
 
 ### Next Task
-- [Title of next ready task]
-- [Brief description]
+- [Title and brief description]
+- [Why this is the right next step based on learnings]
 
 ### To Continue
 Run `/gambit:executing-plans` to execute the next task.
 ```
 
 **Why STOP is mandatory:**
-- User can review implementation
-- User can clear context if needed
-- User can adjust next task based on learnings
+- User can review implementation quality
+- User can clear context if conversation is long
+- User can adjust direction based on learnings
 - Prevents runaway execution without oversight
 
-**Do NOT rationalize skipping:**
-- "Good context loaded" → STOP anyway
-- "Just one more quick task" → STOP anyway
-- "User trusts me" → STOP anyway; one command ≠ blanket permission
+---
 
 ### 5. Final Validation
 
 When all subtasks completed:
 
-```
-TaskList
-```
-
-Verify all subtasks show status="completed".
-
-**Check epic success criteria:**
-
-```
-TaskGet
-  taskId: "epic-task-id"
-```
-
-Review each success criterion. Run full verification.
+1. `TaskList` — verify all subtasks show "completed"
+2. `TaskGet` on epic — review each success criterion
+3. Run full verification suite
 
 **Present completion summary:**
 
 ```markdown
-## Epic Complete — Final Review
+## Epic Complete
 
 ### Requirements Check
-- [x] Requirement 1: [How satisfied]
-- [x] Requirement 2: [How satisfied]
-
-### Success Criteria
-- [x] Criterion 1: [Evidence]
-- [x] Criterion 2: [Evidence]
+- [x] Requirement 1: [How satisfied, with evidence]
+- [x] Requirement 2: [How satisfied, with evidence]
 
 ### Anti-patterns Avoided
 - [x] Did not [forbidden thing 1]
 - [x] Did not [forbidden thing 2]
 
 ### Task Summary
-```
-TaskList showing all completed
-```
+[TaskList showing all completed]
 
-### Ready for Finish
+### Next
 Use `/gambit:finishing-branch` to merge, create PR, or cleanup.
 ```
 
-**Mark epic complete:**
+Mark epic complete with `TaskUpdate`.
 
-```
-TaskUpdate
-  taskId: "epic-task-id"
-  status: "completed"
-```
+---
 
 ## Examples
 
-### Proper STOP Checkpoint
-
-After completing a task, present this format then STOP:
-
-```markdown
-## Task Complete — Checkpoint
-
-### What Was Done
-- [Summary of implementation]
-
-### Task Status
-- Task 1: completed
-- Task 2: completed ← just finished
-- Task 3: pending, blockedBy: [] ← ready
-
-### Epic Progress
-- 2/4 success criteria met
-
-### To Continue
-Run `/gambit:executing-plans` to execute the next task.
-```
-
-**Never rationalize "just one more task"** - STOP means STOP.
-
-### Obstacle Handling
+### Handling Obstacles Correctly
 
 When blocked, check epic BEFORE switching approaches:
-1. Read "Approaches Considered" section
-2. If alternative was rejected, note original rejection reason
-3. Only switch if rejection reason no longer applies AND user approves
 
-## Anti-patterns
+```
+1. Hit obstacle: OAuth library doesn't support PKCE
+2. Re-read epic → "Approaches Considered" shows:
+   "Implicit flow - REJECTED BECAUSE: security risk"
+3. PKCE is different from implicit flow → safe to explore
+4. Ask user before switching: "Library X doesn't support PKCE.
+   Should I try library Y, or use a different approach?"
+```
 
-**Don't:**
-- Continue past STOP checkpoint
-- Execute multiple tasks without stopping
-- Water down requirements when blocked
-- Close task with steps incomplete
-- Rationalize "just one more task"
-- Switch to rejected approaches without checking epic
-- Create new tasks without SRE-style refinement
-- Skip checking "Approaches Considered" when hitting obstacles
+**Wrong:** "PKCE doesn't work, let me just use implicit flow" (REJECTED approach)
 
-**Do:**
-- STOP after every task
-- Re-read epic when blocked
-- Check "Approaches Considered" before switching approaches
-- Apply SRE refinement to newly created tasks
-- Complete ALL steps before `TaskUpdate status="completed"`
-- Document learnings in checkpoint
-- Let user review before continuing
+### Creating Next Task Based on Learnings
+
+After completing "Set up OAuth config", you discover the framework has built-in session middleware:
+
+```
+TaskCreate
+  subject: "Integrate with existing session middleware"
+  description: |
+    ## Goal
+    Use framework's built-in session middleware instead of custom implementation.
+
+    ## Implementation
+    1. Study existing middleware: src/middleware/session.ts:15-40
+    2. Write test: auth token stored in session correctly
+    3. Integrate OAuth token storage with existing session
+    4. Verify: session persists across requests
+
+    ## Success Criteria
+    - [ ] OAuth tokens stored via existing session middleware
+    - [ ] No duplicate session logic
+    - [ ] Tests passing
+  activeForm: "Integrating session middleware"
+```
+
+This task wouldn't have been correct if planned upfront — it reflects what you actually found.
+
+## Critical Rules
+
+1. **ONE task then STOP** — no batching, no "just one more"
+2. **Epic requirements IMMUTABLE** — tasks adapt, requirements don't
+3. **Check epic before switching approaches** — rejected approaches stay rejected unless conditions changed
+4. **Create next task from learnings** — not from upfront assumptions
+5. **Evidence before completion** — run tests, show output, then mark done
+6. **Never water down requirements** — if blocked, ask user, don't simplify
+
+**Common rationalizations (all mean STOP, follow the process):**
+
+| Excuse | Reality |
+|--------|---------|
+| "Good context loaded" | STOP anyway — user reviews matter |
+| "Just one more quick task" | STOP anyway — quick tasks compound |
+| "User trusts me" | STOP anyway — one invocation ≠ blanket permission |
+| "This is trivial" | STOP anyway — trivial tasks can have unexpected effects |
+| "I'll save time by continuing" | STOP anyway — wrong direction wastes more time |
 
 ## Verification Checklist
 
 Before completing each task:
 - [ ] All steps in description executed
-- [ ] Tests passing (verified with test-runner agent)
+- [ ] Tests passing (verified by running them)
 - [ ] Changes committed
 - [ ] `TaskUpdate status="completed"` only after truly done
 
 After completing each task:
-- [ ] Reviewed learnings against epic (`TaskGet` on epic)
-- [ ] Checked `TaskList` for next ready task
+- [ ] Reviewed learnings against epic (`TaskGet`)
+- [ ] Created next task based on learnings (or documented why not)
 - [ ] Presented checkpoint summary
 - [ ] STOPPED execution
 - [ ] Waiting for user to run `/gambit:executing-plans` again
 
 Before closing epic:
-- [ ] ALL subtasks show status="completed" in `TaskList`
-- [ ] ALL success criteria verified against epic
+- [ ] ALL subtasks show "completed" in `TaskList`
+- [ ] ALL success criteria verified with evidence
 - [ ] ALL anti-patterns avoided
-- [ ] `TaskUpdate status="completed"` on epic task
+- [ ] Epic marked complete with `TaskUpdate`
 
 ## Integration
 
-**This skill is called by:**
+**Called by:**
 - User via `/gambit:executing-plans`
-- After `gambit:writing-plans` creates tasks
+- After `gambit:writing-plans` or `gambit:brainstorming` creates tasks
 
-**This skill calls:**
+**Calls:**
 - `gambit:test-driven-development` during implementation
 - `gambit:verification` before claiming task complete
-- test-runner agent for running tests
 - `gambit:finishing-branch` after epic complete
-
-**Task tools used:**
-- `TaskList` — Find ready tasks, check progress
-- `TaskGet` — Load epic requirements, read task details
-- `TaskUpdate` — Mark in_progress, mark completed
-- `TaskCreate` — Add tasks for discovered work
-
-**Workflow pattern:**
-```
-/gambit:executing-plans
-  → TaskList (find ready task)
-  → TaskUpdate status="in_progress"
-  → Execute steps
-  → TaskUpdate status="completed"
-  → Present checkpoint
-  → STOP
-
-[User reviews, clears context if needed]
-
-/gambit:executing-plans
-  → TaskList (find next ready task)
-  → ... repeat ...
-
-[Until all tasks complete]
-
-/gambit:finishing-branch
-  → Merge/PR/cleanup
-```
