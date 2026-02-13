@@ -1,15 +1,13 @@
 ---
 name: writing-skills
-description: Use when creating or modifying skills - evaluation-driven development, TDD with subagents, test with all target models before finalizing
+description: Creates and modifies Claude skills using evaluation-driven development. Tests with subagents before finalizing. Use when creating new skills, updating existing skills, writing SKILL.md files, or when user mentions "create a skill", "write a skill", "new skill", "modify skill", or "improve skill".
 ---
 
 # Writing Skills
 
 ## Overview
 
-Skills are executable documentation. Writing skills without testing is like writing code without tests - you're guessing. The Anthropic best practice: create evaluations BEFORE writing documentation.
-
-**Core principle:** Test the skill BEFORE finalizing it. If a subagent can rationalize around it, production Claude will too.
+Test the skill BEFORE finalizing it. If a subagent can rationalize around it, production Claude will too.
 
 **Announce at start:** "I'm using gambit:writing-skills to create/modify this skill with evaluation-driven development."
 
@@ -21,8 +19,9 @@ LOW FREEDOM - Follow the TDD cycle exactly. Test with subagent before every comm
 
 | Phase | Action | STOP If |
 |-------|--------|---------|
+| 0 | Read official guidance | — |
 | 1 | Define evaluation criteria | Can't articulate success |
-| 2 | Baseline test (RED) | Subagent follows perfectly |
+| 2 | Baseline test (RED) | Subagent already follows correctly |
 | 3 | Write minimal skill (GREEN) | Test still fails |
 | 4 | Pressure test (REFACTOR) | Subagent finds loopholes |
 | 5 | Multi-model test | Fails on any target model |
@@ -30,70 +29,37 @@ LOW FREEDOM - Follow the TDD cycle exactly. Test with subagent before every comm
 
 **Iron Law:** No skill change without failing test first.
 
-## Skill Anatomy
+## Key Constraints
 
-### Frontmatter Requirements (Official)
+See references for full details, examples, and patterns. These are the non-negotiable rules:
 
-```yaml
----
-name: processing-pdfs          # 64 chars max, lowercase/numbers/hyphens only
-description: Extract text...   # 1024 chars max, non-empty, no XML tags
----
-```
+- **name:** 64 chars max, lowercase/numbers/hyphens only, gerund form preferred (`processing-pdfs`)
+- **description:** 1024 chars max, third person, include WHAT + WHEN + trigger phrases
+- **description is the trigger:** All "when to use" info goes in the description, NOT the body. The body only loads AFTER triggering.
+- **SKILL.md body:** Under 500 lines. Split into `references/` if over.
+- **References:** One level deep from SKILL.md. Files >100 lines need a table of contents.
+- **No extras:** No README.md, CHANGELOG.md, or auxiliary docs in skill folder.
+- **Conciseness:** Claude is already smart. Only add context it doesn't have. Challenge each paragraph's token cost.
+- **Scripts over instructions:** Use `scripts/` for deterministic operations. Code is reliable; language instructions aren't.
+- **Degrees of freedom:** Start HIGH (open field), tighten to LOW (narrow bridge) only where failures occur.
 
-**Name constraints:**
-- Lowercase letters, numbers, hyphens only
-- No XML tags, no reserved words ("anthropic", "claude")
-- Prefer gerund form: `processing-pdfs`, `analyzing-spreadsheets`, `managing-databases`
-
-**Description requirements:**
-- Include BOTH what the skill does AND when to use it
-- Always write in third person (injected into system prompt)
-- Include trigger keywords for discoverability
-
-**Good:** `Extracts text from PDF files. Use when working with PDFs or document extraction.`
-**Bad:** `I can help you with PDFs` (first person) or `Helps with documents` (too vague)
-
-### Token Budget
-
-**Official guidance:** Keep SKILL.md body under 500 lines.
-
-Context window is a public good. Your skill shares it with system prompt, conversation history, other skills, and the actual request. Challenge each piece: "Does Claude really need this explanation?"
-
-**If over 500 lines:** Split into separate files using progressive disclosure (see below).
-
-### Progressive Disclosure
-
-SKILL.md serves as overview pointing to detailed materials. Files are read on-demand.
-
-```
-skill-name/
-├── SKILL.md              # Main instructions (<500 lines)
-├── REFERENCE.md          # API reference (loaded as needed)
-├── EXAMPLES.md           # Usage examples (loaded as needed)
-└── scripts/
-    └── utility.py        # Executed, not loaded into context
-```
-
-**Critical:** Keep references ONE level deep from SKILL.md. Deeply nested references get partially read.
-
-### Degrees of Freedom
-
-| Level | Use When | Example |
-|-------|----------|---------|
-| **HIGH** | Multiple valid approaches, context-dependent | Brainstorming, code review |
-| **MEDIUM** | Preferred pattern exists, some variation OK | Most implementation skills |
-| **LOW** | Fragile operations, consistency critical | Database migrations, verification |
-
-**Analogy:** Think of Claude navigating a path:
-- Narrow bridge with cliffs → Exact instructions (LOW)
-- Open field → General direction (HIGH)
-
-**Rule:** Start with more freedom, tighten only where failures occur.
+**Description debug tip:** Ask Claude "When would you use the [skill-name] skill?" — it quotes the description back. Adjust based on what's missing.
 
 ---
 
 ## The Process
+
+### Phase 0: Study Official Guidance
+
+**BEFORE doing anything else**, read all three reference files:
+
+1. `references/anthropic-complete-guide.md` — Use case categories, 5 workflow patterns, success metrics, troubleshooting
+2. `references/anthropic-best-practices.md` — Conciseness, progressive disclosure patterns, anti-patterns, evaluation-driven development, Claude A/B iteration
+3. `references/anthropic-skill-creator.md` — Skill anatomy, creation process, bundled resource types (scripts/, references/, assets/)
+
+Internalize these before writing.
+
+---
 
 ### Phase 1: Define Evaluation Criteria
 
@@ -126,9 +92,7 @@ TaskCreate
 
 ### Phase 2: Baseline Test (RED)
 
-**Test that the problem exists without the skill.**
-
-Dispatch subagent WITHOUT skill:
+Test that the problem exists without the skill.
 
 ```
 Task
@@ -148,14 +112,12 @@ Task
 
 ### Phase 3: Write Minimal Skill (GREEN)
 
-**Smallest skill that makes the test pass.**
-
-Start minimal:
+Smallest skill that makes the test pass. Apply patterns from the reference files.
 
 ```yaml
 ---
 name: skill-name
-description: [What it does]. Use when [trigger].
+description: [What it does]. Use when [trigger phrases].
 ---
 
 # Skill Title
@@ -190,7 +152,7 @@ Task
 
 ### Phase 4: Pressure Test (REFACTOR)
 
-**Find loopholes Claude exploits under pressure.**
+Find loopholes Claude exploits under pressure.
 
 #### Time Pressure
 
@@ -241,7 +203,7 @@ Task
 
 ### Phase 5: Multi-Model Test
 
-**Official guidance:** Test with all models you plan to use.
+Test with all models you plan to use.
 
 | Model | Check |
 |-------|-------|
@@ -269,7 +231,23 @@ Task
 2. Effectiveness (pass with skill)
 3. Pressure tests (time, sunk cost, authority)
 4. Multi-model (Haiku, Sonnet, Opus)
-5. Discoverability (Claude selects skill from options)
+5. Triggering tests (see below)
+
+**Triggering tests:** Verify the description activates correctly.
+
+```
+Should trigger (run 5-10 queries):
+- Obvious task phrases
+- Paraphrased requests
+- Domain-specific keywords
+
+Should NOT trigger (run 3-5 queries):
+- Unrelated topics
+- Adjacent-but-different skills
+```
+
+**Under-triggering fix:** Add more keywords and trigger phrases to description.
+**Over-triggering fix:** Add negative triggers ("Do NOT use for...") and narrow scope.
 
 **Line count check:**
 ```bash
@@ -287,24 +265,10 @@ TaskUpdate
     - Effectiveness: PASS
     - Pressure tests: PASS
     - Multi-model: PASS
+    - Triggering: PASS
     - Lines: [N] (<500)
   status: "completed"
 ```
-
----
-
-## Iterative Development with Claude A/B
-
-**Anthropic's recommended pattern:**
-
-1. **Complete task with Claude A** (author): Work through problem, note what context you provide
-2. **Identify reusable pattern**: What would help with similar future tasks?
-3. **Ask Claude A to create skill**: "Create a skill capturing this pattern"
-4. **Review for conciseness**: Remove explanations Claude already knows
-5. **Test with Claude B** (fresh instance): Does it find info, apply rules, succeed?
-6. **Iterate**: If B struggles, return to A with specifics
-
-**Key insight:** Claude A designs the skill, Claude B tests it. Alternate between them.
 
 ---
 
@@ -323,11 +287,12 @@ TaskUpdate
 
 ### Rules That Have No Exceptions
 
-1. **Test before writing** → Baseline failure must be confirmed
-2. **Test after writing** → Skill must make test pass
-3. **Pressure test discipline skills** → Time, sunk cost, authority
-4. **Test with target models** → Haiku, Sonnet, Opus if using all
-5. **Respect 500-line limit** → Split if over, use progressive disclosure
+1. **Read references first** → Phase 0 is not optional
+2. **Test before writing** → Baseline failure must be confirmed
+3. **Test after writing** → Skill must make test pass
+4. **Pressure test discipline skills** → Time, sunk cost, authority
+5. **Test with target models** → Haiku, Sonnet, Opus if using all
+6. **Respect 500-line limit** → Split if over, use progressive disclosure
 
 ### Common Excuses
 
@@ -338,19 +303,23 @@ TaskUpdate
 | "Pressure tests are overkill" | Production faces more pressure |
 | "Just a small change" | Small changes create loopholes |
 | "Works on Opus so it's fine" | Haiku needs more guidance |
+| "I already know the best practices" | Read the references anyway |
 
 ---
 
 ## Verification Checklist
 
+- [ ] Read all three reference files (Phase 0)
 - [ ] Evaluation criteria defined
 - [ ] Baseline test confirms failure without skill
 - [ ] Skill makes test pass
 - [ ] Pressure tests pass (time, sunk cost, authority)
 - [ ] Multi-model tests pass (Haiku, Sonnet, Opus)
-- [ ] Description has trigger keywords, third person
+- [ ] Triggering tests pass (activates correctly, doesn't over-trigger)
+- [ ] Description has trigger keywords, third person, all "when to use" info
 - [ ] Under 500 lines (or split with progressive disclosure)
 - [ ] References one level deep from SKILL.md
+- [ ] No extra files (no README, CHANGELOG, etc.)
 - [ ] Task updated with results
 - [ ] Committed with test results
 
@@ -364,21 +333,12 @@ TaskUpdate
 
 **Workflow:**
 ```
-Need skill → Define eval → Baseline (RED) → Write (GREEN) → Pressure (REFACTOR) → Multi-model → Done
+Need skill → Read references → Define eval → Baseline (RED) → Write (GREEN) → Pressure (REFACTOR) → Multi-model → Triggering → Done
 ```
-
----
-
-## Resources
-
-**Frontmatter:**
-- name: 64 chars, lowercase/numbers/hyphens, gerund form preferred
-- description: 1024 chars, third person, include triggers
-
-**Token budget:** <500 lines, split if needed
 
 **When stuck:**
 - Baseline passes → Problem doesn't exist
 - Skill test fails → Instructions unclear
 - Pressure test fails → Add explicit rules
 - Model-specific failure → Add detail for weaker models
+- Triggering failure → Adjust description keywords
