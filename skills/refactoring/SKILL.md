@@ -42,10 +42,10 @@ MEDIUM FREEDOM - Follow the change→test→commit cycle strictly. Adapt specifi
 - Simplifying complex code while preserving behavior
 
 **Don't use for:**
-- Changing functionality (use `gambit:execute-plan`)
+- Changing functionality (use `gambit:executing-plans`)
 - Fixing bugs (use `gambit:debugging`)
 - Adding features while restructuring (do separately)
-- Code without tests (write tests first using `gambit:tdd`)
+- Code without tests (write tests first using `gambit:test-driven-development`)
 
 ## The Process
 
@@ -523,8 +523,8 @@ Before marking refactoring complete:
 ## Integration
 
 **This skill requires:**
-- Tests exist (use `gambit:tdd` to write tests first if none exist)
-- `gambit:verify` (for final verification)
+- Tests exist (use `gambit:test-driven-development` to write tests first if none exist)
+- `gambit:verification` (for final verification)
 - test-runner agent (for running tests without context pollution)
 
 **This skill is called when:**
@@ -565,6 +565,6 @@ Code improved, tests still green
 **When stuck:**
 - Tests fail after change → Undo (git restore), make smaller change
 - 3+ failures → Question if refactoring is right approach
-- No tests exist → Use `gambit:tdd` to write tests first
+- No tests exist → Use `gambit:test-driven-development` to write tests first
 - Unsure how small → If it touches more than one function/file, too big
 - Behavior needs to change → Stop refactoring, do feature work separately

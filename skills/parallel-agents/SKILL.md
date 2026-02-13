@@ -567,7 +567,7 @@ Before completing parallel agent work:
 
 **This skill calls:**
 - `gambit:debugging` (how to investigate individual failures)
-- `gambit:verify` (verify integration)
+- `gambit:verification` (verify integration)
 - test-runner agent (run tests without context pollution)
 - general-purpose agents (for parallel investigation)
 

@@ -73,7 +73,7 @@ if [[ "$show_tdd" == "true" ]] || [[ "$show_verify" == "true" ]] || [[ "$show_co
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     if [[ "$show_tdd" == "true" ]]; then
-        echo "💭 Remember: Write tests first (gambit:tdd)"
+        echo "💭 Remember: Write tests first (gambit:test-driven-development)"
     fi
 
     if [[ "$show_verify" == "true" ]]; then

@@ -11,7 +11,7 @@ Guide completion of development work by verifying tasks, running tests, presenti
 
 **Core principle:** Verify tasks → Verify tests → Present options → Execute choice → Clean up.
 
-**Announce at start:** "I'm using gambit:finish to complete this work."
+**Announce at start:** "I'm using gambit:finishing-branch to complete this work."
 
 ## Rigidity Level
 
@@ -49,7 +49,7 @@ LOW FREEDOM - Follow the 6-step process exactly. Present exactly 4 options. Neve
 - Work still in progress
 - Tests failing
 - Epic has open tasks
-- Mid-implementation (use `gambit:execute-plan`)
+- Mid-implementation (use `gambit:executing-plans`)
 
 ## The Process
 
@@ -582,20 +582,20 @@ Mark epic complete after successful merge/PR.
 
 **This skill is called by:**
 - User after implementation complete
-- After `gambit:execute-plan` completes all tasks
+- After `gambit:executing-plans` completes all tasks
 
 **This skill calls:**
 - gh commands (PR creation)
 - git commands (merge, branch, worktree)
 
 **This skill pairs with:**
-- `gambit:worktree` - Cleans up worktree created by that skill
+- `gambit:using-worktrees` - Cleans up worktree created by that skill
 
 **Workflow:**
 ```
-gambit:execute-plan
+gambit:executing-plans
     → All tasks complete
-gambit:finish
+gambit:finishing-branch
     → Step 1: Verify tasks complete
     → Step 2: Verify tests pass
     → Step 3: Determine base branch

@@ -12,7 +12,7 @@ Execute Tasks one at a time with mandatory human checkpoints. Load epic → Exec
 
 **Core principle:** Epic requirements are immutable. Tasks adapt to reality. STOP after each task for human oversight.
 
-**Announce at start:** "I'm using gambit:execute-plan to implement this task."
+**Announce at start:** "I'm using gambit:executing-plans to implement this task."
 
 ## Rigidity Level
 
@@ -91,7 +91,7 @@ TaskUpdate
 
 ## When to Use
 
-After `gambit:write-plan` creates epic with Tasks.
+After `gambit:writing-plans` creates epic with Tasks.
 
 Symptoms:
 - Epic Task exists with subtasks ready to execute
@@ -274,7 +274,7 @@ TaskList output showing current state
 - [Brief description]
 
 ### To Continue
-Run `/gambit:execute-plan` to execute the next task.
+Run `/gambit:executing-plans` to execute the next task.
 ```
 
 **Why STOP is mandatory:**
@@ -330,7 +330,7 @@ TaskList showing all completed
 ```
 
 ### Ready for Finish
-Use `/gambit:finish` to merge, create PR, or cleanup.
+Use `/gambit:finishing-branch` to merge, create PR, or cleanup.
 ```
 
 **Mark epic complete:**
@@ -408,7 +408,7 @@ After completing each task:
 - [ ] Checked `TaskList` for next ready task
 - [ ] Presented checkpoint summary
 - [ ] STOPPED execution
-- [ ] Waiting for user to run `/gambit:execute-plan` again
+- [ ] Waiting for user to run `/gambit:executing-plans` again
 
 Before closing epic:
 - [ ] ALL subtasks show status="completed" in `TaskList`
@@ -419,14 +419,14 @@ Before closing epic:
 ## Integration
 
 **This skill is called by:**
-- User via `/gambit:execute-plan`
-- After `gambit:write-plan` creates tasks
+- User via `/gambit:executing-plans`
+- After `gambit:writing-plans` creates tasks
 
 **This skill calls:**
-- `gambit:tdd` during implementation
-- `gambit:verify` before claiming task complete
+- `gambit:test-driven-development` during implementation
+- `gambit:verification` before claiming task complete
 - test-runner agent for running tests
-- `gambit:finish` after epic complete
+- `gambit:finishing-branch` after epic complete
 
 **Task tools used:**
 - `TaskList` — Find ready tasks, check progress
@@ -436,7 +436,7 @@ Before closing epic:
 
 **Workflow pattern:**
 ```
-/gambit:execute-plan
+/gambit:executing-plans
   → TaskList (find ready task)
   → TaskUpdate status="in_progress"
   → Execute steps
@@ -446,12 +446,12 @@ Before closing epic:
 
 [User reviews, clears context if needed]
 
-/gambit:execute-plan
+/gambit:executing-plans
   → TaskList (find next ready task)
   → ... repeat ...
 
 [Until all tasks complete]
 
-/gambit:finish
+/gambit:finishing-branch
   → Merge/PR/cleanup
 ```

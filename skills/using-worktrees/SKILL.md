@@ -11,7 +11,7 @@ Git worktrees create isolated workspaces sharing the same repository, allowing w
 
 **Core principle:** Systematic directory selection + safety verification + environment setup = reliable isolation.
 
-**Announce at start:** "I'm using gambit:worktree to set up an isolated workspace."
+**Announce at start:** "I'm using gambit:using-worktrees to set up an isolated workspace."
 
 ## Rigidity Level
 
@@ -434,7 +434,7 @@ Before reporting ready:
 ### Good: Complete Workflow
 
 ```
-Claude: "I'm using gambit:worktree to set up an isolated workspace."
+Claude: "I'm using gambit:using-worktrees to set up an isolated workspace."
 
 Step 1: Check existing directories
 $ ls -d .worktrees 2>/dev/null
@@ -515,26 +515,26 @@ Untracked files:
 ## Integration
 
 **This skill is called by:**
-- `gambit:brainstorm` (after design approved)
+- `gambit:brainstorming` (after design approved)
 - Any skill needing isolated workspace
 
 **This skill pairs with:**
-- `gambit:finish` - REQUIRED for cleanup after work complete
-- `gambit:execute-plan` - Work happens in this worktree
+- `gambit:finishing-branch` - REQUIRED for cleanup after work complete
+- `gambit:executing-plans` - Work happens in this worktree
 
 **Workflow:**
 ```
-gambit:brainstorm
+gambit:brainstorming
     → Design approved
-gambit:worktree
+gambit:using-worktrees
     → Check directories (Step 1-3)
     → Verify gitignore (Step 4)
     → Create worktree (Step 5)
     → Environment setup (Step 6)
     → Verify baseline (Step 7)
     → Report ready (Step 8)
-gambit:execute-plan
+gambit:executing-plans
     → Implement in worktree
-gambit:finish
+gambit:finishing-branch
     → Merge/PR/cleanup worktree
 ```

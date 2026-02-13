@@ -35,15 +35,15 @@ Verify installation:
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | **using-gambit** | `/gambit` | Session entry, skill discovery |
-| **brainstorming** | `/gambit:brainstorm` | Socratic design refinement |
-| **writing-plans** | `/gambit:write-plan` | Create Tasks with dependencies |
-| **executing-plans** | `/gambit:execute-plan` | One-task-at-a-time execution |
-| **using-worktrees** | `/gambit:worktree` | Git worktree + devenv setup |
-| **finishing-branch** | `/gambit:finish` | Merge/PR/discard workflow |
-| **test-driven-dev** | `/gambit:tdd` | RED-GREEN-REFACTOR |
-| **verification** | `/gambit:verify` | Evidence before completion |
-| **debugging** | `/gambit:debug` | Systematic root cause analysis |
-| **refactoring** | `/gambit:refactor` | Safe incremental transforms |
+| **brainstorming** | `/gambit:brainstorming` | Socratic design refinement |
+| **writing-plans** | `/gambit:writing-plans` | Create Tasks with dependencies |
+| **executing-plans** | `/gambit:executing-plans` | One-task-at-a-time execution |
+| **using-worktrees** | `/gambit:using-worktrees` | Git worktree + devenv setup |
+| **finishing-branch** | `/gambit:finishing-branch` | Merge/PR/discard workflow |
+| **test-driven-development** | `/gambit:test-driven-development` | RED-GREEN-REFACTOR |
+| **verification** | `/gambit:verification` | Evidence before completion |
+| **debugging** | `/gambit:debugging` | Systematic root cause analysis |
+| **refactoring** | `/gambit:refactoring` | Safe incremental transforms |
 
 ## Basic Workflow
 

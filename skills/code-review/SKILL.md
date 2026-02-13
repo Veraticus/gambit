@@ -442,12 +442,12 @@ Will implement all 6 once clarified."
 ## Integration
 
 **This skill calls:**
-- `gambit:verify` (for self-review verification)
+- `gambit:verification` (for self-review verification)
 - feature-dev:code-reviewer agent (for requesting review)
 - test-runner agent (for running tests)
 
 **This skill is called by:**
-- `gambit:execute-plan` (after each Task)
+- `gambit:executing-plans` (after each Task)
 - Before merging to main
 - When stuck and need fresh perspective
 

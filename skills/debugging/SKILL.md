@@ -56,8 +56,8 @@ LOW FREEDOM - Follow the 6-phase process exactly. No fixes without root cause ev
 - You don't fully understand the issue
 
 **Don't use for:**
-- Implementing new features (use `gambit:execute-plan`)
-- Refactoring (use `gambit:refactor`)
+- Implementing new features (use `gambit:executing-plans`)
+- Refactoring (use `gambit:refactoring`)
 - Code that's working but ugly
 
 ## The Process
@@ -620,8 +620,8 @@ Before claiming bug fixed:
 ## Integration
 
 **This skill calls:**
-- `gambit:tdd` (for RED-GREEN cycle)
-- `gambit:verify` (for test suite verification)
+- `gambit:test-driven-development` (for RED-GREEN cycle)
+- `gambit:verification` (for test suite verification)
 - Explore agent (for codebase investigation)
 - test-runner agent (for running tests without context pollution)
 - WebSearch (for error message research)

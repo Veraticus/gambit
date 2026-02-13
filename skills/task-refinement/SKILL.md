@@ -39,14 +39,14 @@ LOW FREEDOM - Follow the 8-category checklist exactly. Apply all categories to e
 - Reviewing epic/feature plans before implementation
 - Need to ensure junior engineer can execute without questions
 - Want to catch edge cases and failure modes upfront
-- After `gambit:brainstorm` creates initial design
-- Before `gambit:execute-plan` starts implementation
+- After `gambit:brainstorming` creates initial design
+- Before `gambit:executing-plans` starts implementation
 
 **Don't use for:**
 - Task already being implemented (too late)
 - Just need to understand existing code (use Explore agent)
 - Debugging issues (use `gambit:debugging`)
-- Creating plan from scratch (use `gambit:brainstorm`)
+- Creating plan from scratch (use `gambit:brainstorming`)
 
 ## The 8-Category Checklist
 
@@ -546,15 +546,15 @@ Before completing SRE review:
 ## Integration
 
 **This skill is used after:**
-- `gambit:brainstorm` (creates initial design)
-- `gambit:write-plan` (creates Tasks)
+- `gambit:brainstorming` (creates initial design)
+- `gambit:writing-plans` (creates Tasks)
 
 **This skill is used before:**
-- `gambit:execute-plan` (implements Tasks)
+- `gambit:executing-plans` (implements Tasks)
 
 **Workflow:**
 ```
-gambit:brainstorm → gambit:write-plan → gambit:task-refinement → gambit:execute-plan
+gambit:brainstorming → gambit:writing-plans → gambit:task-refinement → gambit:executing-plans
                                                ↓
                                         (if gaps: revise)
 ```

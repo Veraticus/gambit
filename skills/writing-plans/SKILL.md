@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: Creates Tasks with dependencies, exact file paths, complete code, and verification commands. Use when requirements are clear for multi-step tasks.
+description: Creates implementation plans as native Tasks with dependencies, exact file paths, and verification commands. Use when requirements are clear for multi-step tasks, when breaking work into trackable pieces, or when multiple sessions will execute the work.
 user_invokable: true
 ---
 
@@ -8,11 +8,11 @@ user_invokable: true
 
 ## Overview
 
-Create comprehensive implementation plans as native Claude Code Tasks. Assume the engineer has zero codebase context and questionable taste. Document everything: exact file paths, complete code, verification commands, expected output.
+Create implementation plans as native Claude Code Tasks. Each task: exact file paths, clear steps, verification commands. No placeholders, no conditional steps.
 
-**Core principle:** No placeholders. No assumptions. Verify with codebase-investigator, then write definitive steps.
+**Core principle:** Verify assumptions with the codebase first, then write definitive steps.
 
-**Announce at start:** "I'm using gambit:write-plan to create the implementation plan."
+**Announce at start:** "I'm using gambit:writing-plans to create the implementation plan."
 
 ## Rigidity Level
 
@@ -23,65 +23,33 @@ MEDIUM FREEDOM — Follow task structure and verification pattern strictly. Adap
 | Step | Action | Critical Rule |
 |------|--------|---------------|
 | **Create Epic** | `TaskCreate` with requirements + success criteria | Requirements are IMMUTABLE |
-| **Verify Codebase** | Use codebase-investigator agent | NEVER verify yourself |
-| **Create Subtasks** | `TaskCreate` for each, then `TaskUpdate` with `addBlockedBy` | Bite-sized (2-5 min each) |
-| **Present to User** | Show COMPLETE plan FIRST | Then ask for approval |
-| **Continue** | Move to next subtask automatically | NO asking permission between |
-
-**FORBIDDEN:** Placeholders like `[implementation details go here]`
-**REQUIRED:** Complete code, exact paths, real commands
-
-## Task Tool Reference
-
-### TaskCreate
-
-Creates a new task. Returns the task ID.
-
-```
-TaskCreate
-  subject: "Brief imperative title (e.g., 'Add login endpoint')"
-  description: "Full markdown description with steps, code, commands"
-  activeForm: "Present participle for spinner (e.g., 'Adding login endpoint')"
-```
-
-### TaskUpdate
-
-Updates an existing task. Use for setting dependencies and status.
-
-```
-TaskUpdate
-  taskId: "the-task-id"
-  status: "pending" | "in_progress" | "completed"
-  addBlockedBy: ["task-id-that-must-complete-first"]
-  addBlocks: ["task-id-that-waits-for-this"]
-```
-
-### TaskGet
-
-Retrieves full task details.
-
-```
-TaskGet
-  taskId: "the-task-id"
-```
-
-### TaskList
-
-Lists all tasks with status, owner, and blockers.
-
-```
-TaskList
-```
+| **Verify Codebase** | Explore agent for broad investigation; Read/Glob for targeted checks | Write definitive steps, NEVER conditional |
+| **Create Subtasks** | `TaskCreate` for each, `TaskUpdate` with `addBlockedBy` | Bite-sized (2-5 min each) |
+| **Present Plan** | Show COMPLETE plan before asking approval | User reviews whole plan first |
 
 ## When to Use
 
-After `gambit:brainstorm` produces approved requirements, or when user provides clear spec.
+After `gambit:brainstorming` produces approved requirements, or when user provides clear spec.
 
-Symptoms:
-- Have requirements, need implementation plan
-- Need to break work into trackable pieces
-- Want explicit file paths and code examples
-- Multiple engineers or sessions will execute
+**Use this skill when:**
+- Have clear requirements, need implementation plan
+- Need to break work into trackable pieces with dependencies
+- Want explicit file paths and verification commands
+- Multiple sessions will execute the work
+
+**Don't use when:**
+- Idea is vague or needs refinement → use `gambit:brainstorming`
+- Only one task needed → just do it
+- Debugging or fixing bugs → use `gambit:debugging`
+
+### Writing-plans vs Brainstorming
+
+| | Writing-plans | Brainstorming |
+|---|---|---|
+| **Input** | Clear requirements or approved design | Rough idea |
+| **Creates** | Epic + ALL subtasks upfront | Epic + ONLY first task |
+| **Task tree** | Complete dependency chain | Iterative (tasks created as you learn) |
+| **Best when** | Requirements are stable | Requirements will evolve |
 
 ## The Process
 
@@ -91,249 +59,110 @@ The epic contains immutable requirements — these don't change during implement
 
 ```
 TaskCreate
-  subject: "Feature: User Authentication"
+  subject: "Feature: [Name]"
   description: |
     ## Goal
-    Add JWT-based authentication to the API.
+    [One paragraph summary]
 
     ## Requirements (IMMUTABLE)
-    - Users can register with email/password
-    - Users can login and receive JWT token
-    - Protected routes validate JWT
+    - [Specific, testable condition]
+    - [Another specific condition]
 
     ## Success Criteria
-    - [ ] POST /auth/register creates user with hashed password
-    - [ ] POST /auth/login returns valid JWT
-    - [ ] Protected routes reject invalid/missing tokens
-    - [ ] All endpoints have integration tests
-
-    ## Architecture
-    Use bcrypt for password hashing, jsonwebtoken for JWT.
-    Middleware pattern for route protection.
+    - [ ] [Objective, checkable item]
+    - [ ] All tests passing
 
     ## Anti-patterns (FORBIDDEN)
-    - Do NOT store plaintext passwords
-    - Do NOT use symmetric JWT signing in production
-    - Do NOT mock database in integration tests
-  activeForm: "Planning user authentication"
-```
+    - Do NOT [specific forbidden pattern] (reason: [why])
 
-Note the epic task ID returned — you'll reference it when creating subtasks.
+    ## Approaches Considered
+    ### [Rejected approach] - REJECTED
+    REJECTED BECAUSE: [reason]
+    DO NOT REVISIT UNLESS: [condition changes]
+  activeForm: "Planning [feature name]"
+```
 
 ### 2. Verify Codebase State
 
-**CRITICAL: Use codebase-investigator agent. Never verify yourself.**
+**Before writing any task, verify assumptions against reality.**
 
-Dispatch Task tool with Explore agent:
+For broad investigation (multiple unknowns), use Explore agent:
 
 ```
 Task
   subagent_type: "Explore"
   prompt: |
-    Verify these assumptions for the auth feature:
-    - Where should auth routes go? Check existing route patterns.
-    - Is there an existing User model? What fields does it have?
-    - What test patterns are used? Where do integration tests live?
-    - Is bcrypt or another hashing library already installed?
-
-    Report:
-    1. What exists vs what we expect
-    2. Exact file paths for new code
-    3. Dependency versions already installed
+    Verify these assumptions for [feature]:
+    - Where do [routes/models/components] live?
+    - What patterns are used for [testing/state/etc]?
+    - What dependencies are already installed?
+    Report exact file paths, existing patterns, dependency versions.
 ```
 
-**Based on report:**
-- ✓ Confirmed → Use in plan
-- ✗ Incorrect → Adjust plan to reality
-- + Found additional → Incorporate
+For targeted checks (specific file, specific line), use Read or Glob directly.
+
+**Based on findings, write DEFINITIVE steps:**
+- "Create `src/routes/auth.ts`" (confirmed doesn't exist)
+- "Modify `src/routes/index.ts:12-15`" (confirmed location)
 
 **NEVER write conditional steps:**
-- ❌ "Update `index.js` if exists"
-- ❌ "Modify `config.py` (if present)"
-
-**ALWAYS write definitive steps:**
-- ✅ "Create `src/routes/auth.ts`" (investigator confirmed doesn't exist)
-- ✅ "Modify `src/routes/index.ts:12-15`" (investigator confirmed location)
+- "Update `index.js` if exists"
+- "Modify `config.py` (if present)"
 
 ### 3. Create Subtasks with Dependencies
 
-Each subtask is bite-sized (2-5 minutes) and follows TDD.
+Each subtask is bite-sized (2-5 minutes) and self-contained. Describe WHAT to build, not full code — Claude already knows how to write code. Focus on: which files, what behavior, how to verify.
 
-**First subtask (no dependencies):**
+**Good subtask structure:**
 
 ```
 TaskCreate
-  subject: "Add User model with password hashing"
+  subject: "Add [specific deliverable]"
   description: |
     **Files:**
     - Create: `src/models/user.ts`
     - Test: `tests/models/user.test.ts`
 
-    **Step 1: Write failing test**
-    ```typescript
-    // tests/models/user.test.ts
-    import { createUser, verifyPassword } from '../src/models/user';
+    **Steps:**
+    1. Write test: [describe what test verifies]
+    2. Run test → expect: [specific failure message]
+    3. Implement: [describe approach briefly]
+    4. Run test → expect: PASS
+    5. Commit
 
-    describe('User model', () => {
-      it('hashes password on creation', async () => {
-        const user = await createUser('test@example.com', 'plaintext123');
-        expect(user.password).not.toBe('plaintext123');
-        expect(user.password).toMatch(/^\$2[ayb]\$.{56}$/);
-      });
-
-      it('verifies correct password', async () => {
-        const user = await createUser('test@example.com', 'mypassword');
-        expect(await verifyPassword(user, 'mypassword')).toBe(true);
-        expect(await verifyPassword(user, 'wrongpassword')).toBe(false);
-      });
-    });
-    ```
-
-    **Step 2: Run test (expect fail)**
+    **Verification:**
     ```bash
     npm test -- tests/models/user.test.ts
     ```
-    Expected: `Cannot find module '../src/models/user'`
 
-    **Step 3: Implement minimal code**
-    ```typescript
-    // src/models/user.ts
-    import bcrypt from 'bcrypt';
-
-    export interface User {
-      id: string;
-      email: string;
-      password: string;
-    }
-
-    export async function createUser(email: string, plainPassword: string): Promise<User> {
-      const password = await bcrypt.hash(plainPassword, 10);
-      return { id: crypto.randomUUID(), email, password };
-    }
-
-    export async function verifyPassword(user: User, plainPassword: string): Promise<boolean> {
-      return bcrypt.compare(plainPassword, user.password);
-    }
-    ```
-
-    **Step 4: Run test (expect pass)**
-    ```bash
-    npm test -- tests/models/user.test.ts
-    ```
-    Expected: `PASS`
-
-    **Step 5: Commit**
-    ```bash
-    git add src/models/user.ts tests/models/user.test.ts
-    git commit -m "feat(auth): add User model with bcrypt password hashing"
-    ```
-  activeForm: "Adding User model"
+    **Success criteria:**
+    - [ ] [specific measurable outcome]
+    - [ ] Tests passing
+  activeForm: "Adding [deliverable]"
 ```
 
-Save the returned task ID (e.g., `task-user-model`).
-
-**Second subtask (depends on first):**
+**Bad subtask** (too verbose — wastes tokens on code Claude can write):
 
 ```
 TaskCreate
-  subject: "Add login endpoint"
+  subject: "Add User model"
   description: |
-    **Files:**
-    - Create: `src/routes/auth.ts`
-    - Modify: `src/routes/index.ts:12-15`
-    - Test: `tests/routes/auth.test.ts`
-
     **Step 1: Write failing test**
     ```typescript
-    // tests/routes/auth.test.ts
-    import request from 'supertest';
-    import { app } from '../src/app';
-    import { createUser } from '../src/models/user';
-
-    describe('POST /auth/login', () => {
-      it('returns JWT for valid credentials', async () => {
-        await createUser('test@example.com', 'password123');
-
-        const response = await request(app)
-          .post('/auth/login')
-          .send({ email: 'test@example.com', password: 'password123' });
-
-        expect(response.status).toBe(200);
-        expect(response.body.token).toBeDefined();
-        expect(response.body.token).toMatch(/^eyJ/); // JWT format
-      });
-
-      it('returns 401 for invalid password', async () => {
-        await createUser('test@example.com', 'password123');
-
-        const response = await request(app)
-          .post('/auth/login')
-          .send({ email: 'test@example.com', password: 'wrongpassword' });
-
-        expect(response.status).toBe(401);
-      });
-    });
+    // 50 lines of complete test code...
     ```
-
-    **Step 2: Run test (expect fail)**
-    ```bash
-    npm test -- tests/routes/auth.test.ts
-    ```
-    Expected: `404` (route doesn't exist yet)
-
-    **Step 3: Implement login route**
+    **Step 2: Implement**
     ```typescript
-    // src/routes/auth.ts
-    import { Router } from 'express';
-    import jwt from 'jsonwebtoken';
-    import { findUserByEmail, verifyPassword } from '../models/user';
-
-    const router = Router();
-
-    router.post('/login', async (req, res) => {
-      const { email, password } = req.body;
-
-      const user = await findUserByEmail(email);
-      if (!user || !await verifyPassword(user, password)) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-      res.json({ token });
-    });
-
-    export default router;
+    // 40 lines of complete implementation...
     ```
-
-    **Step 4: Register route in index**
-    ```typescript
-    // src/routes/index.ts - add at line 12
-    import authRoutes from './auth';
-    router.use('/auth', authRoutes);
-    ```
-
-    **Step 5: Run test (expect pass)**
-    ```bash
-    npm test -- tests/routes/auth.test.ts
-    ```
-    Expected: `PASS`
-
-    **Step 6: Commit**
-    ```bash
-    git add src/routes/auth.ts src/routes/index.ts tests/routes/auth.test.ts
-    git commit -m "feat(auth): add POST /auth/login endpoint"
-    ```
-  activeForm: "Adding login endpoint"
 ```
 
-Save the returned task ID (e.g., `task-login`).
-
-**Set dependency:**
+**Set dependencies after creation:**
 
 ```
 TaskUpdate
-  taskId: "task-login"
-  addBlockedBy: ["task-user-model"]
+  taskId: "task-2-id"
+  addBlockedBy: ["task-1-id"]
 ```
 
 ### 4. Present Complete Plan
@@ -341,101 +170,68 @@ TaskUpdate
 Show the FULL plan before asking for approval:
 
 ```markdown
-## Epic: User Authentication
+## Epic: [Feature Name]
 
-**Task 1: Add User model with password hashing**
-- Creates `src/models/user.ts` with bcrypt hashing
-- Tests in `tests/models/user.test.ts`
-- No dependencies (ready to start)
+**Task 1: [Title]** (ready)
+- Creates `src/path/file.ts`
+- Tests in `tests/path/file.test.ts`
 
-**Task 2: Add login endpoint** (blocked by Task 1)
-- Creates `src/routes/auth.ts`
-- Modifies `src/routes/index.ts`
-- Tests in `tests/routes/auth.test.ts`
+**Task 2: [Title]** (blocked by Task 1)
+- Modifies `src/existing/file.ts`
+- Tests in `tests/path/file.test.ts`
 
-**Task 3: Add JWT middleware** (blocked by Task 2)
-- Creates `src/middleware/auth.ts`
-- Tests in `tests/middleware/auth.test.ts`
+**Task 3: [Title]** (blocked by Task 2)
+- Creates `src/path/another.ts`
+- Tests in `tests/path/another.test.ts`
 
 ---
 
 **Codebase verification findings:**
-- ✓ Confirmed: Express app at `src/app.ts`, routes at `src/routes/`
-- ✓ Confirmed: bcrypt@5.1.0 already installed
-- + Discovered: Existing test helper at `tests/helpers/db.ts` for test DB setup
+- Confirmed: [what exists as expected]
+- Discovered: [unexpected findings incorporated]
 ```
 
-**THEN ask:**
-"Is this plan approved? I can begin execution with `/gambit:execute-plan`."
+**THEN ask:** "Plan approved? Run `/gambit:executing-plans` to begin."
 
 ### 5. After Approval
 
-All Tasks are now created with proper dependencies.
+All Tasks are created with proper dependencies. Report:
 
-```
-TaskList
-```
+"Plan created. N tasks ready for execution. Run `/gambit:executing-plans` to begin."
 
-Shows:
-- Task 1: pending, blockedBy: [] (ready)
-- Task 2: pending, blockedBy: [task-1]
-- Task 3: pending, blockedBy: [task-2]
+## Task Quality Checklist
 
-Report: "Plan created. 3 tasks ready for execution. Run `/gambit:execute-plan` to begin."
+Each task must pass these checks:
 
-## Task Granularity
-
-**Each step is ONE action (2-5 minutes):**
-
-1. "Write the failing test" — one step
-2. "Run it to verify it fails" — one step
-3. "Implement minimal code to pass" — one step
-4. "Run tests to verify they pass" — one step
-5. "Commit" — one step
-
-**NOT:**
-- "Implement authentication" (too big)
-- "Add tests" (too vague)
-- "Update the code" (meaningless)
+- **Scoped**: 2-5 minutes of work (if longer, break down)
+- **Self-contained**: Can execute without asking questions
+- **Explicit**: All file paths specified, no placeholders
+- **Testable**: Has verification command with expected output
+- **Ordered**: Dependencies set via `addBlockedBy`
 
 ## Anti-patterns
 
 **Don't:**
+- Write full code implementations in task descriptions (describe behavior, not code)
+- Write conditional steps ("if exists", "if present")
+- Create vague tasks ("implement feature", "add tests")
 - Write placeholders ("details above", "see requirements")
-- Verify codebase yourself (use Explore agent)
-- Write conditional steps ("if exists")
-- Ask permission between subtasks
-- Create vague tasks ("implement feature")
+- Skip codebase verification
+- Ask permission between subtasks after plan is approved
 
 **Do:**
-- Write complete code in every step
-- Use Explore agent to verify assumptions
-- Write definitive steps based on verification
-- Continue automatically after approval
+- Describe what each task ACHIEVES, not line-by-line code
+- Write definitive steps based on verified codebase state
 - Create bite-sized tasks (2-5 min each)
-
-## Verification Checklist
-
-Before presenting plan:
-- [ ] Used Explore agent (not manual verification)
-- [ ] All steps have complete code (no placeholders)
-- [ ] All steps have exact file paths
-- [ ] All steps have exact commands with expected output
-- [ ] Dependencies set correctly with `TaskUpdate addBlockedBy`
-- [ ] Each task is 2-5 minutes of work
+- Include verification commands with expected output
+- Set task dependencies explicitly
 
 ## Integration
 
 **This skill is called by:**
-- `gambit:brainstorm` (after design approval)
-- User via `/gambit:write-plan`
+- `gambit:brainstorming` (after design approval)
+- User via `/gambit:writing-plans`
 
 **This skill calls:**
-- Explore agent (verify assumptions)
-- `gambit:execute-plan` (offered after plan approval)
-
-**Task tools used:**
-- `TaskCreate` — Create epic and subtasks
-- `TaskUpdate` — Set dependencies via `addBlockedBy`
-- `TaskList` — Verify task structure
-- `TaskGet` — Read task details
+- Explore agent (verify codebase assumptions)
+- `gambit:executing-plans` (offered after plan approval)
