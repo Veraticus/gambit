@@ -1,7 +1,7 @@
 {
   "name": "gambit",
   "description": "Structured development workflows for Claude Code using native Tasks",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": {
     "name": "Josh Symonds",
     "email": "josh@joshsymonds.com"
@@ -9,5 +9,13 @@
   "homepage": "https://github.com/Veraticus/gambit",
   "repository": "https://github.com/Veraticus/gambit",
   "license": "MIT",
-  "keywords": ["skills", "workflows", "tasks", "tdd", "debugging", "devenv", "worktrees"]
+  "keywords": [
+    "skills",
+    "workflows",
+    "tasks",
+    "tdd",
+    "debugging",
+    "devenv",
+    "worktrees"
+  ]
 }
