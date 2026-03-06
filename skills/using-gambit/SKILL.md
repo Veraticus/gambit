@@ -39,6 +39,7 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded — follow 
 | Audit test quality | testing-quality | `/gambit:testing-quality` |
 | Refine task details | task-refinement | `/gambit:task-refinement` |
 | Verify completion | verification | `/gambit:verification` |
+| Review completed epic | epic-review | `/gambit:epic-review` |
 | Parallel investigations | parallel-agents | `/gambit:parallel-agents` |
 | Create/modify skills | writing-skills | `/gambit:writing-skills` |
 | Start feature branch | using-worktrees | `/gambit:using-worktrees` |
@@ -81,6 +82,8 @@ digraph skill_flow {
 ```
 executing-plans (one task → checkpoint → STOP → repeat)
     ↓ all tasks done
+epic-review (6-dimension quality/architecture/security review)
+    ↓ approved
 finishing-branch (verify → merge/PR/keep/discard)
 ```
 

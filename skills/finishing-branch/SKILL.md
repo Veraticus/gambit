@@ -1,6 +1,6 @@
 ---
 name: finishing-branch
-description: Completes development work on a feature branch by verifying tasks and tests, then presenting integration options. Use when implementation is complete and all tasks pass, when ready to merge, create PR, or discard a branch, or after executing-plans finishes all tasks.
+description: Completes development work on a feature branch by verifying tasks and tests, then presenting integration options. Use when implementation is complete and all tasks pass, when ready to merge, create PR, or discard a branch, or after epic-review approves the implementation.
 user_invokable: true
 ---
 
@@ -35,10 +35,11 @@ LOW FREEDOM — Follow the process exactly. Never skip test verification. Never 
 
 - All tasks for an epic show "completed"
 - Implementation reviewed and ready to integrate
-- After `gambit:executing-plans` completes all tasks
+- After `gambit:epic-review` approves the implementation
 
 **Don't use when:**
 - Tasks still open → use `gambit:executing-plans`
+- Epic not yet reviewed → use `gambit:epic-review` first
 - Tests failing → fix first
 - Work still in progress
 - No epic exists → use `gambit:brainstorming`
@@ -293,7 +294,8 @@ git worktree remove .worktrees/experimental
 
 **Called by:**
 - User via `/gambit:finishing-branch`
-- After `gambit:executing-plans` completes all tasks
+- `gambit:epic-review` (after approval — the normal workflow path)
+- After `gambit:executing-plans` → `gambit:epic-review` completes
 
 **Calls:**
 - `gh` CLI (PR creation)

@@ -190,7 +190,7 @@ Run `/gambit:executing-plans` to execute the next task.
 
 ---
 
-### 5. Final Validation
+### 5. Epic Review
 
 When all subtasks completed:
 
@@ -198,32 +198,13 @@ When all subtasks completed:
 2. `TaskGet` on epic — review each success criterion
 3. Run full verification suite
 
-**Present completion summary:**
-
-```markdown
-## Epic Complete
-
-### Requirements Check
-- [x] Requirement 1: [How satisfied, with evidence]
-- [x] Requirement 2: [How satisfied, with evidence]
-
-### Anti-patterns Avoided
-- [x] Did not [forbidden thing 1]
-- [x] Did not [forbidden thing 2]
-
-### Task Summary
-[TaskList showing all completed]
-```
-
-Mark epic complete with `TaskUpdate`.
-
-**Then invoke finishing-branch directly using the Skill tool:**
+**Then invoke epic-review directly using the Skill tool:**
 
 ```
-Skill skill="gambit:finishing-branch"
+Skill skill="gambit:epic-review"
 ```
 
-Do not tell the user to run it manually — invoke it and follow its process immediately.
+Do not tell the user to run it manually — invoke it and follow its process immediately. Epic-review validates architecture, security, completeness, dead code, test quality, and code quality across the entire epic before allowing finishing-branch.
 
 ---
 
@@ -308,8 +289,8 @@ Before closing epic:
 - [ ] ALL subtasks show "completed" in `TaskList`
 - [ ] ALL success criteria verified with evidence
 - [ ] ALL anti-patterns avoided
-- [ ] Epic marked complete with `TaskUpdate`
-- [ ] Invoked `gambit:finishing-branch` directly via Skill tool
+- [ ] Invoked `gambit:epic-review` directly via Skill tool
+- [ ] Epic-review approved → finishing-branch invoked automatically
 
 ## Integration
 
@@ -320,4 +301,4 @@ Before closing epic:
 **Calls:**
 - `gambit:test-driven-development` during implementation
 - `gambit:verification` before claiming task complete
-- `gambit:finishing-branch` (invoked directly when all tasks complete)
+- `gambit:epic-review` (invoked directly when all tasks complete — reviews then calls finishing-branch)

@@ -56,6 +56,11 @@
     "patterns": ["review.*task.*quality", "refine.*plan", "ready.*to implement"]
   },
 
+  "epic-review": {
+    "keywords": ["review epic", "validate implementation", "check quality", "review completed", "epic review"],
+    "patterns": ["all tasks.*done", "ready.*for review", "implementation.*complete"]
+  },
+
   "finishing-branch": {
     "keywords": ["finish branch", "done with feature", "ready to merge"],
     "patterns": ["create.*pull request", "open.*pr"]

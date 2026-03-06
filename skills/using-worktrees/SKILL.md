@@ -316,5 +316,7 @@ See [REFERENCE.md](REFERENCE.md) for detailed good/bad examples including:
 gambit:brainstorming ─┐
                       ├→ gambit:using-worktrees → gambit:executing-plans
 gambit:writing-plans ─┘                                    ↓
+                                                 gambit:epic-review
+                                                           ↓
                                                  gambit:finishing-branch
 ```
