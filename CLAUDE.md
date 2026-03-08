@@ -27,7 +27,6 @@ gambit/
 │   ├── session-start/           # Inject using-gambit at start
 │   ├── user-prompt-submit/      # Suggest relevant skills
 │   ├── post-tool-use/           # Track file edits
-│   ├── pre-tool-use/            # Block anti-patterns
 │   └── stop/                    # Gentle reminders
 └── context/                     # Runtime state (edit logs)
 ```

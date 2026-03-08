@@ -9,7 +9,7 @@ Gambit achieves skill compliance through **strong prompting, not mechanical enfo
 The hooks reinforce this by:
 - **SessionStart** — Injecting the full `using-gambit` skill with mandatory activation language
 - **UserPromptSubmit** — Matching prompts to skills and presenting matches as non-negotiable
-- **PostToolUse/PreToolUse/Stop** — Tracking state and providing contextual nudges
+- **PostToolUse/Stop** — Tracking state and providing contextual nudges
 
 Every skill match is mandatory. There are no priority tiers — if a keyword matches, Claude must invoke the skill. Users bypass with "no skill" or "skip skill" in their prompt.
 
@@ -45,14 +45,6 @@ For manual installation, add to your project's `.claude/settings.json`:
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "/path/to/gambit/hooks/pre-tool-use/block-pre-existing-checks.sh" }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
@@ -79,7 +71,6 @@ User sends prompt
 
 Claude works
   → track-edits.sh logs file modifications
-  → block-pre-existing-checks.sh prevents wasted git archaeology
 
 Claude stops
   → gentle-reminders.sh checks for TDD/verification/commit gaps
@@ -121,10 +112,6 @@ Keywords are case-insensitive substring matches. Multi-word keywords (e.g., "cod
 
 Logs Edit, Write, and MultiEdit tool calls to `context/edit-log.txt`. Records timestamp, tool name, and file path. Auto-rotates at 500 lines. Used by `gentle-reminders.sh` to detect TDD gaps (source edits without test edits).
 
-### PreToolUse: block-pre-existing-checks.sh
-
-Blocks Claude from checking out old commits to verify if failures are "pre-existing." Only activates in repos with pre-commit hooks (`.pre-commit-config.yaml`, `.git/hooks/pre-commit`, `lefthook.yml`), since those guarantee the previous commit was clean.
-
 ### Stop: gentle-reminders.sh
 
 Non-blocking contextual reminders when Claude's turn ends:
@@ -148,9 +135,6 @@ echo '{"prompt": "What time is it?"}' | ./hooks/user-prompt-submit/skill-activat
 
 # Skill activator — bypass
 echo '{"prompt": "Fix this typo, no skill"}' | ./hooks/user-prompt-submit/skill-activator.sh
-
-# Block pre-existing checks
-echo '{"tool_name": "Bash", "tool_input": {"command": "git checkout HEAD~1 && go test", "description": "check pre-existing"}}' | ./hooks/pre-tool-use/block-pre-existing-checks.sh
 
 # Gentle reminders
 echo '{"response": "Done! The feature is complete."}' | ./hooks/stop/gentle-reminders.sh
