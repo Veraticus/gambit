@@ -23,9 +23,7 @@ gambit/
 │   └── ...                      # See PLAN.md for full list
 ├── hooks/                       # Bash hooks for automation (~5ms startup)
 │   ├── hooks.json               # Hook configuration
-│   ├── skill-rules.json         # Keyword triggers for skill activation
 │   ├── session-start/           # Inject using-gambit at start
-│   ├── user-prompt-submit/      # Suggest relevant skills
 │   ├── post-tool-use/           # Track file edits
 │   └── stop/                    # Gentle reminders
 └── context/                     # Runtime state (edit logs)
@@ -92,7 +90,6 @@ Hooks are bash scripts that run at lifecycle points. They read JSON from stdin a
 
 **Testing hooks:**
 ```bash
-echo '{"prompt": "Fix this bug"}' | ./hooks/user-prompt-submit/skill-activator.sh
 echo '{"response": "Done!"}' | ./hooks/stop/gentle-reminders.sh
 ```
 

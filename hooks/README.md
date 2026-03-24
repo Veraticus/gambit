@@ -8,10 +8,9 @@ Gambit achieves skill compliance through **strong prompting, not mechanical enfo
 
 The hooks reinforce this by:
 - **SessionStart** — Injecting the full `using-gambit` skill with mandatory activation language
-- **UserPromptSubmit** — Matching prompts to skills and presenting matches as non-negotiable
 - **PostToolUse/Stop** — Tracking state and providing contextual nudges
 
-Every skill match is mandatory. There are no priority tiers — if a keyword matches, Claude must invoke the skill. Users bypass with "no skill" or "skip skill" in their prompt.
+Skills are invoked manually by the user via slash commands (e.g., `/gambit:debugging`).
 
 ## Installation
 
@@ -27,13 +26,6 @@ For manual installation, add to your project's `.claude/settings.json`:
         "matcher": "startup|resume|clear|compact",
         "hooks": [
           { "type": "command", "command": "/path/to/gambit/hooks/session-start/inject-using-gambit.sh" }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          { "type": "command", "command": "/path/to/gambit/hooks/user-prompt-submit/skill-activator.sh" }
         ]
       }
     ],
@@ -56,18 +48,15 @@ For manual installation, add to your project's `.claude/settings.json`:
 }
 ```
 
-## Skill Activation Chain
+## Activation Chain
 
 ```
 Session starts
   → inject-using-gambit.sh loads using-gambit skill with <EXTREMELY_IMPORTANT> tags
   → Claude sees: "IF A SKILL APPLIES, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT."
 
-User sends prompt
-  → skill-activator.sh matches keywords/patterns from skill-rules.json
-  → If match found: outputs <EXTREMELY-IMPORTANT> mandatory activation directive
-  → If "no skill"/"skip skill" in prompt: bypasses silently
-  → Claude must invoke the Skill tool before proceeding
+User invokes skills manually
+  → /gambit:debugging, /gambit:review, etc.
 
 Claude works
   → track-edits.sh logs file modifications
@@ -85,28 +74,6 @@ Injects the full `using-gambit` skill into context at session start.
 - Reads `skills/using-gambit/SKILL.md`
 - Wraps in `<EXTREMELY_IMPORTANT>` tags
 - Contains the 1% threshold rule, Red Flags rationalization table, and skill routing flowchart
-
-### UserPromptSubmit: skill-activator.sh
-
-Matches prompts to skills and mandates activation.
-
-- Matches keywords and regex patterns from `skill-rules.json`
-- Returns up to 3 matching skills wrapped in `<EXTREMELY-IMPORTANT>` tags
-- Every match is mandatory — no priority tiers, no soft suggestions
-- Bypass: user includes "no skill" or "skip skill" in their prompt
-
-**Configuration** — edit `skill-rules.json`:
-
-```json
-{
-  "debugging": {
-    "keywords": ["bug", "broken", "failing", "error"],
-    "patterns": ["test.*fail", "doesn't work"]
-  }
-}
-```
-
-Keywords are case-insensitive substring matches. Multi-word keywords (e.g., "code review") match as complete phrases. Patterns are regex matched via `grep -E`.
 
 ### PostToolUse: track-edits.sh
 
@@ -127,15 +94,6 @@ Non-blocking contextual reminders when Claude's turn ends:
 ## Testing Hooks
 
 ```bash
-# Skill activator — should match debugging
-echo '{"prompt": "I found a bug in the login"}' | ./hooks/user-prompt-submit/skill-activator.sh
-
-# Skill activator — should match nothing
-echo '{"prompt": "What time is it?"}' | ./hooks/user-prompt-submit/skill-activator.sh
-
-# Skill activator — bypass
-echo '{"prompt": "Fix this typo, no skill"}' | ./hooks/user-prompt-submit/skill-activator.sh
-
 # Gentle reminders
 echo '{"response": "Done! The feature is complete."}' | ./hooks/stop/gentle-reminders.sh
 ```
