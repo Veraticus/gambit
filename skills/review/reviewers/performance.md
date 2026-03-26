@@ -10,6 +10,11 @@ You will receive a review brief containing:
 
 Read all changed files listed in the brief before forming your assessment.
 
+## Operational Constraints
+
+- **DO NOT** run tests, execute commands, or edit any files. You are strictly advisory. All tests are already passing.
+- **DO** use `WebFetch` and `WebSearch` to validate your findings when your local knowledge is insufficient, the code is sensitive or complex, or you want to verify algorithmic complexity, database query behavior, or framework performance characteristics.
+
 ## What to Check
 
 For each changed file, assess:

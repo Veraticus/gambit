@@ -127,7 +127,10 @@ Agent subagent_type="general-purpose" description="Performance review" prompt="[
 Each reviewer will:
 - Read the changed files independently
 - Evaluate their dimensions with evidence
+- Fetch documentation or references from the web when local knowledge is insufficient or the code is sensitive/complex
 - Return findings as APPROVED or GAPS FOUND
+
+**Critical:** Reviewers are strictly advisory. They must NOT run tests, execute commands, or edit files. All tests are already passing by the time review runs — their job is code analysis only. They DO have access to `WebFetch` and `WebSearch` and should use them to validate edge cases, check API documentation, verify security patterns, or confirm language-specific behavior when they aren't confident from code reading alone.
 
 ### Step 5: Synthesize Findings
 
@@ -316,7 +319,7 @@ Agent general-purpose: "[performance.md] + [brief]"  (parallel)
 **Calls:**
 - `gambit:finishing-branch` (if approved)
 
-**Dispatches general-purpose agents (parallel) using reviewer instructions from:**
+**Dispatches general-purpose agents (parallel, read-only) using reviewer instructions from:**
 - `reviewers/conformance.md` — completeness, architecture, dead code
 - `reviewers/security.md` — OWASP audit, secrets, auth, data exposure
 - `reviewers/quality.md` — language idioms, linter circumvention, test quality
