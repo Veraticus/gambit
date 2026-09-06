@@ -1,5 +1,34 @@
 # Behavioral Validation
 
+## Existing-skill regression evaluation (2026-09-05)
+
+`writing-skills` previously stopped after any successful no-skill baseline, even when
+maintaining an existing skill suspected of making behavior worse. Matched decision exercises
+used fresh `sol-low-ro` agents (configured Sol/low), no inherited session history, and no edits
+or nested experiments by the subjects. Prompts and complete returned decisions are retained in
+`tests/fixtures/skill-convergence/authoring-*.txt` and `authoring-results.json` (including source
+hashes and trial IDs). These are decision tests, not measured software-delivery improvements.
+
+All trials are reported, including initial passes:
+- Supplying the existing-workflow failure explicitly: no-skill and current-skill subjects both
+  chose the proper repair/control experiment and refused a separate no-gap proposal. No RED.
+- Asking for an evaluation design while mentioning the possible conditions: both selected
+  no-skill/current/edited comparisons. No RED; this prompt cued the desired design.
+- Testing the actual stopping gate without supplying a current-skill result or naming that next
+  step: BOTH subjects stopped after the sole successful no-skill trial. IDs `56ed1f00-af0d-473`
+  and `b0953c0e-81f6-40b`. This prematurely dismissed a possible instruction-induced regression.
+- Same gate with edited guidance: `95d9e3d1-7ef1-4dc` requested the missing current-skill trial
+  with matched conditions instead of stopping. Behavioral RED→GREEN.
+- Edited controls (`e40c1b1e-9745-4e2`): refused an unnecessary new skill; blocked an edit that
+  leaked a credential; refused sampling until failure when both controls passed; accepted
+  restoration of unaided behavior when current guidance regressed and security stayed intact.
+
+The change distinguishes new-skill baselines from existing-skill controls and scores actions,
+not recitation. The small, adaptive fixture-development sequence is not a statistical estimate;
+initial prompts were more leading, and those passes must not be hidden. No claim of long-run
+convergence or cross-model reliability follows. Structural renderer tests guard the new policy
+in both backend outputs; they do not substitute for these behavioral trials.
+
 ## Contract-surface validation: rung dispatch and steelman
 
 The rung/role and steelman contracts and their wired workflow routing have structural regression

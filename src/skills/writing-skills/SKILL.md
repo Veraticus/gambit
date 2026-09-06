@@ -10,9 +10,9 @@ when_to_use: Use when creating a new skill, modifying an existing skill, writing
 
 ## Overview
 
-A skill earns its tokens only if the model behaves differently with it than without it. Most don't.
-This skill is the check: prove the gap exists, write the smallest thing that closes it, then try to
-break it under pressure.
+A new skill must improve behavior over an unaided baseline. An existing skill can also make
+behavior worse: removing that regression earns its tokens even if the result merely restores
+unaided behavior. Prove the gap, make the smallest change, then try to break it under pressure.
 
 Format and structure are not the problem — a current-generation model writes a well-formed SKILL.md
 unaided. What it will not do unaided is resist a plausible shortcut at the moment one is offered.
@@ -38,7 +38,7 @@ Also read `references/codex-skill-guidance.md` completely before writing: it car
 | Phase | Action | STOP If |
 |-------|--------|---------|
 | 1 | Define the behavior gap | Can't articulate the failure |
-| 2 | Baseline test — no skill (RED) | **Subagent already behaves correctly** |
+| 2 | Baseline: no skill for new guidance; current skill plus no-skill control for revisions | **No demonstrated behavior gap** |
 | 3 | Write the minimal skill (GREEN) | Test still fails |
 | 4 | Pressure test (REFACTOR) | Subagent finds loopholes |
 | 5 | Record the result in VALIDATION.md | Nothing measurable to record |
@@ -49,8 +49,10 @@ Also read `references/codex-skill-guidance.md` completely before writing: it car
 
 ### Phase 1: Define the behavior gap
 
-Answer three questions before writing anything: what does Claude do wrong without this skill, what
-rationalization does it use to get there, and what would correct behavior look like?
+Before writing, name the wrong action, its rationalization, and the correct observable action.
+For a new skill, the gap is unaided behavior; for a revision, it may be behavior induced by the
+current skill. Predeclare the scenario, scored actions/artifacts, instruction conditions, model
+and effort, and a bounded trial set. Do not score reassurance or rule recitation.
 
 If you cannot name a specific wrong behavior, stop — you are about to document something rather
 than change something.
@@ -74,8 +76,8 @@ Present in the root transcript as "Evaluation Brief: [skill-name] baseline test"
     ## Expected Behavior (with skill)
     [What Claude should do]
 
-    ## Failure Mode (without skill)
-    [What Claude does wrong]
+    ## Failure Mode (baseline condition)
+    [What Claude does wrong unaided or with the current skill]
 
     ## Success Criteria
     - [ ] Claude [specific behavior]
@@ -122,9 +124,18 @@ Agent
 ```
 <!-- /gambit-backend -->
 
-- Fails as expected → the gap is real, continue.
-- **Behaves correctly → STOP. Do not write the skill.** The model already does this. A skill here
-  buys nothing and costs context on every invocation that loads it.
+**Choose the comparison before interpreting the result:**
+- **New skill:** unaided failure is RED. Unaided success with no other evidenced gap means STOP;
+  do not add a mandatory process merely to make correct behavior more ceremonial.
+- **Existing skill:** also run the current skill on the same fixture. Unaided success alone is
+  NOT a stop condition: it says nothing about whether the current instructions cause harm.
+  A current-skill failure is RED; test whether the edit repairs that failure.
+- If current and unaided conditions both behave correctly and no concrete regression is evidenced,
+  STOP this behavior-change proposal. Do not retry until a failure appears.
+
+Use fresh contexts and hold the task, model/effort, available tools, and scoring constant; vary only
+instructions. Inspect inherited guidance so the no-skill control is not secretly receiving the
+rule. Historical failures may motivate a fixture, but distinguish them from controlled results.
 
 <!-- gambit-backend:claude -->
 This is the single most important step. Capable models are disciplined by default; the weakest rung
@@ -137,8 +148,10 @@ is where a contract earns its keep, and where the baseline tells you the truth.
 
 ### Phase 3: Write the minimal skill (GREEN)
 
-The smallest thing that makes the baseline pass. Then dispatch a fresh subagent *with* the skill on
-the same scenario. Follows correctly → continue. Still fails → revise and repeat.
+Make the smallest edit that addresses the observed failure, then run a fresh edited-condition
+trial on the same scenario. For an existing-skill regression, restoring correct unaided behavior
+is a successful repair; outperforming it is not required. Preserve a control where the disputed
+safeguard is genuinely necessary. Faster completion that drops that guarantee is a failure.
 
 ### Phase 4: Pressure test (REFACTOR)
 
@@ -191,10 +204,11 @@ Two register notes: don't write skills in a warm, agreeable voice — it trades 
 compliance. And don't claim authority the skill doesn't have; a rule that states its real reason
 survives scrutiny that "because I said so" does not.
 
-**Bulletproof** means: the agent picks the right option under maximum combined pressure, cites the
-specific section as its reason, and acknowledges the temptation while following the rule anyway.
-Keep iterating if it invents hybrid approaches that partially skip the rule, argues the skill is
-wrong for this case, or finds rationalizations you haven't countered.
+A pressure-test pass means the chosen action and resulting artifact satisfy the predeclared
+criteria, including the necessary-safeguard control. Citing a section or acknowledging temptation
+is not behavioral evidence. Retain every outcome, including inconvenient passes and failures.
+When the bounded trial set is exhausted, report what remains unproven rather than sampling until
+one favorable answer appears.
 
 **Meta-test** (run after a failed pressure test, to diagnose which fix is needed):
 
@@ -205,7 +219,8 @@ only acceptable answer?
 ```
 
 - "The skill WAS clear, I chose to ignore it" → the rule needs structural enforcement, not louder text
-- "The skill should have said X" → documentation gap; add their suggestion verbatim
+- "The skill should have said X" → possible documentation gap; test the suggestion as a hypothesis,
+  not an instruction to expand the skill
 - "I didn't see section Y" → organization problem; move it to where the decision happens
 
 ### Phase 5: Record the result
@@ -220,16 +235,20 @@ rung does not hold for a dispatched worker.
 | **Sonnet** | Is it clear and efficient — the rung most workers run on? |
 | **Opus** | Does it avoid over-explaining what the model already knows? |
 
-Then write the RED/GREEN outcome into `contracts/VALIDATION.md`: what behavior flipped, on which
-rung, and which clause caused it. An unrecorded pressure test is an assertion, not evidence.
+Then write the results into `contracts/VALIDATION.md`: exact prompts/artifact locations, conditions,
+model/rung and effort, decisions, failures, controls, and verification limits. Say whether the edit
+improved unaided behavior or repaired a current-skill regression; do not claim population-wide
+reliability or causation from a few trials.
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
 Test across the tiers you expect the skill to run at — a skill that only holds at the most-capable
 tier does not hold for a dispatched worker.
 
 
-Then write the RED/GREEN outcome into `contracts/VALIDATION.md`: what behavior flipped, at which
-tier, and which clause caused it. An unrecorded pressure test is an assertion, not evidence.
+Then write the results into `contracts/VALIDATION.md`: exact prompts/artifact locations, conditions,
+model/tier and effort, decisions, failures, controls, and verification limits. Say whether the edit
+improved unaided behavior or repaired a current-skill regression; do not claim population-wide
+reliability or causation from a few trials.
 <!-- /gambit-backend -->
 
 <!-- gambit-backend:claude -->
