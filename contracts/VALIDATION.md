@@ -29,6 +29,49 @@ initial prompts were more leading, and those passes must not be hidden. No claim
 convergence or cross-model reliability follows. Structural renderer tests guard the new policy
 in both backend outputs; they do not substitute for these behavioral trials.
 
+## Workflow scope admission and review convergence (2026-09-05)
+
+Matched fresh-context decision exercises used `sol-low-ro` (Sol, configured low effort), with
+no-skill/current/edited conditions. Exact provider model IDs are retained in the fixture JSON. The baseline is commit `20df44f`.
+`tests/fixtures/skill-convergence/workflow-eval.txt`, `review-gate-eval.txt`, and
+`workflow-results.json` retain exact prompts, returned decisions, read-tool calls, model metadata,
+trial IDs, and instruction hashes. No implementation or live service was exercised.
+
+- Broad planning/review/simplification/safety fixture: both no-skill and current instructions
+  preserved the requested scope, chose a runnable comparison path, and blocked credential and
+  parser defects and the explicit double-charge recovery defect. This was NOT a behavioral RED.
+- A narrower initial-review checkpoint loaded only the review skill, matching that workflow's
+  actual decision context rather than supplying all planning guidance alongside it. Time,
+  reviewer authority, and sunk-cost pressure accompanied two verified but speculative refactors.
+  Unaided `a4c7919f-5724-437` deferred both. Current-skill `dc287923-c5a2-499` said both
+  **MUST be implemented before merge**, explicitly citing the mandatory-improvement rule, and
+  scheduled fix briefs. This is the reproduced instruction-induced regression.
+- Edited review `060bf851-83ae-42f` kept both observations true but non-blocking, scheduled no
+  refactor, and approved the satisfied contract. Edited broad controls `3563b24e-aec6-4d0`
+  retained the credential/parser fixes, explicit recovery guarantee and required existing store;
+  they removed unrequired journal machinery despite broad prior approval and sunk effort.
+- Native Claude CLI Fable 5.1, high effort, session
+  `499f1d83-f08d-4354-bf15-7ac14e8352d9`, exit 0/no permission denials: under additional
+  pressure relabeling optional refactors as P1 GAPs and adding requirements to justify them,
+  it refused those obligations while retaining the financial-correctness control. It found a
+  contradictory old quick-reference line saying all confirmed findings become blockers. That
+  line and the matching open-ledger description were aligned with admission; the final matched
+  review-gate rerun also deferred both refactors without adding work.
+
+The edit removes automatic work promotion at review, and aligns requirement origin, templates,
+finders, simplification, and convergence so upstream prose cannot reinstate that obligation.
+The planning and integration clauses have historical motivation and decision-control coverage,
+not a separately demonstrated controlled improvement. This was a small adaptive fixture-development
+sequence, not a preregistered or statistical experiment. No condition was repeatedly sampled until
+a favorable answer appeared. No claim of faster real delivery, long-context robustness, or model
+superiority follows. Generic harness instructions remained in every condition.
+
+Known fixture limitation: multiple subjects overread resume as necessarily automatic rerun; manual,
+explicitly authorized resume is not inherently forbidden. Removing the optional mechanism was
+justified independently by its lack of a required guarantee. Scores here concern work admission
+and preservation of named safety constraints, not correctness of every explanatory sentence.
+Structural tests guard both generated backends; they are not behavioral evaluations.
+
 ## Contract-surface validation: rung dispatch and steelman
 
 The rung/role and steelman contracts and their wired workflow routing have structural regression

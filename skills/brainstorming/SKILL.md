@@ -262,9 +262,21 @@ After design is validated, create epic as immutable contract. See [TEMPLATES.md]
 
 **Required epic sections:**
 
+**Admit requirements by origin, not by how thoroughly a design was described.** Give each a
+short basis: an explicit user request, an existing contract/repository obligation, or a necessary
+correctness/security guarantee with a concrete failure and consequence. The agent's own proposal
+is not independent evidence of necessity. Hypothetical future reuse, speculative scale, and
+professional preference do not create obligations.
+
+Put chosen mechanisms in Approach/Architecture unless the user explicitly requires them.
+Approval to implement an approach does not make every internal mechanism immutable. Call out any
+proposed new guarantee as a scope addition before confirmation; do not hide it in a long design.
+Changing an explicit user constraint still requires their approval. Preserve existing contracts,
+security protections, and required behavior when revising implementation choices.
+
 | Section | Purpose |
 |---------|---------|
-| Requirements (IMMUTABLE) | Specific, testable conditions that must be true |
+| Requirements (IMMUTABLE) | User outcomes, explicit constraints, and necessary guarantees, each with its basis |
 | Success Criteria | Objective, checkable items including "all tests passing" |
 | Anti-Patterns (FORBIDDEN) | Explicitly forbidden patterns with reasoning |
 | Quality Bar | gambit's fixed maximal standard for "good code" — the highest professional quality, written verbatim into every epic and judged against each diff by reviewers and the orchestrator at every checkpoint, beyond the objective Success Criteria |
@@ -372,7 +384,7 @@ Before handoff, verify each first-wave task passes these checks:
 3. **Explicit:** All file paths specified
 4. **Testable:** At least 3 success criteria
 
-**Corner cases to check:**
+**Corner cases to check for each behavior a Requirement demands:**
 - What if the happy path fails?
 - Edge case inputs? Empty/null/missing data?
 - Network/IO failures? Concurrent access?
@@ -387,7 +399,7 @@ Before announcing the plan to the user, run an inline self-review across the epi
 Scan for:
 - **Placeholders:** Any `TBD`, `TODO`, `FIXME`, `XXX`, `[details above]`, "see requirements", `<angle-bracket-placeholder>`, or sentence that trails off without committing to a specific behavior
 - **Vague requirements:** "properly handle errors", "good performance", "secure authentication", "similar to X" — requirements that can't be tested objectively must be rewritten with concrete, checkable conditions (or moved to a subtask's implementation notes)
-- **Scope drift:** Does the first task introduce files, behaviors, or dependencies the epic's requirements don't justify? Either tighten the task or add the requirement to the epic explicitly.
+- **Scope drift:** Remove work the requirements don't justify from the task, or present it separately as proposed scope for an explicit user decision. Never add a requirement merely to justify a task, a review suggestion, or already-written code.
 - **Ambiguity:** Any sentence where two readers could reach different implementations. Pick one and say it.
 - **Internal consistency:** The first task's files, function names, and success criteria should match the epic's stated approach. Mismatches mean one of them is wrong.
 - **Quality Bar present:** Does the epic carry the fixed Quality Bar verbatim from [TEMPLATES.md](TEMPLATES.md), unweakened? It's the same standard on every epic — restore it if it's missing, paraphrased, or watered down.

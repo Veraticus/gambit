@@ -260,6 +260,11 @@ If implementation reveals unexpected work:
 
 ### 3. Create the Next Wave
 
+Choose a runnable delivery slice before applying the width rule below. Prefer the smallest path
+to the next user outcome, not independently polished foundations. A foundation is justified by a
+concrete required dependency; name its next real consumer and integration point. Module completion
+is not end-to-end delivery. Harvest parallelism within that slice rather than displacing it.
+
 After a wave completes, build the NEXT wave from what you learned — and make it **as wide as the design genuinely supports**. Author EVERY follow-on task that passes the pluckability test, not just the single next step. Defaulting to one task when three are pluckable wastes the parallel machinery.
 
 **The pluckability test:** a task belongs in the next wave iff its brief can be written entirely from code that exists right now — exact file set, anchors cited by `file:line`, testable criteria — with no placeholder for anything another open task will produce. If the brief needs a stand-in ("use whatever interface task N exposes"), it isn't pluckable; it waits.
@@ -280,6 +285,13 @@ After a wave completes, build the NEXT wave from what you learned — and make i
 2. What existing functionality, blockers, or limitations appeared?
 3. Are we still moving toward epic success criteria?
 4. What's the logical next step?
+
+Unrequired machinery may be removed rather than hardened when no requirement, existing obligation,
+or admitted finding depends on it. Trace the remaining behavior and test the retained guarantees.
+Prior approval of an approach and sunk effort do not independently make its mechanisms immutable.
+Explicit user-selected mechanisms and safety/compatibility constraints still bind. This does not
+bypass architecture admission for new ownership or protocol invariants. Case C below applies to
+changes to those approved constraints, not removal of incidental machinery.
 
 **Three cases:**
 
@@ -308,10 +320,17 @@ After a wave completes, build the NEXT wave from what you learned — and make i
 
 Before retaining any next-wave brief, compare the current result with the last durable checkpoint and record which success criteria or named blockers were retired, which remain, and which new items appeared.
 
-- **Positive convergence** means the wave retired at least one approved success criterion or named blocker without unauthorized scope growth. Continue within the approved Delivery Constraints.
+- **Positive convergence** means the wave retired at least one approved success criterion or
+  named blocker without unauthorized scope growth. A named blocker is a failing declared gate or
+  a confirmed, admitted finding tied to required behavior or an evidenced failure—not a newly
+  named prerequisite or optional improvement. Report the actual integration milestone; polishing
+  a foundation or retiring optional improvements does not reset the convergence counter.
 - **Negative convergence circuit breaker:** if two consecutive checkpoints retire no success criterion or named blocker, or remaining work grows at both checkpoints, STOP autonomous continuation. Present the evidence and require explicit user approval to re-scope, change architecture, or extend the delivery budget. Do not silently add another repair wave.
 - **Repair ladder terminal rung:** one implementation attempt, one informed repair, then `escalation` re-dispatches climbing the ladder in `contracts/models.md`, with the top rung repeated with updated evidence until the defect clears. A defect recurring at a later checkpoint re-enters at the `escalation` role. The negative-convergence circuit breaker above is the only autonomous stop.
-- **Scope admission:** every new worker must map to an immutable requirement, an open frozen-ledger finding, or a failing declared validation gate. Otherwise report it as proposed scope and exclude it until the user approves it.
+- **Scope admission:** every new worker must map to an immutable requirement, an admitted open
+  frozen-ledger finding, or a failing declared validation gate. Review confirmation alone does
+  not authorize work. Do not strengthen the epic to justify a task; report additional guarantees
+  as proposed scope and exclude them until explicitly approved.
 - **Architecture admission:** new cross-component ownership, persistence, recovery, ordering, fencing, or protocol invariants that the approved approach does not settle route back through `gambit:brainstorming` before another implementation wave or release-acceptance spend.
 
 ---

@@ -63,12 +63,18 @@ Search the changed files for:
 Every finding must be categorized:
 
 - **GAP** — Blocks the verdict. Real, exploitable vulnerabilities that need fixing before merge.
-- **IMPROVEMENT** — Does not block the verdict, but WILL be implemented by the main agent before merge. Hardening opportunities, defense-in-depth additions, inconsistent error handling that could leak information under future changes. Include actionable detail: what to change, where, and why.
+- **IMPROVEMENT** — Non-blocking by default. State the concrete benefit and actionable change; confirmation alone does not require implementation. Hypothetical future changes do not establish a current vulnerability.
 - **False positive** — Pattern match but not actually a risk (document why).
 
 Do not downgrade hardening opportunities to vague suggestions. If you think something should be hardened, categorize it as an IMPROVEMENT with specific remediation guidance.
 
 **Improvements are held to the same verifier evidence bar as Gaps.** Ground every claim in a specific code location: name the file, line, and observable pattern. Evaluative conclusions ("this is insufficiently hardened," "this endpoint is an attack surface") are fine — required, even — but they must follow from a stated observation, not substitute for one. The pattern to use: observation first, then judgment (`src/routes/auth.ts:22 mounts /login with no rate-limit middleware while the adjacent /signup at :31 wraps with rateLimit(...) — this is an IMPROVEMENT: match the existing pattern`). The pattern to avoid: leading with a feeling that has no code anchor ("could be hardened against brute force"). Findings the verifier cannot confirm with a file read do not reach the user.
+
+A GAP must identify a violated requirement/existing obligation or a concrete security failure,
+including reachable preconditions and its consequence. A severity label alone is insufficient.
+Do not promote speculative hardening to GAP to force work. Credential disclosure, authorization
+bypasses, and other established vulnerabilities remain blockers even if the user did not
+individually enumerate them; scope restraint is not permission to ship insecure code.
 
 ## Scope — findings must anchor to changed code
 

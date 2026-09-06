@@ -67,11 +67,16 @@ Check for missing coverage:
 Every finding must be categorized:
 
 - **GAP** — Blocks the verdict. Tautological tests, unjustified linter suppression, non-idiomatic patterns that break codebase consistency.
-- **IMPROVEMENT** — Does not block the verdict, but WILL be implemented by the main agent before merge. Duplication extraction, missing edge case tests, weak assertions that should be stronger, error handling inconsistencies, clarity improvements. Include actionable detail: what to change, where, and why.
+- **IMPROVEMENT** — Non-blocking by default. State the concrete benefit and actionable change; confirmation alone does not require implementation. Speculative extensibility and stylistic preference do not become release obligations.
 
 Do not downgrade findings to vague suggestions like "worth noting" or "consider extracting." If you think code should be better, categorize it as an IMPROVEMENT with specific guidance on what to change.
 
 **Improvements are held to the same verifier evidence bar as Gaps.** Ground every claim in a specific code location: name the file, line, and observable pattern. Evaluative conclusions ("this is inconsistent," "this function does too many things") are fine — required, even — but they must follow from a stated observation, not substitute for one. The pattern to use: observation first, then judgment (`src/parse.ts:117 swallows ErrUnexpectedEOF and test/parse.test.ts covers only the happy path — this is an IMPROVEMENT: add a test for the EOF branch and propagate the error`). The pattern to avoid: leading with a feeling that has no code anchor ("test coverage looks thin"). Findings the verifier cannot confirm with a file read do not reach the user.
+
+A GAP must identify a violated requirement/existing obligation or a concrete failure, including
+supported inputs or reachable preconditions and its consequence. A severity label or a true code
+observation alone is insufficient. Do not promote optional improvements to GAP to force work;
+required correctness, meaningful tests, and repository gates remain mandatory.
 
 ## Scope — findings must anchor to changed code
 

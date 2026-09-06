@@ -11,10 +11,11 @@ TaskCreate
   subject: "Epic: [Feature Name]"
   description: |
     ## Requirements (IMMUTABLE)
-    [What MUST be true when complete — specific, testable]
-    - Requirement 1: [concrete requirement]
-    - Requirement 2: [concrete requirement]
-    - Requirement 3: [concrete requirement]
+    [Outcomes and guarantees, not incidental mechanisms. Include each requirement's basis:
+    explicit user request, existing obligation, or necessary guarantee with failure/consequence.]
+    - Requirement 1: [concrete requirement — basis]
+    - Requirement 2: [concrete requirement — basis]
+    - Requirement 3: [concrete requirement — basis]
 
     ## Success Criteria (MUST ALL BE TRUE)
     - [ ] Criterion 1 (objective, testable — e.g., 'Integration tests pass')
@@ -45,7 +46,8 @@ TaskCreate
     - Self-documenting: names say what things are; comments only where the WHY isn't obvious.
 
     ## Approach
-    [2-3 paragraph summary of chosen approach]
+    [Chosen implementation, revisable while preserving Requirements and explicit constraints.
+    Approval of this approach does not independently promote its mechanisms into Requirements.]
 
     ## Architecture
     [Key components, data flow, integration points]
@@ -83,9 +85,12 @@ TaskCreate
     - Repair ladder: one implementation attempt, one informed repair, one fresh escalation, then
       terminal escalation attempts repeated with updated evidence until the defect clears. A
       defect recurring at a later checkpoint re-enters at the terminal escalation rung.
-    - Scope growth: every newly discovered worker must map to an immutable requirement, an open
-      review-ledger finding, or a failing declared validation gate. Anything else is proposed scope,
-      not automatically authorized work.
+    - Scope growth: every newly discovered worker must map to an immutable requirement, an
+      admitted review-ledger finding, or a failing declared validation gate. A true observation
+      alone does not authorize work. Optional improvements are not convergence milestones.
+    - First deliverable: [smallest runnable path exercising required behavior through its real
+      consumer; if prerequisites prevent that first, name the concrete dependency and next
+      integration point, not a collection of hypothetical reusable foundations.]
 
     ## Validation Strategy
     - Focused worker command: [fast exact command each worker runs for its owned behavior]

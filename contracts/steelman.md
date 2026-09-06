@@ -51,7 +51,10 @@ constraints, then identify the strongest credible alternative and when it wins.
   tied to the stated goal, constraint, architecture, delivery boundary, or validation strategy.
 - Do not reopen a rejected approach unless new evidence or a changed assumption defeats its stated
   rejection reason. Name that new evidence or changed assumption explicitly.
-- Do not expand unrelated scope or turn optional polish into a delivery requirement.
+- Do not expand unrelated scope or turn optional polish into a delivery requirement. Check whether
+  a smaller runnable design preserves every user outcome and necessary guarantee; identify
+  proposed mechanisms masquerading as requirements. A more elaborate design is not stronger
+  merely because it handles hypothetical future use.
 - Separate evidence from inference. Cite inspected sources and label unverified assumptions.
 - Number assumptions, failure modes, ambiguities, and validation gaps. For each item, state impact,
   evidence, and the smallest concrete contract change that resolves or records it.

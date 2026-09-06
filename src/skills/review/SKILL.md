@@ -50,7 +50,7 @@ Works in epic or standalone workflow context; either context has an initial-audi
 | **4. Dispatch Reviewers** | Initial audit only: 4 agents in parallel, each reading instructions by path | Any agent fails to run |
 | **5. Scope + Dedupe** | Reject out-of-boundary candidates; byte-identical dedupe only | — |
 | **6. Dispatch Verifier** | 1 verifier sub-agent with the deduped candidate list | Verifier fails to run |
-| **7. Freeze Ledger** | Confirmed findings become the complete, immutable blocker set | — |
+| **7. Admit and Freeze Ledger** | Only confirmed, admitted findings become immutable blockers | — |
 | **8. Remediate / Close** | Fix ledger items; re-verify only open IDs + original gates | Evidence fails |
 <!-- gambit-backend:claude -->
 | **9. Gate** | APPROVED or OPEN LEDGER with verification counts | Ledger remains open → fix tasks, STOP |
@@ -84,7 +84,7 @@ Works in epic or standalone workflow context; either context has an initial-audi
 
 ### Step 1: Detect Context
 
-First detect an open **Review Closure Ledger** in the current workflow state. A ledger is open when a prior review recorded confirmed finding IDs and has not recorded terminal closure for all of them.
+First detect an open **Review Closure Ledger** in the current workflow state. A ledger is open when a prior review recorded admitted finding IDs and has not recorded terminal closure for all of them.
 
 - **Open ledger found → closure mode.** Skip Steps 3–5 and all four finders. Load the frozen boundary and only the still-open ledger entries, then continue at Step 6 with `mode: closure`.
 - **No open ledger → initial mode.** Determine what you're reviewing against below and run the full audit.
@@ -295,7 +295,9 @@ Agent subagent_type="general-purpose" model="<verifier tier — see contracts/mo
 
 **Do NOT include reviewer severity, category (Gap vs. Improvement), or reasoning chain in the candidate list.** The verifier receives the mode, frozen revisions, and only `id`, `path`, `line_range`, `body`, `verify_by` per candidate. Fresh context prevents anchoring. Retain stripped fields in the Step 5 side-table.
 
-**Do NOT verify findings in the main context.** Main context's job is dispatch + assembly. The verifier is the single source of truth for classification.
+**Do NOT verify findings in the main context.** The verifier owns factual classification.
+The root separately decides work admission from that evidence and the approved requirements;
+a true observation is not automatically an obligation to change code.
 
 Skip the verifier dispatch only if the candidate list is empty. Continue to Step 9 with an empty ledger; original criteria and the full project gate still require fresh evidence before APPROVED.
 
@@ -305,7 +307,10 @@ The verifier returns one classification per candidate, each with `verdict`, `quo
 
 Route by verdict, using the Step 5 side-table to recover each finding's original `category`:
 
-- **confirmed** → keep in the final report as a finding. Preserve the reviewer's original body text and the verifier's `quoted_evidence` / `evidence_location`. Place the finding in the "Gaps" section if the side-table's `category` is `gap`, or the "Improvements to Implement" section if `improvement`.
+- **confirmed** → preserve the original body and verifier evidence. Apply the admission check
+  below to both categories; the reviewer's Gap/Improvement label does not determine whether work
+  is mandatory. Keep unadmitted observations in a non-blocking "Optional improvements" section,
+  without pretending they were refuted.
 - **gap** → surface in a "🔍 Couldn't verify" section of the final report. NOT a confirmed finding — a coverage boundary. Include the verifier's `gap_reason` verbatim.
 <!-- gambit-backend:claude -->
 - **refuted** → drop from the findings and the gate. But list each one **tersely in the "Refuted (dropped)" audit trail** (file:line + the reviewer's one-line claim + the verifier's quoted counter-evidence). This is the only window into the verifier's one documented failure mode — aggressive refutation suppressing a real bug. Do not act on refuted findings, create tasks for them, or let them block; the audit trail exists so you (and the user) can spot a bad refutation, not to re-litigate verdicts.
@@ -314,7 +319,16 @@ Route by verdict, using the Step 5 side-table to recover each finding's original
 - **refuted** → drop from the findings and the gate. But list each one **tersely in the "Refuted (dropped)" audit trail** (file:line + the reviewer's one-line claim + the verifier's quoted counter-evidence). This is the only window into the verifier's one documented failure mode — aggressive refutation suppressing a real bug. Do not act on refuted findings, author worker briefs for them, or let them block; the audit trail exists so you (and the user) can spot a bad refutation, not to re-litigate verdicts.
 <!-- /gambit-backend -->
 
-After the initial verdicts, create a **Review Closure Ledger** containing every confirmed finding and no others:
+**Admission check:** name the approved requirement or existing obligation the finding violates,
+or the concrete correctness/security/operational failure demonstrated by its evidence. For a
+risk-based claim, state supported inputs or reachable preconditions and the consequence.
+Hypothetical future use, stylistic preference, severity labels, and sunk work are not sufficient.
+Do not add a requirement to justify a finding. Actual credential leaks, corrupt results, missing
+required behavior/tests, and failing declared gates remain mandatory fixes.
+
+After initial verification and admission, create a **Review Closure Ledger** containing only
+confirmed findings that pass that check. An optional improvement may become new work only through
+explicit user-approved scope expansion, not through automatic promotion into the contract:
 
 ```yaml
 review_base: <revision>
@@ -328,13 +342,20 @@ open:
     body: <original claim>
     verify_by: <original check>
     evidence: <verifier quote + location>
+    admission_basis: <requirement/obligation or evidenced failure with preconditions and consequence>
 ```
 
-The ledger is immutable: closure may change only an entry's status from open to resolved. Refuted, gap-classified, and boundary-rejected candidates stay in non-blocking audit trails and never enter later work. Preserve the complete ledger in the review checkpoint; fix work must reference its IDs.
+The ledger is immutable: closure may change only an entry's status from open to resolved. Refuted,
+gap-classified, boundary-rejected, and unadmitted optional candidates stay in non-blocking audit
+trails and never automatically enter later work. Preserve the complete ledger in the review checkpoint; fix work must reference its IDs.
 
 ### Step 8: Remediate and Close the Ledger
 
-In initial mode, implement every confirmed improvement. Confirmed gaps become fix work through the owning workflow. A suggestion may be skipped only with code evidence that the reviewer misunderstood it; record that as a verifier-calibration issue, not a new finding.
+Remediate admitted ledger entries through the owning workflow. Confirmation establishes truth,
+not mandatory scope: do not schedule unadmitted improvements or relabel them as misunderstood.
+Unrequired machinery may be removed instead of hardened when the remaining implementation still
+satisfies every requirement, existing obligation, and admitted finding. Verify those guarantees;
+never use simplification to drop required safety or compatibility.
 
 After any remediation, enter closure mode. **Do not dispatch the four finders again.** Dispatch the verifier with only open ledger entries.
 
@@ -368,7 +389,9 @@ Newly noticed issues from the frozen snapshot, process/history concerns, and unr
 
 ### Step 9: Gate Decision
 
-**APPROVED** requires either zero confirmed findings in initial mode, or every ledger ID resolved in closure mode, plus green original criteria and full project gate. This is the terminal condition; proceed directly to `gambit:finishing-branch` and pass the fresh test evidence.
+**APPROVED** requires either zero admitted ledger entries in initial mode, or every ledger ID
+resolved in closure mode, plus green original criteria and full project gate. Verified optional
+improvements do not block approval. This is the terminal condition; proceed directly to `gambit:finishing-branch` and pass the fresh test evidence.
 
 If entries remain open, report only those IDs with their evidence and complete fix briefs. Preserve the same ledger:
 

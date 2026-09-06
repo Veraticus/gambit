@@ -63,11 +63,16 @@ Only flag as GAPS issues that would cause real problems at the project's expecte
 Every finding must be categorized:
 
 - **GAP** — Blocks the verdict. Real performance problems that would cause failures at the project's expected scale.
-- **IMPROVEMENT** — Does not block the verdict, but WILL be implemented by the main agent before merge. Safety limits (LIMIT clauses, pagination bounds), missing timeouts, caching opportunities, batching improvements. Include actionable detail: what to change, where, and why.
+- **IMPROVEMENT** — Non-blocking by default. State the concrete benefit and actionable change; confirmation alone does not require implementation. Speculative future scale does not establish a current performance requirement.
 
 Do not downgrade findings to vague suggestions like "could add a LIMIT." If you think a safety valve or optimization should exist, categorize it as an IMPROVEMENT with specific guidance.
 
 **Improvements are held to the same verifier evidence bar as Gaps.** Ground every claim in a specific code location: name the file, line, and observable pattern. Evaluative conclusions ("this is unbounded," "this will degrade at scale") are fine — required, even — but they must follow from a stated observation, not substitute for one. The pattern to use: observation first, then judgment (`src/db/users.ts:88 builds a query with no LIMIT; the caller at src/api/list.ts:42 passes a user-controlled offset — this is an IMPROVEMENT: cap the result set`). The pattern to avoid: leading with a feeling that has no code anchor ("this could get slow under load"). Findings the verifier cannot confirm with a file read do not reach the user.
+
+A GAP must identify a violated requirement/existing obligation or a concrete failure at the
+project's supported workload, including reachable preconditions and its consequence. A severity
+label alone is insufficient. Do not promote speculative optimization to GAP to force work;
+actual resource-exhaustion or availability failures remain blockers.
 
 ## Scope — findings must anchor to changed code
 
