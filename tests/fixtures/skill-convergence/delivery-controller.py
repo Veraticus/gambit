@@ -71,7 +71,8 @@ def run_real_check(state_path: Path) -> int:
         "import pathlib,sys; namespace={}; "
         "source=pathlib.Path(sys.argv[1]).read_text(); "
         "exec(compile(source,sys.argv[1],'exec'),namespace); "
-        "assert namespace['transform'](1)==2"
+        "assert namespace['transform'](1)==2; "
+        "assert namespace['transform'](7)==8"
     )
     return subprocess.run(
         [sys.executable, "-I", "-c", checker, str(target_path(state_path))], check=False

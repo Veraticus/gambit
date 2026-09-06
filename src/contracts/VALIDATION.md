@@ -112,8 +112,11 @@ prompts, instruction snapshots/hashes, returned reports and actual fixture actio
   ownership. The judge retained real obligations and reported limits on uninspected fixture claims.
 - **Observable positive endpoint:** root invoked the controlled judge transport, used the separately
   obtained real judge response, persisted consumed allowance before worker dispatch, ran an actual
-  Python assertion after the scripted one-line patch, and completed the fixture. Controller tests
-  also break the program after dispatch and prove the check fails: success is not inferred from an
+  Python assertion after the scripted one-line patch, and completed the fixture. The original positive
+  model trial used the weaker single-input predicate `transform(1) == 2`; the deterministic controller
+  correction now also checks an ordinary second positive integer, and a constant-return regression
+  proves that weaker implementation fails while the original correct implementation passes. Controller
+  tests also break the program after dispatch and prove the check fails: success is not inferred from an
   action record. Improper dispatches remain possible and observable, not blocked by the controller.
 
 An initial unvalidated policy draft and synthetic state-only success check were rejected. Policy

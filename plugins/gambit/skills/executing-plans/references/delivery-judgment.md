@@ -39,8 +39,19 @@ Resolve the existing config-resolved `steelman` role and dispatch it fresh with
 `codex-contracts/steelman.md` by path and `Mode: Delivery judgment`; do not inherit a prior judge turn.
 
 ```
-SpawnSpawnAgent agent_type="steelman" fork_turns="none"
-  message="Read <abs>/codex-codex-contracts/steelman.md first. Mode: Delivery judgment. Evaluate only the supplied evidence and return its contracted verdict."
+SpawnAgent agent_type="steelman" task_name="steelman" fork_turns="none"  # Profile-aware: requires hide_spawn_agent_metadata = false and a non-reserved tool_namespace.
+  message="Read <abs>/codex-contracts/steelman.md first. Mode: Delivery judgment.
+Complete packet:
+Verbatim Requirements and Success Criteria: <verbatim requirements and success criteria>
+Original executable brief: <original executable brief>
+Authoritative DELIVERY record and allowance: <authoritative DELIVERY record with allowance marked unused, consumed, or unknown>
+Worker returns: <worker returns>
+Diff stat and ownership versus wave base: <diff stat against wave base and owned files>
+Gate output: <focused-gate output>
+Admitted defects and consequences: <admitted defects with locations and consequences>
+Source references: <source references>
+Root proposal (separately labeled): <root's proposed route>
+Evaluate only this supplied evidence and return its contracted verdict."
 ```
 
 One execution-time judgment is available for a task-family intervention, separately from the

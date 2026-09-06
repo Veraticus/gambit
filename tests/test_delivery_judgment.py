@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -56,6 +57,47 @@ class DeliveryJudgmentPolicyTest(unittest.TestCase):
         self.assertIn("unused, consumed, or unknown", evidence)
         self.assertIn("must not guess", evidence)
 
+    def test_both_rendered_judge_payloads_contain_the_complete_packet(self) -> None:
+        required_fields = (
+            "Verbatim Requirements and Success Criteria: <verbatim requirements and success criteria>",
+            "Original executable brief: <original executable brief>",
+            "Authoritative DELIVERY record and allowance: <authoritative DELIVERY record with allowance marked unused, consumed, or unknown>",
+            "Worker returns: <worker returns>",
+            "Diff stat and ownership versus wave base: <diff stat against wave base and owned files>",
+            "Gate output: <focused-gate output>",
+            "Admitted defects and consequences: <admitted defects with locations and consequences>",
+            "Source references: <source references>",
+            "Root proposal (separately labeled): <root's proposed route>",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            skills, _ = render_skills.render_backend("claude", Path(temporary))
+            claude = (skills / "executing-plans/references/delivery-judgment.md").read_text()
+            skills, _ = render_skills.render_backend("codex", Path(temporary))
+            codex = (skills / "executing-plans/references/delivery-judgment.md").read_text()
+        for backend, rendered, command in (
+            ("claude", claude, "Agent subagent_type="),
+            ("codex", codex, "SpawnAgent agent_type="),
+        ):
+            with self.subTest(backend=backend):
+                block = rendered.split(command, 1)[1].split("```", 1)[0]
+                payload = re.search(r'(?:prompt|message)="([\s\S]*?)"\n', block)
+                self.assertIsNotNone(payload)
+                for field in required_fields:
+                    self.assertIn(field, payload.group(1))
+
+    def test_codex_render_has_exact_undoubled_delivery_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            skills, _ = render_skills.render_backend("codex", Path(temporary))
+            rendered = (skills / "executing-plans/references/delivery-judgment.md").read_text()
+        self.assertRegex(
+            rendered,
+            r'(?m)^SpawnAgent agent_type="steelman" task_name="steelman" fork_turns="none"  '
+            r'# Profile-aware: requires hide_spawn_agent_metadata = false and a non-reserved tool_namespace\.\n'
+            r'  message="Read <abs>/codex-contracts/steelman\.md first\.',
+        )
+        self.assertNotIn("SpawnSpawnAgent", rendered)
+        self.assertNotIn("codex-codex-contracts", rendered)
+
     def test_bounded_policy_replaces_generated_legacy_retries_but_not_user_policy(self) -> None:
         skill = (ROOT / "src/skills/executing-plans/SKILL.md").read_text()
         legacy = skill.split("For a legacy epic", 1)[1].split("**Enter the epic worktree.**", 1)[0]
@@ -90,7 +132,10 @@ class DeliveryJudgmentPolicyTest(unittest.TestCase):
             self.assertIn("Record and consume the allowance **before** dispatching", reference)
             self.assertIn("endpoint failed", reference)
         self.assertIn('Agent subagent_type="general-purpose" model="<steelman rung alias', claude_reference)
-        self.assertIn('SpawnAgent agent_type="steelman" fork_turns="none"', codex_reference)
+        self.assertIn(
+            'SpawnAgent agent_type="steelman" task_name="steelman" fork_turns="none"',
+            codex_reference,
+        )
         self.assertIn("same-session plan/checkpoint only", codex_reference)
         self.assertNotIn("until the defect clears", claude)
         self.assertNotIn("until the defect clears", codex)
@@ -128,6 +173,9 @@ class DeliveryJudgmentPolicyTest(unittest.TestCase):
             self.assertEqual(0, self.run_controller(state, "run-check").returncode)
             target = Path(temporary) / "delivery_target.py"
             target.write_text("def transform(value):\n    return value - 1\n")
+            self.assertNotEqual(0, self.run_controller(state, "run-check", expected=None).returncode)
+            self.assertFalse(json.loads(state.read_text())["check_passed"])
+            target.write_text("def transform(value):\n    return 2\n")
             self.assertNotEqual(0, self.run_controller(state, "run-check", expected=None).returncode)
             self.assertFalse(json.loads(state.read_text())["check_passed"])
 
