@@ -249,7 +249,7 @@ class RenderedSkillsTest(unittest.TestCase):
                 text = path.read_text(encoding="utf-8")
                 self.assertRegex(
                     text,
-                    r"(?m)^\| `steelman` \(design collaborator\) \|",
+                    r"(?m)^\| `steelman` \(design/delivery collaborator\) \|",
                 )
                 self.assertIn(
                     "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/gambit/models.json", text
@@ -772,12 +772,13 @@ class RenderedSkillsTest(unittest.TestCase):
         worker = routing.index('SpawnAgent agent_type="worker"')
         same_thread_repair = routing.index("followup_task")
         escalation = routing.index('SpawnAgent agent_type="escalation"')
-        escalation_final = routing.index(
-            'SpawnAgent agent_type="escalation-final"'
-        )
         self.assertLess(worker, same_thread_repair)
         self.assertLess(same_thread_repair, escalation)
-        self.assertLess(escalation, escalation_final)
+        terminal = routing.split(
+            "4. **Terminal escalation — no automatic retry.**", 1
+        )[1].split("Route the bounded continuation result", 1)[0]
+        self.assertNotIn("SpawnAgent", terminal)
+        self.assertNotIn("escalation-final", terminal)
         self.assertIn("same worker thread and agent configuration", routing)
         self.assertIn("exactly one informed repair turn", routing)
         self.assertNotIn("re-dispatch a FRESH worker", executing)
@@ -833,7 +834,7 @@ class RenderedSkillsTest(unittest.TestCase):
 
         for required in (
             "two consecutive checkpoints",
-            "terminal escalation attempts repeated with updated evidence",
+            "independent delivery judgment and at most one consumed bounded continuation",
             "explicit user approval",
             "Focused worker command",
             "Wave/component gate",
@@ -854,7 +855,7 @@ class RenderedSkillsTest(unittest.TestCase):
             "retire no success criterion or named blocker",
             "remaining work grows",
             "STOP autonomous continuation",
-            "`escalation-final` workers repeated with updated evidence",
+            "one independently justified continuation at most is consumed before dispatch",
             "explicit user approval",
         ):
             self.assertIn(required, convergence)

@@ -275,9 +275,10 @@ class ModelsContractDefinesRungsAndRolesTest(unittest.TestCase):
             "never selects or changes its own rung",
             "Never re-dispatch the same rung on unchanged evidence",
             "moves UP the ladder",
-            "top rung repeats",
-            "until the defect clears",
-            "terminal rung is native Claude",
+            "Escalation stays bounded by delivery state",
+            "must first follow",
+            "consumed allowance",
+            "terminal-rung selection remains native Claude",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, prose)

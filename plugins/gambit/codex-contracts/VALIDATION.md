@@ -78,12 +78,59 @@ The rung/role and steelman contracts and their wired workflow routing have struc
 coverage. `tests/test_rung_dispatch.py` pins the `models.json` config path, the rung and role
 schema, the two dispatch shapes, the foreign-model-id prohibition, the built-in defaults, and the
 ladder invariants — and proves the Claude render carries no Codex-MCP executor machinery.
-`tests/test_brainstorming_steelman.py` covers Steelman rung resolution and call wiring;
+`tests/test_brainstorming_steelman.py` covers Steelman rung resolution and call wiring for design modes;
+`tests/test_delivery_judgment.py` covers the delivery mode, independent repair-routing seam, and isolated controller actions; and
 `tests/test_executing_plans_rungs.py` covers worker, escalation, and checkpoint-finder routing;
 `tests/test_review_rungs.py` covers finder and verifier routing; and
 `tests/test_workflow_routing.py` covers scout and test-runner routing. Together they check source
-and rendered backend behavior, including both Steelman modes, exact statuses, the frozen Design
-Ledger, authority boundaries, the two-call circuit breaker, and per-role rung resolution.
+and rendered backend behavior, including the Discovery/Closure and separate delivery Steelman modes,
+exact statuses, the frozen Design Ledger, authority boundaries, the design two-call circuit breaker,
+and per-role rung resolution.
+
+## Delivery judgment exercise (2026-09-06)
+
+Ten fresh subjects used the configured `sol-low` agent at low effort; exact reported model IDs
+are retained in the fixture JSON rather than pinned in this contract. The bounded set was declared before calls; no additional samples or
+retries were taken. `tests/fixtures/skill-convergence/delivery-results.json` retains exact dispatch
+prompts, instruction snapshots/hashes, returned reports and actual fixture action traces;
+`delivery-eval.txt` describes the adapter. No private product payloads were used.
+
+- **Observed RED before the accepted policy implementation:** unaided and current-skill subjects
+  dispatched another corrective worker after a failed informed repair, without independent judgment.
+  Both recorded their decision only after dispatch. A structured root-self-check comparison paused;
+  its explanation treated attempts as checkpoints, so this is not evidence of equivalent policy
+  reasoning. The user explicitly requires independence at the intervention trigger regardless.
+- **Edited primary GREEN:** dispatched judgment, recorded `USER-DECISION`, then paused; no worker
+  or false completion. Expanded first-repair control likewise judged and paused. A complete fixture
+  with an optional plugin-registry ideal ran its supported check and completed without extra work.
+- **State controls:** consumed allowance after rename/Goal resume, unrecoverable allowance, and a
+  subsequent failed-endpoint scenario all paused without a new judge or worker. A known fresh,
+  correct task with a long test duration completed normally; duration alone did not trigger a stop.
+- **Separate real judge subjects:** inspected the tiny owned target and authorized an exact one-line
+  fix with an endpoint; classified the optional ideal as `DESIGN-SATISFIED`; and rejected a biased
+  root's allegedly tiny repair when supplied evidence showed four material failures and expanded
+  ownership. The judge retained real obligations and reported limits on uninspected fixture claims.
+- **Observable positive endpoint:** root invoked the controlled judge transport, used the separately
+  obtained real judge response, persisted consumed allowance before worker dispatch, ran an actual
+  Python assertion after the scripted one-line patch, and completed the fixture. Controller tests
+  also break the program after dispatch and prove the check fails: success is not inferred from an
+  action record. Improper dispatches remain possible and observable, not blocked by the controller.
+
+An initial unvalidated policy draft and synthetic state-only success check were rejected. Policy
+changes were discarded; the controller was corrected; the three primary trials then established
+RED against the untouched baseline before the accepted implementation. This procedural failure is
+not concealed as test-first work. Root, not the implementation worker, ran all ten subjects.
+
+After these trials, narrow structural regressions scoped design-only authority text, made delivery
+allowance input explicit, clarified legacy-policy precedence, and removed an obsolete terminal-call
+example. Instruction snapshots retain the actual pre-clarification trial text; those final wording
+changes have structural checks, not an additional unbudgeted model trial.
+
+These are controlled action/decision exercises, not live service or project-delivery measurements.
+Scripted worker/judge adapters isolate root routing; they do not prove actual child-dispatch runtime
+integration. Both backend renders have structural coverage, but behavior trials use Claude-format
+instructions and adapters, not native Codex orchestration. No statistical, cross-model, hard-runtime-
+enforcement or faster-real-delivery claim follows.
 
 Each agent class and the governance reflex was validated with **baseline-RED → GREEN-under-pressure → mis-prompt/injection**, using the gambit:writing-skills evaluation-driven method (a fresh subagent, a realistic scenario, a forced choice under combined pressure). Tested at the tier each class actually runs at — the cheap tier is where contracts earn their keep, since capable models are already disciplined by default. Summary of recorded results:
 

@@ -100,9 +100,9 @@ Run `TaskList` and analyze:
 - **Start next:** Previous completed, next "pending" with empty blockedBy → Step 1 then 2
 - **All done:** All subtasks "completed" → Step 5 (final validation)
 
-**Do NOT ask "where did we leave off?"** — Task state tells you exactly where to resume.
+**Do NOT ask "where did we leave off?"** — Task state tells you exactly where to resume. Before choosing a corrective task on resume, read `references/delivery-judgment.md`: a known `USER-DECISION`, consumed failed endpoint, or unrecoverable existing-family allowance pauses; a known fresh initial task with no record remains healthy.
 
-**If the task store is empty or wiped** (e.g. an MCP reconnect drops the session's tasks mid-epic) — this is recoverable state loss, not a halt. You hold the epic's requirements and the current wave in your own context; recreate the epic and the in-flight tasks with `TaskCreate` from that context, then resume. Never abandon an epic because the store reset.
+**If the task store is empty or wiped** (e.g. an MCP reconnect drops the session's tasks mid-epic), recover only enough task state to distinguish a known fresh initial task from an existing family. An existing family's missing `DELIVERY` record is unknown allowance and pauses for user decision; do not recreate it as a fresh allowance.
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
 Run `SessionPlanRead` and analyze the wave steps:
@@ -112,9 +112,9 @@ Run `SessionPlanRead` and analyze the wave steps:
 - **Start next:** Previous wave completed and the next wave is pending → Step 1 then 2
 - **All done:** Every wave step is completed → Step 5 (final validation)
 
-**Do NOT ask "where did we leave off?"** — the root session's wave state tells you exactly where to resume.
+**Do NOT ask "where did we leave off?"** — the root session's wave state tells you exactly where to resume. Before choosing a corrective wave on resume, read `references/delivery-judgment.md`: a known `USER-DECISION`, consumed failed endpoint, or unrecoverable existing-family allowance pauses; a known fresh initial task with no record remains healthy.
 
-**If native plan state is absent**, use `SessionContextRead` to recover only from this root session's approved contract and latest checkpoint, then reconstruct the complete ordered wave list with `SessionPlanWrite`. If same-session context is insufficient, or native plan mutation is unavailable, fail closed and ask the user; never recover orchestration state from the repository, another session, a goal, or legacy state.
+**If native plan state is absent**, use `SessionContextRead` to recover only from this root session's approved contract and latest checkpoint. If same-session context is insufficient, delivery allowance for an existing family is unknown and requires user decision; never recover orchestration permission from repository artifacts, another session, a Goal, or legacy state.
 <!-- /gambit-backend -->
 
 ---
@@ -138,7 +138,7 @@ Before executing ANY wave, use `SessionContextRead` to reread the complete appro
 
 **Why:** Requirements prevent rationalizing shortcuts when implementation gets hard.
 
-For a legacy epic that lacks Delivery Constraints or Validation Strategy, do not guess silently. Before implementation, propose the conservative defaults from this skill — the two-checkpoint convergence circuit breaker, the repair ladder ending in terminal escalation attempts repeated with updated evidence, focused and wave/component commands from repository policy, and one fresh release acceptance run after architecture/scope preflight — then obtain explicit user approval. This records delivery policy without changing immutable product requirements.
+For a legacy epic that lacks Delivery Constraints or Validation Strategy, do not guess silently. Before implementation, propose the conservative defaults from this skill — the two-checkpoint convergence circuit breaker, the bounded delivery judgment and one continuation in `references/delivery-judgment.md`, focused and wave/component commands from repository policy, and one fresh release acceptance run after architecture/scope preflight — then obtain explicit user approval; agent-generated legacy retry boilerplate is replaced by this bounded policy even when the epic already has Delivery Constraints and does not preserve extra automatic retries. An explicit conflicting user-selected continuation policy requires clarification rather than silent override. This records delivery policy without changing immutable product requirements.
 
 **Enter the epic worktree.** All epic work happens in a worktree — never directly on main. Working on main risks orphaned commits and a corrupted mainline while waves land.
 
@@ -264,13 +264,13 @@ The ready work is a **wave** — one or more ready tasks whose file sets are **p
 <!-- /gambit-backend -->
 
 <!-- gambit-backend:claude -->
-3. **Route on the worker's returned status** (the contract defines four). Never re-dispatch the same rung on the same unchanged task — something must change first. The ladder is one implementation attempt, one informed repair, then `escalation`-role re-dispatches that climb the ladder in `contracts/models.md` — each carrying updated actionable evidence — with the top rung repeating until the defect clears; a defect recurring at a later checkpoint re-enters at the `escalation` role with its recurrence as the new evidence:
+3. **Route on the worker's returned status** (the contract defines four). Before any corrective dispatch, quality repair, escalation, or terminal-rung repeat, load `references/delivery-judgment.md`. A bounded ordinary first informed repair may proceed; material expansion triggers the fresh independent judgment before that repair. Consume `CONTINUE-ONCE` before its worker. A failed endpoint, `USER-DECISION`, malformed judgment, or unknown existing-family allowance pauses rather than dispatching again:
    - **DONE** → single-task wave: verify with FRESH evidence by running its focused worker command. Wave of ≥2: confirm the worker's isolated RED/GREEN evidence and rerun only a missing worker-scoped check; the declared wave/component gate belongs to the combined manifest and runs exactly once. Then run the **Checkpoint quality gate** (below) on that worker's complete change set before proceeding.
    - **DONE_WITH_CONCERNS** → read the concern. Correctness or scope → resolve it (refine + re-dispatch, or fix directly) before accepting; treat it as an escalation trigger in the quality gate (below). Benign observation → note it and verify as DONE. **A "bigger behavior change than the brief implied" flag usually means the brief was wrong, not the worker** — re-read the requirement the worker cites and fix the brief, don't wave the flag through because the worker followed instructions literally. A worker's scope-surprise is often your spec catching itself.
    - **NEEDS_CONTEXT** → supply the missing values/decisions and re-dispatch with them added.
    - **BLOCKED** → act by cause: missing context → add it + re-dispatch; needs more reasoning → move UP the ladder; task too large → decompose into a new task (`TaskCreate`); the plan/brief itself is wrong → STOP and escalate to the user. Do NOT water down requirements.
 
-     A needs-more-reasoning retry climbs the ladder: Resolve the `escalation` role through `contracts/models.md` and dispatch a fresh agent on the next rung up, reusing the same absolute worker contract path and complete brief plus the updated evidence. Once the ladder's top rung is reached, that rung repeats with new evidence each time:
+     When delivery judgment authorizes the one bounded continuation, Resolve the `escalation` role through `contracts/models.md` and dispatch a fresh agent on the selected rung, reusing the same absolute worker contract path and complete brief plus updated evidence. A later escalation or terminal-rung repeat does not renew the allowance:
      ```
      Agent subagent_type="general-purpose" model="<escalation rung alias — contracts/models.md>" description="Escalate: <task subject>"
        prompt="<same absolute worker contract path directive and complete worker brief>"
@@ -278,7 +278,7 @@ The ready work is a **wave** — one or more ready tasks whose file sets are **p
      On an agent rung, drop the `model=` field and set `subagent_type="<escalation rung agent>"` instead.
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
-3. **Route on the worker's returned status** (the contract defines four) through this fixed four-rung worker ladder. Do not skip or reorder a rung; only rung 4 repeats:
+3. **Route on the worker's returned status** (the contract defines four). Before any corrective dispatch, quality repair, escalation, or terminal-rung repeat, load `references/delivery-judgment.md`. A bounded ordinary first informed repair may proceed; material expansion triggers the fresh independent judgment before that repair. Consume `CONTINUE-ONCE` before its worker. A failed endpoint, `USER-DECISION`, malformed judgment, or unknown existing-family allowance pauses rather than dispatching again:
 
    1. **Initial implementation — worker.** Use the `worker` SpawnAgent dispatch above.
       ```
@@ -291,24 +291,14 @@ The ready work is a **wave** — one or more ready tasks whose file sets are **p
         target: "<worker task name returned by the initial SpawnAgent>"
         message: "Reread <abs>/contracts/worker.md and perform the one informed repair. <new actionable evidence and exact remaining defect>"
       ```
-   3. **Reasoning escalation — fresh escalation worker.** If rung 2 does not produce a verified, quality-clean result, dispatch one fresh `escalation` worker in the same worktree. Pass the same contract path and complete original brief plus both prior results and the exact remaining evidence.
+   3. **Reasoning escalation — bounded continuation worker.** If judgment returned `CONTINUE-ONCE`, dispatch one fresh `escalation` worker in the same worktree with the consumed allowance, same contract path, complete original brief, prior results, and exact remaining evidence. Otherwise pause for user decision.
       ```
       SpawnAgent role="escalation" description="Escalate: <task subject>"
         prompt="Read <abs>/contracts/worker.md first, then implement the complete original brief in <same worktree>. Prior attempt: <result>. Informed repair: <result>. Remaining evidence: <exact defect or failing output>."
       ```
-   4. **Terminal escalation — repeated maximum-reasoning workers.** If rung 3 does not produce a verified, quality-clean result, dispatch a fresh `escalation-final` worker in the same worktree, carrying the bounded history of every prior attempt and the updated remaining evidence. Repeat this rung — never with unchanged evidence — until the result verifies clean.
-      ```
-      SpawnAgent role="escalation-final" description="Escalate (terminal): <task subject>"
-        prompt="Read <abs>/contracts/worker.md first, then implement the complete original brief in <same worktree>. Prior attempts: <bounded summaries with cited excerpts>. Remaining evidence: <exact defect or failing output>."
-      ```
+   4. **Terminal escalation — no automatic retry.** If rung 3 misses its recorded endpoint, preserve the incomplete work and pause for user decision. Do not dispatch another worker, another judge, or a renamed descendant automatically.
 
-   Route each terminal result within that ladder:
-   - **DONE** → verify with FRESH evidence, then run the **Checkpoint quality gate** below. A verification or quality defect consumes the next unused repair rung.
-   - **DONE_WITH_CONCERNS** → accept only a benign observation after verification. Correctness or scope concerns consume the next unused repair rung unless they prove the brief or architecture is wrong. **A "bigger behavior change than the brief implied" flag usually means the brief was wrong, not the worker** — reread the cited requirement before repairing.
-   - **NEEDS_CONTEXT** → add the missing values or decision as the actionable evidence for the next unused repair rung.
-   - **BLOCKED** → missing context or insufficient reasoning consumes the next unused repair rung; a brief that is too large is split into later complete worker briefs, while a wrong plan/brief or unsettled architecture STOPs for user input. Do NOT water down requirements.
-
-   A defect recurring at a later checkpoint re-enters rung 4 with its recurrence as the new evidence. There is no human rung; the ladder ends only in a verified, quality-clean result. The epic-level negative-convergence circuit breaker still applies.
+   Route the bounded continuation result: verify `DONE` with FRESH evidence and the **Checkpoint quality gate**. For correctness/scope concerns, `NEEDS_CONTEXT`, `BLOCKED`, or a failed endpoint, retain the same delivery family record and pause for user decision. Do NOT water down requirements.
 <!-- /gambit-backend -->
 
 <!-- gambit-backend:claude -->
@@ -374,10 +364,10 @@ Route on the verdict:
 - **Clean** → proceed to the durable checkpoint with the native wave still `in_progress`.
 <!-- /gambit-backend -->
 <!-- gambit-backend:claude -->
-- **Quality defect** → re-dispatch a FRESH worker with the specific cited defects (never the same worker on unchanged input). **Never edit the diff yourself — you judge and route; workers implement.**
+- **Quality defect** → before routing any repair, load `references/delivery-judgment.md`. The defect still blocks completion, but it does not create another allowance; retain the family record and pause when its continuation was consumed or its endpoint failed. **Never edit the diff yourself — you judge and route; workers implement.**
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
-- **Quality defect** → consume the next unused rung in the fixed worker ladder with the cited defect as new actionable evidence: same-thread `followup_task` first, then a fresh `escalation` worker, then repeated `escalation-final` workers with updated evidence until the defect clears. **Never edit the diff yourself — you judge and route; workers implement.**
+- **Quality defect** → before routing any repair, load `references/delivery-judgment.md`. The defect still blocks completion, but it does not create another allowance; retain the family record and pause when its continuation was consumed or its endpoint failed. **Never edit the diff yourself — you judge and route; workers implement.**
 <!-- /gambit-backend -->
 - **Doubt, or an escalation trigger fired** → escalate (below) before deciding.
 
@@ -553,10 +543,10 @@ Before retaining any next-wave brief, compare the current result with the last d
   a foundation or retiring optional improvements does not reset the convergence counter.
 - **Negative convergence circuit breaker:** if two consecutive checkpoints retire no success criterion or named blocker, or remaining work grows at both checkpoints, STOP autonomous continuation. Present the evidence and require explicit user approval to re-scope, change architecture, or extend the delivery budget. Do not silently add another repair wave.
 <!-- gambit-backend:claude -->
-- **Repair ladder terminal rung:** one implementation attempt, one informed repair, then `escalation` re-dispatches climbing the ladder in `contracts/models.md`, with the top rung repeated with updated evidence until the defect clears. A defect recurring at a later checkpoint re-enters at the `escalation` role. The negative-convergence circuit breaker above is the only autonomous stop.
+- **Repair ladder:** the first informed repair may remain within the original brief. Material expansion, a failed informed repair, escalation, or a terminal-rung repeat routes through `references/delivery-judgment.md`; one independently justified continuation at most is consumed before dispatch. Its failed endpoint pauses for user decision. The negative-convergence circuit breaker remains an additional stop.
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
-- **Repair ladder terminal rung:** the fixed ladder is initial `worker`, one informed same-thread repair, one fresh `escalation` worker, then `escalation-final` workers repeated with updated evidence until the defect clears. A defect recurring at a later checkpoint re-enters at `escalation-final`. The negative-convergence circuit breaker above is the only autonomous stop.
+- **Repair ladder:** the first informed repair may remain within the original brief. Material expansion, a failed informed repair, escalation, or a terminal-rung repeat routes through `references/delivery-judgment.md`; one independently justified continuation at most is consumed before dispatch. Its failed endpoint pauses for user decision. The negative-convergence circuit breaker remains an additional stop.
 <!-- /gambit-backend -->
 - **Scope admission:** every new worker must map to an immutable requirement, an admitted open
   frozen-ledger finding, or a failing declared validation gate. Review confirmation alone does

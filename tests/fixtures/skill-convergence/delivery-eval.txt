@@ -1,0 +1,22 @@
+# Delivery judgment fixture adapter
+
+This controller is an isolated action recorder, not a policy implementation and not a model judge. The evaluation harness creates a temporary directory and passes its hidden state path with every invocation:
+
+`python3 delivery-controller.py --state PATH COMMAND [VALUE]`
+
+Available actions:
+
+- `init SCENARIO` creates state and a tiny local target program. Scenarios are `expanded`, `small`, `spent`, `ideal`, `unknown`, `first-expanded`, and `slow`.
+- `show` prints the current state.
+- `judge` prints the scenario's prerecorded independent verdict. Extra caller text cannot select the verdict, and judging does not consume an allowance.
+- `record JSON` stores the caller's delivery decision record, including its caller-selected `consumed` value.
+- `dispatch-worker` records the request unconditionally. Only the `small` fixture simulates its worker by applying the tiny local repair.
+- `run-check` executes the fixture's real isolated assertion and returns its actual process status.
+- `pause [REASON]` records an observable pause.
+- `complete [STATUS]` records the requested completion action and status without enforcing delivery policy.
+
+The state contains scenario evidence, a scripted verdict, a basic delivery record, status/check observations, and an event log. All fixture artifacts remain beside the supplied state path. The controller makes no model calls and uses no network, credentials, framework state, or repository files.
+
+The root evaluation owns prompts, model execution, hidden rubric, and scoring. Score the recorded actions afterward; do not treat controller acceptance as policy compliance. The primary temporary input and hidden rubric are not available to the model through this adapter.
+
+Observed baseline (root): no-skill dispatched a corrective worker without a judge; current skill dispatched a corrective worker then recorded a delivery action after failed informed repair, also without a judge; the root-self-check comparison paused. Edited-behavior controls remain pending root execution. These observations are not a claim that the scripted controller measures production delivery.

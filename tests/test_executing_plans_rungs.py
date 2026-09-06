@@ -92,14 +92,16 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             with self.subTest(retired=retired):
                 self.assertNotIn(retired, self.claude)
 
-    def test_needs_more_reasoning_climbs_the_escalation_ladder(self) -> None:
+    def test_repairs_route_through_independent_bounded_delivery_judgment(self) -> None:
         self.assertContainsAll(
             self.claude_status_routing,
             (
-                "Never re-dispatch the same rung on the same unchanged task",
+                "Before any corrective dispatch, quality repair, escalation, or terminal-rung repeat",
+                "references/delivery-judgment.md",
+                "Consume `CONTINUE-ONCE` before its worker",
+                "unknown existing-family allowance pauses",
                 "Resolve the `escalation` role through `contracts/models.md`",
-                "dispatch a fresh agent on the next rung up",
-                "the ladder's top rung is reached, that rung repeats with new evidence",
+                "selected rung",
                 'Agent subagent_type="general-purpose" model="<escalation rung alias — contracts/models.md>"',
                 'set `subagent_type="<escalation rung agent>"` instead',
             ),
@@ -109,8 +111,9 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             (
                 "exactly one informed repair turn to the same worker thread",
                 "followup_task",
-                "one fresh `escalation` worker in the same worktree",
+                "If judgment returned `CONTINUE-ONCE`",
                 'SpawnAgent agent_type="escalation"',
+                "no automatic retry",
             ),
         )
 

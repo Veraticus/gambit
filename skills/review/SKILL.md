@@ -275,7 +275,7 @@ improvements do not block approval. This is the terminal condition; proceed dire
 
 If entries remain open, report only those IDs with their evidence and complete fix briefs. Preserve the same ledger:
 
-Create or update fix Tasks for the open IDs only, then STOP and return to `gambit:executing-plans` (or the owning standalone workflow). The task descriptions retain the ledger fields needed for closure.
+Create or update fix Tasks for the open IDs only, retaining the existing delivery-family identity, verdict, consumed allowance, endpoint, and evidence references. Then STOP and return to `gambit:executing-plans` (or the owning standalone workflow); remediation cannot launder a spent allowance into a new family. The task descriptions retain the ledger fields needed for closure.
 
 Never create work from refuted, gap-classified-in-initial-mode, boundary-rejected, or newly noticed closure observations. Never replace closure with another full review merely because the verifier or tests found an open ledger item.
 

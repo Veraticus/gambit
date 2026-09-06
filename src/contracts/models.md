@@ -119,18 +119,20 @@ because an operator declared one in the config file.
   same call twice; something must change first.
 - **Each escalation step moves UP the ladder**, carrying the updated evidence the previous rung
   produced — the cited defect, the failing output, the missing value.
-- **The top rung repeats.** At the ladder's last rung, re-dispatch that same rung with updated
-  evidence, again and again, until the defect clears. There is no human rung. For the roles that
-  escalate — `worker` and `escalation` — the terminal rung is native Claude by config design, which
-  is what preserves the 100%-solve invariant measured in the tiltyard ladder experiments (recorded
-  outside this repo). An advisory or test-running role whose `ladder` is its entry rung alone never
-  escalates at all.
+- **Escalation stays bounded by delivery state.** A material expansion, failed informed repair,
+  escalation, or repeat of the terminal rung must first follow
+  `skills/executing-plans/references/delivery-judgment.md`. A consumed allowance or failed endpoint
+  pauses for user decision; a rung, rename, descendant, or later checkpoint cannot renew it. For
+  the roles that escalate — `worker` and `escalation` — terminal-rung selection remains native
+  Claude by config design. The historical tiltyard 100%-solve result is rationale for that selection,
+  not a current unlimited-dispatch mandate. An advisory or test-running role whose `ladder` is its
+  entry rung alone never escalates at all.
 
 ## Roles
 
 | Role | What it dispatches | Why its default entry |
 |---|---|---|
-| `steelman` (design collaborator) | read-only design collaboration during bounded discovery and closure | strengthens and challenges architecture without implementation authority |
+| `steelman` (design/delivery collaborator) | read-only bounded discovery, closure, or delivery judgment | strengthens architecture or independently evaluates a delivery intervention without implementation authority |
 | `finder` (review reviewers) | read-only audit of changed code | recall ceiling — a missed finding is unrecoverable, no verifier recovers it |
 | `verifier` (review verifier) | read-only kill-or-keep of candidate findings | verifying a subtle or security finding is as hard as finding it; a weak verifier rubber-stamps coherent-but-wrong findings and over-refutes real ones |
 | `worker` (implementation) | one bounded task from a complete brief | mechanical work from a clear brief, with the ladder above it for what the brief could not anticipate |

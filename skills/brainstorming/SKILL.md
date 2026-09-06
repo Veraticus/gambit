@@ -319,8 +319,9 @@ TaskCreate
 
     ## Delivery Constraints
     - Stop after two consecutive non-converging checkpoints; require explicit user approval
-      before expanding scope, architecture, or budget. Repairs ladder up to terminal
-      escalation attempts repeated with updated evidence until the defect clears.
+      before expanding scope, architecture, or budget. An ordinary first informed repair may stay
+      within the brief; material expansion, failed repair, escalation, or a terminal-rung repeat
+      requires independent delivery judgment and at most one consumed bounded continuation.
 
     ## Validation Strategy
     - Focused worker command: [fast exact command]
@@ -403,7 +404,7 @@ Scan for:
 - **Ambiguity:** Any sentence where two readers could reach different implementations. Pick one and say it.
 - **Internal consistency:** The first task's files, function names, and success criteria should match the epic's stated approach. Mismatches mean one of them is wrong.
 - **Quality Bar present:** Does the epic carry the fixed Quality Bar verbatim from [TEMPLATES.md](TEMPLATES.md), unweakened? It's the same standard on every epic — restore it if it's missing, paraphrased, or watered down.
-- **Convergence bounded:** Does Delivery Constraints stop autonomous continuation after two consecutive checkpoints that retire no success criterion or named blocker, bound repair attempts, and require explicit user approval for scope or budget growth?
+- **Convergence bounded:** Does Delivery Constraints stop autonomous continuation after two consecutive checkpoints that retire no success criterion or named blocker, require independent delivery judgment before material repair/escalation, bound continuation to one consumed attempt, and require explicit user approval for scope or budget growth?
 - **Validation tiered:** Does Validation Strategy distinguish the focused worker command, wave/component gate, and release acceptance, including freshness and an acceptance budget?
 
 Fix what you find by updating the epic or first task with `TaskUpdate`, then proceed. Do NOT present a plan that has items on this list.

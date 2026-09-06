@@ -82,9 +82,10 @@ TaskCreate
       retire no success criterion or named blocker, or when remaining work grows at both
       checkpoints. Report the evidence and require explicit user approval before changing scope,
       architecture, or the delivery budget.
-    - Repair ladder: one implementation attempt, one informed repair, one fresh escalation, then
-      terminal escalation attempts repeated with updated evidence until the defect clears. A
-      defect recurring at a later checkpoint re-enters at the terminal escalation rung.
+    - Repair ladder: an ordinary first informed repair may stay within the original brief. Material
+      expansion, a failed informed repair, escalation, or a terminal-rung repeat requires one fresh
+      independent delivery judgment and at most one consumed bounded continuation; a failed endpoint
+      pauses for explicit user decision. Descendants and resumes retain the same delivery family.
     - Scope growth: every newly discovered worker must map to an immutable requirement, an
       admitted review-ledger finding, or a failing declared validation gate. A true observation
       alone does not authorize work. Optional improvements are not convergence milestones.

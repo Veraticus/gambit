@@ -19,7 +19,7 @@ Each class dispatches on the rung its role resolves to — defaults: `contracts/
 
 | Class | Contract | Use it when |
 |-------|----------|-------------|
-| **steelman** | [steelman.md](steelman.md) | fresh read-only design collaboration during bounded discovery and closure |
+| **steelman** | [steelman.md](steelman.md) | fresh read-only design collaboration during bounded discovery/closure or independent delivery judgment |
 | **worker** | [worker.md](worker.md) | implementing a task's code for executing-plans |
 | **scout** | [scout.md](scout.md) | read-only investigation — find code/patterns/answers and return evidence (brainstorming, executing-plans, debugging) |
 | **finder** | `skills/review/reviewers/{conformance,security,quality,performance}.md` | reviewing changed code for issues — all four at end-of-epic review; the `quality` finder alone, scoped to one diff, as the `executing-plans` checkpoint gate's escalation reviewer |
