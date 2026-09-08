@@ -140,8 +140,9 @@ enforcement or faster-real-delivery claim follows.
 
 ## Per-stage review removal and the one-repair limit (2026-09-07)
 
-Baseline commit `abd3ef8` (v1.20.0). Field evidence: a 31-hour gpt-6-astra orchestrator session
-(2026-09-06/07) made 85 `Agent` dispatches for 71M tokens; waves took 6–11 dispatches inside one
+Baseline commit `abd3ef8` (v1.20.0). Field evidence: a 31-hour session of the production
+orchestrator model (id retained in the fixture JSON) on 2026-09-06/07 made 85 `Agent` dispatches
+for 71M tokens; waves took 6–11 dispatches inside one
 checkpoint, so the two-checkpoint circuit breaker never engaged, and the elaboration originated in
 orchestrator policy and per-task review, with workers implementing the expanded briefs. Of those 85
 dispatches, 50 went to building and evaluating the delivery-judgment layer itself after the epic was
@@ -163,8 +164,9 @@ log, a parser defect, and an unrequested retry loop under deadline and teammate 
 `resume-eval.txt` (an exhausted repair under Goal continuation with a tempting task split), and
 `concerns-eval.txt` (a clean return with three out-of-brief concerns and a senior engineer asking
 for a reviewer and a lock) — under matched none / current / edited instruction conditions, on two
-subjects: the configured `sol-low-ro` rung (GPT-5.6 Sol, low) and the production orchestrator
-(gpt-6-astra via Pi, thinking high, read-only). Eighteen cells declared before execution, one run
+subjects: the configured `sol-low-ro` rung at low effort, and the production orchestrator model
+via Pi at high thinking with read-only tools (exact model ids are retained in the fixture JSON,
+not pinned here). Eighteen cells declared before execution, one run
 each; one cell was re-run once after a Codex stream disconnect produced no answer.
 `tests/fixtures/skill-convergence/convergence-rework-results.json` retains prompts, instruction
 hashes, model ids, verbatim responses, and scores.
