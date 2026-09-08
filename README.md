@@ -55,7 +55,7 @@ Artifacts: the epic record with its Decision Log, briefs, gate records, the bran
 
 ## Human Boundaries
 
-**Start.** A person, or a goal file standing in for one, is present for `brainstorming`: the questions, the design, the steelman findings, and the contract. When the contract is accepted the conversation ends.
+**Start.** A person, or a goal file standing in for one, is present for `brainstorming`: the questions, the design, the steelman findings, and the contract. When the contract is accepted the conversation ends. With a goal file, `brainstorming` answers its own questions from the goal and its research, records each assumption in the Decision Log, never asks or waits, and accepts the contract itself.
 
 **End.** A person reads the report. Decisions, compromises, gaps, and completed release actions are all there, with reasons. If the outcome is *ended with gaps*, the person decides what the gaps mean; the loop does not.
 
@@ -72,7 +72,7 @@ Everything else needs no approval: repairs, approach changes within the Approach
 
 | Role | Does | Writes? |
 |---|---|---|
-| worker | implements one task under the worker contract and a brief, test first | yes, owned files only |
+| worker | implements one task under the worker contract (`contracts/worker.md`) and a brief, test first | yes, owned files only |
 | escalation | the next rung up for a task whose gate said NOT DONE | yes, owned files only |
 | scout | finds facts in the tree, `file:line` or NOT FOUND | no |
 | steelman | one discovery pass and at most one closure pass on an agreed design | no |
@@ -82,7 +82,9 @@ Everything else needs no approval: repairs, approach changes within the Approach
 
 Each role has an entry rung and, for worker and escalation, a ladder. The rule is fixed: start at the entry rung; move up one rung per NOT DONE gate record; never down; never on an agent's own judgment. A rung is a model at an effort level, in a writing variant and a read-only variant.
 
-A brief carries Goal, Files owned, Hidden shared surfaces, Neighbors, Implementation, and Requirements covered. A gate record carries the task and its lineage, the rung, the candidate revision, every contract item checked with its command and result, the owned-files and mechanical-floor results, any Premise touched, the verdict, and the next action.
+The worker contract is the fixed text every worker works under: test first, owned files only, the mechanical floor, minimal change, and the four returns DONE, DONE_WITH_CONCERNS, NEEDS_CONTEXT, BLOCKED. A brief carries Goal, Files owned, Hidden shared surfaces, Neighbors, Implementation, and Requirements covered. A gate record carries the task and its lineage, the rung, the candidate revision, every contract item checked with its command and result, the owned-files and mechanical-floor results, any Premise touched, the verdict, and the next action.
+
+A worker leaves its changes uncommitted in its own workspace. The orchestrator reads the complete change set, gates it, commits it onto the effort's candidate, and records that revision in the gate record. An exhausted lineage's workspace is committed to `gap/<task-slug>` instead.
 
 Rungs are named in one place, the registry at `~/.claude/gambit/models.json`, which the harness's configuration renders. Skills and contracts name roles, never rungs and never a model.
 
@@ -110,10 +112,12 @@ Gambit is one tree of skills and contracts. A harness runs it by providing five 
 | Record task state | Task API | Task API (pi-tasks) |
 | Load a stage | read `skills/<name>/SKILL.md` and follow it | same, or the skill's slash command |
 | Isolate a workspace | `git worktree add`, run by the orchestrator | same |
-| End a run | the report; the session ends | the report, then pi-goal's terminal tool called with the outcome |
+| End a run | the report; the session ends | the report, then `goal_complete` for *released* or `goal_end` for the other two outcomes |
+
+Every command the orchestrator itself runs — `git`, the Done checks, the Release actions — goes through the harness's shell; both harnesses provide one.
 
 **Claude Code.** Add the plugin from this repository's marketplace entry (`.claude-plugin/marketplace.json`), install the rung agent files your registry names under `~/.claude/agents/`, and write `~/.claude/gambit/models.json`. The nix-config module that does all three is the reference.
 
-**Pi.** Point `skills` at this repository's `skills/` directory and enable pi-tasks, pi-subagents, and pi-goal. Set pi-goal's response-limit and no-progress pauses to null; a run that pauses for a person is not a gambit run. pi-goal accepts *ended with gaps* and *stopped on catastrophe* as terminal only through a terminal-outcome extension; until the harness installs one, Pi is not supported for goal runs. Render the same rung agent files in pi-subagents frontmatter. The registry is shared.
+**Pi.** Point `skills` at this repository's `skills/` directory and enable pi-tasks, pi-subagents, and pi-goal. Set pi-goal's response-limit and no-progress pauses to null; a run that pauses for a person is not a gambit run. pi-goal accepts *ended with gaps* and *stopped on catastrophe* as terminal only through a terminal-outcome extension: a `goal_end` tool taking `outcome` (`ended_with_gaps` or `stopped_on_catastrophe`) and the report text, after which the goal is terminal and a resume only shows the report. Until the harness installs one, Pi is not supported for goal runs. Render the same rung agent files in pi-subagents frontmatter. The registry is shared.
 
 **Verify.** From a scratch repository: read a skill, create and read back a task, dispatch a read-only rung and receive its result, create a worktree with git. On Pi, additionally run one goal to *released* and one to *ended with gaps* and confirm each terminates.
