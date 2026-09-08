@@ -734,7 +734,7 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
         )
         self.assertIsInstance(manifest["workers"][0]["owned_paths"], list)
 
-        brief = templates.split("## First Task Template", 1)[1]
+        brief = templates.split("### Task brief", 1)[1]
         self.assert_appears_in_order(
             brief,
             (
@@ -743,12 +743,11 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
                 "## Hidden shared surfaces",
                 "## Neighbors",
                 "## Implementation",
-                "## Success Criteria",
+                "## Requirements covered",
+                "## Test command",
                 "Test command:",
             ),
         )
-        self.assertIn("exact/path/to/source.ext", brief)
-        self.assertIn("exact/path/to/test.ext", brief)
 
         self.assertRegex(
             worker,

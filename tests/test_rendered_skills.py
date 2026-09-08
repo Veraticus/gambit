@@ -81,29 +81,5 @@ class RootSkillsTest(unittest.TestCase):
                     f"concrete provider model ID leaked into {path}",
                 )
 
-    def test_epic_contract_declares_convergence_and_validation_policy(self) -> None:
-        brainstorming = (
-            SKILLS / "brainstorming" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-        templates = (
-            SKILLS / "brainstorming" / "TEMPLATES.md"
-        ).read_text(encoding="utf-8")
-
-        for required in ("Delivery Constraints", "Validation Strategy"):
-            self.assertIn(required, brainstorming)
-            self.assertIn(f"## {required}", templates)
-
-        for required in (
-            "two consecutive checkpoints",
-            "one implementation, then at most one informed repair on the `escalation`",
-            "`awaiting_user`",
-            "explicit user approval",
-            "Focused worker command",
-            "Wave/component gate",
-            "Release acceptance",
-            "Acceptance budget",
-        ):
-            self.assertIn(required, templates)
-
 if __name__ == "__main__":
     unittest.main()

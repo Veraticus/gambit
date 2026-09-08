@@ -19,16 +19,6 @@ class SkillConvergenceTests(unittest.TestCase):
         self.assertIn("Do not retry until a failure appears", text)
         self.assertNotIn("**Behaves correctly → STOP. Do not write the skill.**", text)
 
-    def test_requirements_have_a_basis_not_a_post_hoc_task_justification(self):
-        text = (ROOT / "skills/brainstorming/SKILL.md").read_text()
-        self.assertIn("Admit requirements by origin", text)
-        self.assertIn("Never add a requirement merely to justify a task", text)
-        self.assertIn("each behavior a Requirement demands", text)
-        self.assertNotIn("add the requirement to the epic explicitly", text)
-        template = (ROOT / "skills/brainstorming/TEMPLATES.md").read_text()
-        self.assertIn("concrete requirement — basis", template)
-        self.assertIn("First deliverable:", template)
-
     def test_review_admits_work_separately_from_verifying_truth(self):
         text = (ROOT / "skills/review/SKILL.md").read_text()
         normalized = " ".join(text.split())

@@ -38,25 +38,6 @@ class WorkflowRoutingTest(unittest.TestCase):
         self.assertIn("first match wins", body)
         self.assertLess(len(re.findall(r"\b[\w-]+\b", body)), 200)
 
-    def test_scout_sites_resolve_the_scout_rung(self) -> None:
-        for skill in ("brainstorming",):
-            text = (
-                ROOT / "skills" / skill / "SKILL.md"
-            ).read_text(encoding="utf-8")
-            prose = " ".join(text.split())
-            with self.subTest(skill=skill):
-                self.assertIn(
-                    "Resolve the `scout` role through `contracts/models.md`",
-                    prose,
-                )
-                self.assertIn(
-                    "an agent rung uses the rung's `readonly_agent`",
-                    prose,
-                )
-                self.assertIn("no `model:` at all", prose)
-                self.assertNotIn("executors.json", prose)
-                self.assertNotIn("scout tier", prose)
-
     def test_test_runner_site_resolves_the_test_runner_rung(self) -> None:
         text = (
             ROOT / "skills" / "refactoring" / "SKILL.md"

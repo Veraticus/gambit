@@ -71,14 +71,6 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
             .split()
         )
 
-    def test_scout_sites_resolve_the_scout_role(self) -> None:
-        for name in ("brainstorming",):
-            with self.subTest(skill=name):
-                self.assertIn(
-                    "Resolve the `scout` role through `contracts/models.md`",
-                    self.skill(name),
-                )
-
     def test_test_runner_site_resolves_the_test_runner_role(self) -> None:
         self.assertIn(
             "Resolve the `test-runner` role through `contracts/models.md`",
@@ -99,12 +91,6 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
         )
         self.assertIn(
             "Resolve the `verifier` role through `contracts/models.md`", review
-        )
-
-    def test_brainstorming_resolves_the_steelman_role(self) -> None:
-        self.assertIn(
-            "Resolve the `steelman` role through `contracts/models.md`",
-            self.skill("brainstorming"),
         )
 
     def test_no_skill_keeps_the_retired_tier_vocabulary(self) -> None:

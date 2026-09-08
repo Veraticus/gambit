@@ -1,483 +1,94 @@
 ---
 name: brainstorming
-description: Turns a rough idea into an approved epic contract with immutable requirements, anti-patterns, and a first wave of executable tasks.
-when_to_use: Use when user has a new feature idea, rough concept, or unexplored approach. Include when planning before code, breaking a design into tasks, creating an implementation plan, laying out tasks and dependencies, exploring architectural options, or requirements are vague. User phrases like "I want to build X", "should we do this", "let's think through Y", "explore approaches", "break this into tasks", "make an implementation plan". Do NOT use for executing existing plans, fixing bugs, refactoring, or when requirements and an epic already exist.
+description: Turns an idea, bug report, or goal file into an epic contract and its first executable effort.
+when_to_use: Use when defining work from a new idea, investigating a bug before planning its fix, or starting from a goal file. Not for executing an existing epic contract.
 user_invokable: true
 ---
 
-# Brainstorming Ideas Into Designs
+# Brainstorming
 
-**Freedom: HIGH** — adapt the questioning to context. Fixed: design approved before code, first wave only, questions in prose.
+Own the contract stage. Read `README.md` in full as the design authority. Research, resolve the design, and create the contract before implementation. Use the harness's operations to dispatch roles, record task state, and load stages, rather than naming its tools.
 
-## Overview
+Give a complete, ordered answer before optional elaboration. A request to describe what you produce and do calls for a worked scenario, not live execution. Mark that frame once, complete the research within the scenario, and show its concrete findings followed by the full contract and ready briefs. The research, file paths, commands, and tasks must form one consistent repository scenario and respect every supplied fact. Do not substitute a live-tools disclaimer, promises of later research, or empty section names for the requested records. Described dispatches and acceptance are events in the scenario, not claims that live actions occurred. Keep it concise: summarize dispatch inputs and print the contract and briefs once.
 
-Turn rough ideas into validated designs stored as epic Tasks with immutable requirements. Tasks are created iteratively as you learn, not upfront.
+## Inputs
 
-**Core principle:** Ask questions to understand, research before proposing, document decisions for future reference.
+Begin with the person's idea, bug report, or the complete goal file. Preserve the requested scope. Establish the desired end state and why it matters before choosing mechanisms.
 
-**Announce at start:** "I'm using gambit:brainstorming to refine your idea into a design."
+In conversation, the person resolves contract-stage choices and accepts the contract. With a goal file, the orchestrator stands in for the person throughout this stage: answer every question from the goal and research, choose a scope-preserving answer wherever evidence leaves a choice, and record each assumption with its reason in the Decision Log. Never ask a person, wait for input, or leave an unresolved question for someone to answer. Accept the completed contract on the goal file's behalf and continue automatically.
 
-## Quick Reference
+Collect decisions and their reasons for the epic's attached Decision Log. Keep it outside the contract's eight-section body. When a decision concerns a steelman finding, name the finding ID in the log entry.
 
-| Step | Action | Deliverable |
-|------|--------|-------------|
-| 1 | Scope-check, then ask clarifying questions | Right granularity + understanding |
-| 2 | Research codebase and patterns | Existing approaches |
-| 3 | Propose 2-3 approaches | Recommended option |
-| 4 | Present design, then Steelman agreement | Validated architecture + frozen Design Ledger |
-| 5 | Create epic Task | Immutable requirements + anti-patterns |
-| 6 | Create first wave (pluckable tasks only) | Ready for execution |
-| 7 | Apply task refinement | Corner cases covered |
-| 8 | Confirm immutable requirements with user | Contract locked |
-| 9 | Ask next step, invoke skill | Chain continues automatically |
+## Research
 
-**Key:** Epic = contract (immutable), Tasks = adaptive (created as you learn)
+Read `contracts/models.md`. Resolve each role through its registry, starting at the role's entry rung and selecting the read-only variant for read-only roles. Pass the role's contract by absolute path and its complete brief as text through the dispatch operation. Resolve paths from the installed tree. Follow the registry contract when a role cannot be resolved; never invent a dispatch target.
 
-<HARD-GATE>
-Do NOT write any code, invoke any implementation skill, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY idea regardless of perceived simplicity. No exceptions.
-</HARD-GATE>
+Dispatch a read-only `scout` under `contracts/scout.md` with the repository root and bounded questions. Establish existing implementation patterns, interfaces, tests, contribution commands, release conventions, constraints, and scale. Require `file:line` evidence or `NOT FOUND`, with coverage limitations. Inspect enough to choose between approaches, not merely list them. Research supplies facts; it cannot add requirements.
 
-## When to Use
+For a bug, make this evidence chain explicit and complete:
 
-- User describes a new feature to implement
-- User has a rough idea that needs refinement
-- About to write code without clear requirements
-- Need to explore approaches before committing
+1. Give the scout the report and observed failure as clues to verify. Have it identify the exact reproduction command or smallest sequence and trace the root cause with causal `file:line` evidence, including what would falsify that cause. A suspected file or stack frame is not a verified diagnosis.
+2. If reproduction writes build artifacts, fixtures, a cache, or other state, dispatch `test-runner` with the exact command in an isolated workspace. It writes scratch state only and returns the command and output. The scout does not execute writable reproduction.
+3. Reconcile that output with the scout's causal evidence. Turn the verified root cause into a falsifiable Premise with its explicit Intent-survival clause.
+4. Make the verified reproduction the first task's failing test. Name that same reproduction and its expected corrected result as a Requirement's satisfying evidence, with the exact check. Carry the observed failure into the brief so the worker begins from RED.
 
-**Don't use for:**
-- Executing existing plans (use `gambit:executing-plans`)
-- Starting a bug with no root cause yet (investigate with `gambit:debugging` first — it hands the root cause back here to design the fix)
-- Refactoring (use `gambit:refactoring`)
-- Requirements already crystal clear and epic exists
+This is research for a fix, not the fix itself. Do not patch the bug, write implementation, or hand the investigation to another stage.
 
-## The Process
+## Questions in prose
 
-### 1. Understand the Idea
+Only in conversation, ask two to four questions per round. Each carries context, realistic options, and a recommendation with its reason. Use ordinary prose for every question. Stop questioning when scope, constraints, existing patterns, and scale are understood.
 
-**Research existing context first:**
+In a goal-file run, perform the same inquiry yourself. Record the answer, its supporting goal text or research, and any assumption with its reason in the Decision Log. Resolve uncertainty by a choice that preserves the goal, not by creating a request for input.
 
-Resolve the absolute path to `contracts/scout.md`. Resolve the `scout` role through
-`contracts/models.md` — its entry rung, or a higher rung on the scout ladder when the
-question is about code flow or exhaustiveness rather than a single fact. Dispatch that rung: a
-model rung uses the read-only `Explore` class below; an agent rung uses the rung's `readonly_agent`
-and passes no `model:` at all. The prompt is identical either way.
+## Approaches and design
 
-```
-Agent
-  subagent_type: "Explore"          # model rung: the read-only scout class
-  model: "<scout rung alias — contracts/models.md>"   # resolve <abs> via Glob **/contracts/scout.md
-  prompt: "Read <abs>/contracts/scout.md first (your binding scout contract), then: Find existing [relevant] implementation patterns in this codebase. Report with file:line evidence; say NOT FOUND if absent."
-```
+Compare two or three credible approaches. Recommend one using the research and Intent. Record why each alternative loses and the specific condition under which it should be reconsidered.
 
-**Check scope before refining.** If the request spans multiple independent subsystems (e.g., "a platform with chat, billing, and analytics"), STOP and decompose before asking detail questions — don't refine something that should be several epics. Identify the independent pieces, how they relate, and what order to build them. Then brainstorm the FIRST piece through the normal flow; each piece gets its own epic → tasks cycle. Refining an over-large project wastes questions and produces a brittle epic.
+Present the design in digestible sections covering the relevant components, interfaces, data flow, errors, and tests. In conversation, settle the design with the person. For a goal file, settle it from the goal and research and log the decisions.
 
-**Then ask clarifying questions in prose. Never use the AskUserQuestion tool — in this step or anywhere else in this skill.**
+Decompose for isolation: each unit has a clear purpose, known interfaces, and independently testable behavior. Cut features, abstractions, and hardening the Requirements do not demand. Chosen mechanisms belong in Approach unless the request explicitly requires them. Never add a Requirement to justify a preferred task.
 
-Aim for 2-4 questions per round, 2-4 rounds total. Every question carries its own context: why you're asking, what the realistic options are, and which one you recommend and why. A bare question with no setup arrives confusing — the reader shouldn't have to reconstruct what prompted it. Stop when you understand scope, constraints, existing patterns, and scale.
+## Steelman
 
-```
-Two things before I propose an approach:
+Run exactly one discovery pass on the agreed design, before accepting the contract or creating its executable tasks. Read `contracts/steelman.md`. Dispatch the `steelman` role fresh and read-only under that contract, resolved through `contracts/models.md`.
 
-**Token storage.** The OAuth tokens have to live somewhere the browser sends
-them from. httpOnly cookies block XSS token theft and are the industry default;
-sessionStorage clears on tab close but any injected script can read it. I'd go
-httpOnly cookies unless you need the token client-side. Which fits?
+Supply a self-contained Design Packet using the receiver contract's exact fields, in order: Intent; Premises; Requirements; Must Not Ship; Approach and Rejected Approaches; Done; Release; Unresolved decisions. Include each field's required evidence, survival clauses, reasons, commands, actions, and postconditions. Write `None` for genuinely absent unresolved decisions. The fixed Quality Bar goes in the epic contract; it is not an additional packet field. Discovery receives this packet without prior steelman output.
 
-**Scale.** [context → options → recommendation → question]
-```
+Read its status and every finding. Freeze a transcript-local Design Ledger retaining every finding ID with exactly one disposition: `ADOPTED`, `REJECTED` with a reason, `OPEN`, or `DEFERRED` with a boundary. It is design context, never task state or an independent source of Requirements. Reflect the findings to the person present in conversation. In a goal-file run, decide every named choice yourself from the goal and research. Record every decision, reason, and affected finding ID in the Decision Log, including a choice already made but not yet written down. Incorporate adopted conclusions into the packet without expanding scope.
 
-**Why prose, not the question widget.** The widget strips the context that makes a question answerable: compressed option labels can't carry the trade-off, and the question lands without the reasoning that prompted it. Prose keeps the question, its context, and your recommendation together — and it works in every environment. This applies to every question in this skill, closed or open, including the handoff menu.
+Use at most one closure pass to check revisions. Its only inputs are the revised self-contained packet, the frozen ledger verbatim, and a concise delta. Closure checks adopted and open findings and concerns introduced by the delta. Rejected and deferred findings stay closed.
 
----
+After a non-`READY` closure, finish by revising the packet without another steelman call or locking the contract with the residual explicitly recorded as accepted risk. Prefer the named scope-preserving correction when it resolves the residual. Log the chosen outcome and continue; neither outcome waits. In a goal-file run, the orchestrator makes this choice itself. The bound is one discovery and at most one closure for the design, including resumed work. It cannot be extended or started over.
 
-### 2. Explore Approaches
+## The contract
 
-**Research before proposing:**
-- Existing pattern in codebase → Explore agent
-- New integration → WebSearch or WebFetch
-- No results → Ask user for direction
+Create the epic record through the record-task-state operation from the finalized design and decisions. Read `TEMPLATES.md`. Emit the full contract, with exactly these sections in this order:
 
-**Propose 2-3 approaches:**
-- Lead with your recommendation and why
-- Include pros/cons for each
-- Reference codebase consistency as a factor
+1. **Intent:** one paragraph stating the desired end state and reason, never a solution.
+2. **Premises:** falsifiable facts. Every one states whether the Intent survives if false and the consequence of that clause.
+3. **Requirements:** immutable, atomic, testable outcomes. Every one names the specific evidence and check that satisfies it.
+4. **Must Not Ship:** forbidden outcomes and non-goals, each with its reason.
+5. **Quality Bar:** copy the complete paragraph from README verbatim. Output the paragraph itself, not a summary, reference, or promise to copy it. Never customize it.
+6. **Approach and Rejected Approaches:** chosen shape and reason, with each rejected alternative's reason and reconsideration condition.
+7. **Done:** exact commands for each task's fast check and the integrated candidate's full gate, including required setup.
+8. **Release:** exact ordered actions, each naming its target and intended effect, followed by the observable postconditions required before reporting release.
 
-```
-Based on [research findings], I recommend:
+In live execution, bind evidence links, file paths, commands, and release targets from inspected evidence before task creation. Do not present guesses as verified facts: an assumption can settle an open design choice, but cannot establish that an invented file exists. In a worked scenario, use the findings established by its research. In both cases, show finished records, not section names or promises to populate them.
 
-1. **[Approach A]** (recommended)
-   - Pros: [benefits, especially "matches existing pattern"]
-   - Cons: [drawbacks]
+In conversation, present the complete contract for acceptance and settle requested changes here. With a goal file, accept it yourself on that file's behalf. Record acceptance and freeze Intent, Premises with their survival clauses, and Requirements. Later changes of assessment belong in the Decision Log, leaving those clauses intact. The contract alone authorizes the work that follows.
 
-2. **[Approach B]**
-   - Pros: [benefits]
-   - Cons: [drawbacks]
+## The first effort
 
-I recommend option 1 because [specific reason].
-```
+Create every task writable from the tree now for the first effort, with complete briefs. Cover each unmet Requirement that has executable work now; leave work needing unfinished interfaces for later decomposition. Never produce a full future task tree or split one behavior just to create parallel work.
 
----
+Use the task template's fields in order: Goal, Files owned, Hidden shared surfaces, Neighbors, Implementation, Requirements covered, Test command. Supply the workspace, base revision, applicable contract clauses, verified `file:line` anchors, test-first instructions, and exact task check from Done. Each brief must be executable without conversation history or questions.
 
-### 3. Present the Design
+Give every concurrent task a disjoint exact owned-file list, including tests, additions, deletions, and implicit writes. Hidden shared surfaces and neighbors grant no ownership. Put work with overlapping files into one coherent task or leave it for a later effort. For bugs, the first brief carries the verified reproduction as its failing test and maps it to the Requirement's evidence.
 
-Once approach is chosen, present in digestible sections. Ask "Does this look right?" after each. Cover: architecture, components, data flow, error handling, testing.
+Record tasks as pending and ready. Associate them with the epic without making the epic a blocker: it is their contract container, not a prerequisite that must complete first. State the task state left behind and keep the Decision Log attached to the epic.
 
-**Design the validation ladder, not just the tests.** Identify the fastest focused worker command, the integrated wave/component gate, and any expensive release acceptance or blackbox suite. Record the freshness setup and an explicit acceptance budget. A slow system suite is a release claim, not a reflexive per-task check.
+## Handoff
 
-**Decompose for isolation.** Break the system into units that each have one clear purpose, communicate through well-defined interfaces, and can be understood and tested independently. For each unit, you should be able to say what it does, how to use it, and what it depends on — without reading its internals. If you can't change a unit's internals without breaking its consumers, the boundaries are wrong; rework them before locking the epic.
+After acceptance and first-effort creation, load `skills/executing-plans/SKILL.md` by reading it and following it. Carry the accepted epic, Decision Log, and ready task briefs. Execution follows the same contract regardless of its source.
 
-**Apply YAGNI ruthlessly.** Cut every feature, abstraction, and "we might want this later" the stated requirements don't demand. Unbuilt scope is the cheapest scope to remove — if the user wants it, they'll say so when you present.
-
----
-
-### 3a. Steelman the Agreed Design
-
-After the user and root agree on one coherent candidate design, run one mandatory discovery pass
-before drafting an epic contract or authoring first-wave work.
-Do not create or mutate task state during Steelman discovery, dialogue, or closure.
-No epic or first-wave work begins before Steelman resolution. The Steelman is read-only and
-advisory; the root owns all decisions and every ledger disposition.
-
-#### Build the Design Packet
-
-Supply a self-contained **Design Packet** containing exactly these contracted fields:
-
-1. **User goal**
-2. **Agreed constraints and scope**
-3. **Chosen approach**
-4. **Architecture and data flow**
-5. **Rejected alternatives and reasons**
-6. **Validation strategy**
-7. **Delivery constraints**
-8. **Unresolved decisions**
-
-Do not omit an empty field; write `None` when there is genuinely nothing unresolved. The packet
-must stand alone without inherited conversation.
-
-#### Resolve and dispatch the Steelman
-
-Resolve the absolute path to `contracts/steelman.md`. Resolve the `steelman` role through
-`contracts/models.md` to its rung. Steelman is read-only and advisory, so an agent rung dispatches
-the rung's `readonly_agent` with no `model:` at all; a model rung dispatches `general-purpose` with
-the rung's alias. The dispatch is fresh and contracted either way, and its prompt carries only the
-absolute contract path plus the mode inputs:
-
-```
-Agent
-  subagent_type: "general-purpose"          # model rung; an agent rung uses the rung's readonly_agent
-  model: "<steelman rung alias — contracts/models.md>"   # omit entirely on an agent rung
-  prompt: |
-    Read <abs>/contracts/steelman.md first and follow it exactly.
-
-    Mode: Discovery
-
-    Design Packet:
-    [complete self-contained packet]
-```
-
-Discovery receives the Design Packet and no previous Steelman output; closure receives the revised
-Design Packet, the frozen Design Ledger, and a concise design delta. Never inherit prior turns into
-a Steelman dispatch, and never dispatch a Steelman without its contract path.
-
-Discovery receives the Design Packet and no previous Steelman output. Require one of the contract
-statuses — `READY`, `REVISE`, `NEEDS_DECISION`, or `BLOCKED` — and all contracted sections:
-**Status**, **Strongest case for the chosen design**, **Strongest credible alternative and when it
-wins**, **Numbered findings**, **Actual user decisions**, and **Evidence and coverage**. A missing
-status or section is a failed call, not permission for the root to invent the result.
-
-If the selected discovery dispatch or tool call fails, or its output is malformed or missing any
-contracted section, stop and report the failure. Do not create a Design Ledger, draft an epic
-contract, fall back to another dispatch path, or automatically redispatch.
-
-Route each valid discovery result exactly once:
-
-- `BLOCKED`: stop and show the exact missing material named by the result. Do not draft an epic or
-  dispatch another call.
-- `NEEDS_DECISION`: follow the ledger/yield path and yield on every named user decision. The root
-  cannot advance while any named decision remains unresolved.
-- `REVISE`: follow the ledger/yield path but do not advance directly. It requires finding
-  dispositions and a material Design Packet revision. If no material revision is adopted, stop.
-- `READY`: follow the ledger/yield path. It may skip closure only when no material design change
-  follows.
-
-No non-`READY` discovery result can fall through to epic drafting. No discovery branch
-automatically spends a second discovery call. Any adopted or open material revision requires the
-single closure pass.
-
-#### Freeze the ledger and yield
-
-For every result routed to the ledger/yield path, reflect every discovery finding visibly to the
-user in a transcript-local frozen **Design Ledger**. Keep every returned ID and assign it exactly
-one root-owned disposition: `ADOPTED`, `REJECTED` with a reason, `OPEN`, or `DEFERRED` with a scope
-boundary. Record user decisions and packet revisions against the affected IDs. Never put the
-ledger in task or plan state.
-
-Then yield to the user for discussion. The root cannot silently revise the packet and dispatch
-closure in the same turn. The user must be able to see every discovery finding, every disposition,
-and the resulting design change before deciding what comes next.
-
-#### Run bounded closure when required
-
-After user/root discussion, run exactly one closure pass if an `ADOPTED` or `OPEN` finding
-materially changes the design. Skip closure only when discovery returned `READY` and no material
-design change occurred. Use the revised self-contained Design Packet, the frozen
-Design Ledger verbatim, and a concise design delta as the only closure inputs. Repeat the same
-backend dispatch rules above.
-Under those rules, closure is another fresh contracted dispatch on the `steelman` role's rung.
-
-Require one closure status — `READY`, `STILL_OPEN`, `CHANGE_INDUCED_CONCERN`, or `BLOCKED` — plus
-**Status**, **Ledger dispositions**, **Change-induced concerns**, **Required caller action**, and
-**Evidence and coverage**. Closure cannot restart discovery, cannot reopen `REJECTED` or
-`DEFERRED` items, and cannot add unrelated improvements. A `READY` result, or the permitted
-discovery skip, allows epic drafting to begin.
-
-No automatic third call is allowed. For any non-`READY` closure, stop and offer exactly these user
-choices in prose:
-
-1. revise without another Steelman pass;
-2. lock the contract with the residual risk recorded; or
-3. explicitly authorize another discovery cycle.
-
-The third choice is the only choice that resets the budget, and it is valid only for a fundamental
-architecture reset with explicit user authorization. Never infer that authorization from a
-finding, a revision, or user silence.
-
-#### Finalize the packet for contract drafting
-
-Before epic drafting, the root must produce a finalized Design Packet from the agreed design,
-user decisions, and ledger dispositions. Incorporate every `ADOPTED` conclusion into the
-applicable packet field and carry it into the epic's **Requirements (IMMUTABLE)**,
-**Anti-Patterns (FORBIDDEN)**, **Approach**, **Validation Strategy**, or **Delivery Constraints**.
-A `READY` status permits drafting but is not the contract source.
-
-Draft the epic contract from that finalized Design Packet. Do not copy the Design Ledger itself
-into the epic, and do not convert ledger IDs into task or plan state; the ledger remains
-transcript-local.
-
----
-
-### 4. Create the Epic Task
-
-After design is validated, create epic as immutable contract. See [TEMPLATES.md](TEMPLATES.md) for the full template with all sections.
-
-**Required epic sections:**
-
-**Admit requirements by origin, not by how thoroughly a design was described.** Give each a
-short basis: an explicit user request, an existing contract/repository obligation, or a necessary
-correctness/security guarantee with a concrete failure and consequence. The agent's own proposal
-is not independent evidence of necessity. Hypothetical future reuse, speculative scale, and
-professional preference do not create obligations.
-
-Put chosen mechanisms in Approach/Architecture unless the user explicitly requires them.
-Approval to implement an approach does not make every internal mechanism immutable. Call out any
-proposed new guarantee as a scope addition before confirmation; do not hide it in a long design.
-Changing an explicit user constraint still requires their approval. Preserve existing contracts,
-security protections, and required behavior when revising implementation choices.
-
-| Section | Purpose |
-|---------|---------|
-| Requirements (IMMUTABLE) | User outcomes, explicit constraints, and necessary guarantees, each with its basis |
-| Success Criteria | Objective, checkable items including "all tests passing" |
-| Anti-Patterns (FORBIDDEN) | Explicitly forbidden patterns with reasoning |
-| Quality Bar | gambit's fixed definition of defect — bad code is unacceptable; an unmet ideal or an unnamed edge case is not a defect — written verbatim into every epic and applied to each diff by the checkpoint gate and by review |
-| Approach | 2-3 paragraph summary of chosen approach |
-| Approaches Considered | Rejected alternatives with DO NOT REVISIT conditions |
-| Delivery Constraints | The convergence circuit breaker, the one-repair limit, and scope admission |
-| Validation Strategy | Focused worker command, wave/component gate, release acceptance, freshness, and acceptance budget |
-| Scope Boundaries | What this epic does and does not cover — read by `executing-plans` at the release architecture/scope preflight |
-
-[TEMPLATES.md](TEMPLATES.md) is canonical for both templates. The skeletons below are abbreviated
-for reading; emit from TEMPLATES.md so no required section is dropped.
-
-**The Quality Bar is fixed — write it verbatim, don't elicit it.** Every epic carries the same bar: failing, low-quality, or bad code is unacceptable, but failure to meet a mythic platonic ideal of code or cover literally every imaginable edge case is NOT itself a defect. It is not a per-project preference and is never negotiated in either direction. Copy it verbatim from [TEMPLATES.md](TEMPLATES.md) into the epic so the checkpoint gate and reviewers have it locally. It defines *defect*, not ambition: what the gate and review may return as NOT DONE, and nothing more; project-specific prohibitions go in Anti-Patterns. It sits on top of the mechanical floor the worker contract enforces (no suppression, no weakened tests, no dead code, no unhandled errors).
-
-```
-TaskCreate
-  subject: "Epic: [Feature Name]"
-  description: |
-    ## Requirements (IMMUTABLE)
-    - Requirement 1: [concrete, testable]
-
-    ## Success Criteria (MUST ALL BE TRUE)
-    - [ ] [objective criterion]
-    - [ ] All tests passing
-
-    ## Anti-Patterns (FORBIDDEN)
-    - NO [pattern] (reason: [why])
-
-    ## Quality Bar
-    Failing, low-quality, or bad code is unacceptable, but failure to meet a mythic platonic
-    ideal of code or cover literally every imaginable edge case is NOT itself a defect. Fixed
-    for every epic; copy it verbatim from TEMPLATES.md.
-
-    ## Approach
-    [2-3 paragraph summary]
-
-    ## Approaches Considered
-    ### [Rejected Approach] - REJECTED
-    REJECTED BECAUSE: [reason]
-    DO NOT REVISIT UNLESS: [condition]
-
-    ## Delivery Constraints
-    - Stop after two consecutive non-converging checkpoints; require explicit user approval
-      before expanding scope, architecture, or budget. One implementation, then at most one
-      informed repair on the `escalation` rung; a task still NOT DONE is `awaiting_user`.
-
-    ## Validation Strategy
-    - Focused worker command: [fast exact command]
-    - Wave/component gate: [integrated exact command]
-    - Release acceptance: [fresh expensive exact command]
-    - Acceptance budget: [normally one final run]
-  activeForm: "Planning [feature name]"
-```
-
-**Anti-patterns prevent requirement erosion.** When implementation gets hard, there's pressure to water down requirements. Explicit forbidden patterns with reasoning prevent this.
-
----
-
-### 5. Create the First Wave
-
-Author every task that is **independently pluckable from the current codebase**: its brief can be written entirely from code that exists right now — exact file set, cited anchors, testable criteria — with no placeholder for another task's output, and its file set is disjoint from the others'. Often that's one task; when the design genuinely starts in parallel pieces, it's several. Never a full tree — everything whose spec depends on what execution will teach stays unauthored, created by executing-plans as you learn. Don't manufacture disjointness by splitting one behavior across a file boundary.
-
-**Do NOT set first-wave tasks as blocked by the epic.** The epic is a documentation container for immutable requirements, not a workflow prerequisite. The Task API's `blockedBy` means "cannot start until the blocker completes" — since the epic only completes after all subtasks do, marking a subtask as blocked by the epic creates a deadlock. Subtasks are only blocked by other subtasks.
-
-```
-TaskCreate
-  subject: "Add [specific deliverable]"
-  description: |
-    ## Goal
-    [One clear outcome]
-
-    ## Files owned
-    [Exact repository-relative allowlist — no globs, no directories]
-
-    ## Hidden shared surfaces
-    [Implicit collision surfaces checked, or `None` only after checking]
-
-    ## Neighbors
-    [Concurrent workers' subjects and allowlists, or `None (single-task wave)`]
-
-    ## Implementation
-    1. Study existing code: [file.ts:line]
-    2. Write tests first (TDD)
-    3. Implementation:
-       - [ ] file.ts - function() - [what it does]
-
-    ## Success Criteria
-    - [ ] [specific measurable outcome]
-    - [ ] Tests passing
-    - [ ] Pre-commit hooks passing
-
-    Test command: [focused command]
-  activeForm: "Adding [deliverable]"
-```
-
-**Why so few?** Later tasks reflect learnings from execution. Upfront task trees become brittle when assumptions change.
-
----
-
-### 6. Apply Task Refinement
-
-Before handoff, verify each first-wave task passes these checks:
-
-1. **Scoped:** One focused sitting (~15-45 min). If it sprawls past that, break it down.
-2. **Self-contained:** Can execute without asking questions
-3. **Explicit:** All file paths specified
-4. **Testable:** At least 3 success criteria
-
-**Corner cases to check for each behavior a Requirement demands:**
-- What if the happy path fails?
-- Edge case inputs? Empty/null/missing data?
-- Network/IO failures? Concurrent access?
-- Security implications? Boundary conditions?
-
-Update the task with any missing details before proceeding.
-
-#### Epic + first-task self-review
-
-Before announcing the plan to the user, run an inline self-review across the epic AND the first task. This takes 30 seconds and catches the same class of defects a subagent review pass would — immutable requirements that are actually vague, scope that silently expanded, contradictions between the epic's approach and the first task's implementation steps.
-
-Scan for:
-- **Placeholders:** Any `TBD`, `TODO`, `FIXME`, `XXX`, `[details above]`, "see requirements", `<angle-bracket-placeholder>`, or sentence that trails off without committing to a specific behavior
-- **Vague requirements:** "properly handle errors", "good performance", "secure authentication", "similar to X" — requirements that can't be tested objectively must be rewritten with concrete, checkable conditions (or moved to a subtask's implementation notes)
-- **Scope drift:** Remove work the requirements don't justify from the task, or present it separately as proposed scope for an explicit user decision. Never add a requirement merely to justify a task, a review suggestion, or already-written code.
-- **Ambiguity:** Any sentence where two readers could reach different implementations. Pick one and say it.
-- **Internal consistency:** The first task's files, function names, and success criteria should match the epic's stated approach. Mismatches mean one of them is wrong.
-- **Quality Bar present:** Does the epic carry the fixed Quality Bar verbatim from [TEMPLATES.md](TEMPLATES.md), neither weakened nor strengthened? It's the same definition of defect on every epic — restore it if it's missing, paraphrased, or turned back into a maximal standard.
-- **Convergence bounded:** Does Delivery Constraints stop autonomous continuation after two consecutive checkpoints that retire no success criterion or named blocker, limit each task to one implementation and one informed repair before `awaiting_user`, and require explicit user approval for scope or budget growth?
-- **Validation tiered:** Does Validation Strategy distinguish the focused worker command, wave/component gate, and release acceptance, including freshness and an acceptance budget?
-
-Fix what you find by updating the epic or first task with `TaskUpdate`, then proceed. Do NOT present a plan that has items on this list.
-
-#### Confirm the contract with the user
-
-Epic requirements are IMMUTABLE once execution starts — so the user reviews them BEFORE handoff, not after. Present the epic's Requirements, Success Criteria, and Anti-Patterns for confirmation; the Quality Bar is gambit's fixed standard and applies to every epic, so note it rather than asking the user to set it:
-
-> "Here's the epic contract and the complete first wave — these requirements lock once we start: [summary]. Good to lock both, or change anything first?"
-
-If they request changes, update the epic and re-run the self-review. Only proceed to handoff once they confirm.
-
----
-
-### 7. Handoff
-
-**Offer next steps in prose (not AskUserQuestion), then invoke the chosen skill directly.**
-
-> "Epic and first task are ready. I'd start executing now — gambit:executing-plans opens a fresh worktree for the epic automatically. Or I can tighten the task further first with gambit:task-refinement. Which do you want?"
-
-**After user responds, invoke the chosen skill directly using the Skill tool.** Do not just tell the user to run it — load and follow the skill immediately.
-
-- "Start executing" → `Skill skill="gambit:executing-plans"`
-- "Refine tasks first" → `Skill skill="gambit:task-refinement"` (then executing-plans after)
-
-## Examples
-
-### Bad: Full Task Tree Upfront
-
-```
-TaskCreate "Epic: Add OAuth"
-TaskCreate "Task 1: Configure OAuth"
-TaskCreate "Task 2: Implement token exchange"
-TaskCreate "Task 3: Add refresh logic"
-# Execute Task 1 → discover library handles refresh
-# Task 3 is now wrong. Task tree is brittle.
-```
-
-### Good: Iterative Task Creation
-
-```
-TaskCreate "Epic: Add OAuth" [immutable requirements + anti-patterns]
-TaskCreate "Task 1: Configure OAuth provider"
-# Execute → learn library handles refresh automatically
-TaskCreate "Task 2: Integrate with existing middleware"
-# Created AFTER learning from Task 1 — reflects reality
-```
-
-### Bad: Epic Without Anti-Patterns
-
-```
-TaskCreate subject: "Epic: OAuth"
-  ## Requirements
-  - Users authenticate via Google OAuth2
-  - Tokens stored securely
-# "Tokens stored securely" is vague
-# No forbidden patterns → agent rationalizes localStorage when blocked
-```
-
-### Good: Epic With Anti-Patterns
-
-```
-TaskCreate subject: "Epic: OAuth"
-  ## Requirements (IMMUTABLE)
-  - Tokens stored in httpOnly cookies with Secure flag
-  ## Anti-Patterns (FORBIDDEN)
-  - NO localStorage tokens (reason: XSS vulnerability)
-  - NO mocking OAuth in integration tests (reason: defeats purpose)
-# Explicit reasoning prevents watering down under pressure
-```
-
-## Integration
-
-**Calls:** Explore agent → contracted Steelman discovery/closure → prose next-step question → invokes one of:
-- `gambit:executing-plans` (default — enters the epic worktree automatically)
-- `gambit:task-refinement` (optional, before execution)
+The person in conversation may choose to stop at the contract instead; settle that choice during this conversational stage. A goal-file run always hands off automatically, with no closing question or wait. When describing the stage without implementing, show this as the next load-a-stage operation and leave the described first effort ready.
