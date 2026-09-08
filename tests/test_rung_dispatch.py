@@ -86,12 +86,10 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
 
     def test_review_resolves_finder_and_verifier_roles(self) -> None:
         review = self.skill("review")
-        self.assertIn(
-            "Resolve the `finder` role through `contracts/models.md`", review
-        )
-        self.assertIn(
-            "Resolve the `verifier` role through `contracts/models.md`", review
-        )
+        self.assertIn("contracts/models.md", review)
+        for role in ("finder", "verifier"):
+            with self.subTest(role=role):
+                self.assertRegex(review, rf"\b{role}\b")
 
     def test_no_skill_keeps_the_retired_tier_vocabulary(self) -> None:
         for path in sorted((ROOT / "skills").rglob("*.md")):

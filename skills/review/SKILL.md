@@ -1,313 +1,69 @@
 ---
 name: review
-description: Runs an independent multi-dimension review of completed work and adversarially verifies every finding before reporting it.
-when_to_use: Use after all tasks in an epic complete, after refactoring verifies, or before merging to main. Triggers when independent validation is needed that code meets requirements, has no security gaps, passes quality standards, and has no performance regressions. User phrases like "review this", "is this ready to merge", "validate the implementation".
+description: Judges the completed candidate against the epic contract.
+when_to_use: Use for the end-of-epic review called by executing-plans, or when asked to review completed work against its epic record. Not for building tasks or releasing.
 user_invokable: true
 ---
 
 # Review
 
-**Freedom: LOW** — dispatch all four reviewers for the initial audit, then freeze scope and the finding ledger.
+Produce the complete ordered actions and result from the supplied facts before explanation. When asked to describe rather than execute, complete that description without running actions; never defer or decline it. Decisions and gaps become records, never questions to a person.
 
-## Overview
+## Freeze
 
-Dispatch four specialized reviewer agents to independently audit completed work once, then dispatch a dedicated verifier sub-agent to kill-or-keep each finding and freeze the survivors into a review ledger. Remediation closes that ledger; it does not restart an open-ended audit.
+Read the epic record. Freeze the candidate revision at entry and identify its base revision and the complete changes between them. Inspect exactly that frozen candidate against its Requirements, Must Not Ship, and fixed Quality Bar.
 
-The verification work is delegated to a **dedicated verifier sub-agent**, not done in the main context. Main context's job is dispatch + assembly; the verifier's job is ruthless kill-or-keep classification. This split follows Anthropic's `CitationAgent` pattern and avoids the synthesizer becoming context-starved from juggling four simultaneous roles (dispatch, verify, dedup, implement).
+Do not follow the branch tip. Additional commits landing during review are excluded from inspection and from the correction base. Reviewing those commits would require a later review, which the loop never runs for this epic. The only successor considered here is the corrected candidate produced from the frozen candidate by this review's ledger tasks.
 
-Works in epic or standalone workflow context; either context has an initial-audit phase and a bounded closure phase:
-- **Epic review:** When an epic Task exists, conformance checks against epic requirements and success criteria
-- **Task review:** When reviewing standalone work (debugging, refactoring), conformance checks against the workflow Task's goal and success criteria
+Read `contracts/models.md`. Resolve each role through its registry, starting at the role's entry rung and selecting its read-only variant for `finder` and `verifier`. Pass role contracts by absolute path from the current installation. An unresolved role is recorded in the Decision Log; work requiring it becomes a gap, while independent executable work continues. Do not substitute a dispatch target.
 
-**Core principle:** Review is adversarial and broad once; closure is adversarial and narrow until the frozen findings are resolved.
+## Finders
 
-**Announce at start:** "I'm using gambit:review to validate this implementation before finishing."
+Dispatch the `finder` role once for each dimension, concurrently. Each receives its contract by absolute path:
 
-## Quick Reference
+- `skills/review/reviewers/conformance.md`: Requirements, Must Not Ship, owned files, and minimal change.
+- `skills/review/reviewers/security.md`: security and data-loss failures introduced by the change.
+- `skills/review/reviewers/quality.md`: the worker contract's mechanical floor.
+- `skills/review/reviewers/performance.md`: contract-named workload evidence and resource failures covered by the Quality Bar.
 
-| Step | Action | STOP If |
-|------|--------|---------|
-| **1. Detect Context** | Epic Task/workflow Task + any open review ledger | Can't find either context |
-| **2. Load Context** | Task + changed files list | Can't load task |
-| **3. Freeze Boundary** | Requirements + base revision + review snapshot + changed hunks | Boundary incomplete |
-| **4. Dispatch Reviewers** | Initial audit only: 4 agents in parallel, each reading instructions by path | Any agent fails to run |
-| **5. Scope + Dedupe** | Reject out-of-boundary candidates; byte-identical dedupe only | — |
-| **6. Dispatch Verifier** | 1 verifier sub-agent with the deduped candidate list | Verifier fails to run |
-| **7. Admit and Freeze Ledger** | Only confirmed, admitted findings become immutable blockers | — |
-| **8. Remediate / Close** | Fix ledger items; re-verify only open IDs + original gates | Evidence fails |
-| **9. Gate** | APPROVED or OPEN LEDGER with verification counts | Ledger remains open → fix tasks, STOP |
+Pass the frozen revisions, workspace, change set, task owned-file lists, Requirements with their named evidence, Must Not Ship, Quality Bar, and Done commands as data. Each finder reads its own contract and inspects the frozen candidate without editing it.
 
-## When to Use
+A candidate finding carries an identifier, a claim, `file:line` on the frozen candidate, an admissibility source, and a concrete verify-by step. Admit it only when it cites one of:
 
-- All epic subtasks show "completed" (called automatically by `gambit:executing-plans` Step 5)
-- After `gambit:refactoring` completes changes (mandatory)
-- Before `gambit:finishing-branch`
-- Any time you want independent review of completed work
+- A Requirement whose named evidence is not met.
+- A Must Not Ship entry present.
+- A Quality Bar defect: a change outside owned files; work the contract did not ask for; a suppressed check, weakened or tautological test, dead code, or unhandled error; or a security or data-loss failure with a reachable precondition introduced by this change.
 
-**Don't use when:**
-- Tasks still in progress → use `gambit:executing-plans`
-- Mid-implementation, per-task quality check → that's the `executing-plans` checkpoint gate's job (the orchestrator runs that binary gate itself against the epic baseline; there is no per-task reviewer). This skill is the multi-dimension end-of-epic backstop, not the per-task gate.
+Everything else is an observation. Record it in the Decision Log or report with the reason it is not a defect. Even a verified observation creates no task, Requirement, milestone, or correction work. Cheapness, robustness preferences, and hypothetical future needs do not authorize work or a request for direction.
 
-## The Process
+## Verifier
 
-### Step 1: Detect Context
+Dispatch the read-only `verifier` role with the absolute path to `skills/review/reviewers/verifier.md`. Pass every admissible candidate, its verify-by step, the frozen revisions, and the contract data. The verifier independently gathers fresh evidence and confirms or drops each candidate. A claim it cannot confirm, including one it cannot reproduce on the frozen revision, is dropped. Record the reason; do not make dropped claims correction work.
 
-First detect an open **Review Closure Ledger** in the current workflow state. A ledger is open when a prior review recorded admitted finding IDs and has not recorded terminal closure for all of them.
+For checks needing writable scratch state, dispatch `test-runner` in an isolated workspace at the revision being checked and return its command, revision, and output to the verifier. Neither finder nor verifier writes files or performs corrections.
 
-- **Open ledger found → closure mode.** Skip Steps 3–5 and all four finders. Load the frozen boundary and only the still-open ledger entries, then continue at Step 6 with `mode: closure`.
-- **No open ledger → initial mode.** Determine what you're reviewing against below and run the full audit.
+Freeze all confirmed findings into one ledger. Every entry retains its identifier, claim, contract citation, `file:line`, verify-by step, and confirming evidence. Record dropped claims separately. Ledger membership and claims are fixed; correction and closure may attach evidence and status but cannot add findings.
 
-An old APPROVED report is not an open ledger. A ledger is invalidated only when the user explicitly changes requirements or authorizes implementation outside the recorded remediation boundary; then record why and begin a new initial review. Incidental scope creep is not a reason to restart review — remove it or return it to the worker.
+## One correction round
 
-**Epic context** (default when epic exists):
-```
-TaskList → find epic Task (subject starts with "Epic:")
-TaskGet → epic (requirements, success criteria, anti-patterns)
-TaskList → all subtasks (verify all completed)
-```
+Turn each confirmed ledger finding into a correction task citing its identifier and contract defect. Send these tasks through the build step in `skills/executing-plans/SKILL.md`, Loop step 3. Start each worker on the entry rung in an isolated workspace based on the frozen candidate, under `contracts/worker.md` and a complete brief with exact owned files and the named check. Only workers edit; only the orchestrator gates and commits their accepted changes.
 
-**Task context** (refactoring or standalone work):
-```
-TaskList → find the workflow Task (most recent in-progress or just-completed Task)
-TaskGet → task (goal, implementation steps, success criteria)
-```
+For each return, write the binary gate record with its contract-item evidence, owned-files and mechanical-floor results, Premises touched, lineage, rung, candidate revision, verdict, and next action. NOT DONE advances one rung. A top-rung failure permits one re-decomposition; descendants climb without splitting and become gaps if their top rung fails. Keep exhausted work on its gap branch, outside the candidate, and continue independent tasks. These ladder attempts belong to this one correction round.
 
-The review brief adapts based on which context is detected. If both exist (e.g., a refactor during an epic), prefer the epic context. Detect an open ledger from the prior review checkpoint and its fix Tasks before creating a new audit.
+Record the round as consumed. If the ledger is empty, create no correction tasks. Never start a second correction round, including after failed closure. A proposed quick repair does not reset the round or the ledger.
 
-### Step 2: Load Context
+## Closure
 
-**For epic context:**
-```
-TaskGet → epic (requirements, success criteria, anti-patterns)
-TaskList → all subtasks (verify all completed)
-```
+After the sole correction round finishes, dispatch the verifier with the same contract path, the frozen ledger, and the corrected candidate revision. Re-check only the ledger's findings against that candidate. Do not dispatch finders again or broaden discovery to newly noticed issues.
 
-**For task context:**
-```
-TaskGet → workflow task (goal, success criteria)
-```
+For every identifier, attach fresh closure evidence. Close it only when the original defect is proven resolved. A finding that remains confirmed, or whose resolution cannot be established, stays open as a **review gap**. Record its original contract citation and location, the closure result, correction task and gate evidence, and any gap branch.
 
-**Initial mode, both contexts:** freeze exact revisions before dispatch:
-```bash
-git merge-base main HEAD            # review_base
-git rev-parse HEAD                  # review_snapshot
-git diff <review_base>..<review_snapshot> --name-only
-git diff --unified=0 <review_base>..<review_snapshot>  # frozen changed hunks
-```
+Then run the full Done gate fresh on that exact candidate, even if entry checks were green or the ledger is empty. Record the commands and output. Failed or unavailable Done evidence prevents a clean result and is recorded as a review gap. Neither closure nor Done failure starts more correction work. Record additional observations without expanding the ledger.
 
-If tracked or untracked implementation changes are absent from `review_snapshot`, STOP. The audited snapshot must contain everything intended for merge.
+## Return
 
-### Step 3: Freeze Boundary and Prepare Brief
+Return the frozen and corrected revisions, ledger with closure evidence, fresh Done results, decisions and observations, and any review gaps to the calling orchestrator.
 
-Build a brief that each reviewer agent will receive. Include:
+Return **clean** only when the required review completed, every ledger finding is closed, and the fresh full Done gate is green. Otherwise return the review gaps and the reason nothing can be released. A finding still open after closure makes the run's terminal outcome **ended with gaps**; the orchestrator records the report and ends the run without further correction.
 
-**For epic context:**
-1. **Epic requirements** — full text from TaskGet (requirements, success criteria, anti-patterns)
-2. **Changed files** — the `--name-only` output
-3. **Base branch** — what the diff is against
-
-**For task context:**
-1. **Task goal and success criteria** — full text from TaskGet
-2. **Changed files** — the `--name-only` output
-3. **Base branch** — what the diff is against
-4. **Context type indicator** — "This is a task-level review (debugging/refactoring), not an epic review. Evaluate against the task's stated goal and success criteria."
-
-**Both contexts also include a frozen Review Boundary:**
-
-- `review_base` and `review_snapshot`
-- exact changed files and zero-context changed hunks between those revisions
-- explicit requirements/success criteria from the approved contract or workflow brief
-- this rule: every finding must anchor to a line changed in that frozen diff, including missing-test/docs/config findings via the changed line that creates the obligation
-
-Commit history, checkpoint formatting, transcript/process compliance, unchanged code, and "while I was reading" observations are outside the gate unless an explicit approved requirement names them. Report such observations separately; they cannot become candidates, ledger entries, fix work, or reasons to restart review.
-
-Do NOT include your opinions, implementation notes, or rationale. The reviewers should form their own conclusions from the code.
-
-Before any finder dispatch, validate that the frozen Review Brief contains the actual frozen diff hunks from `review_base..review_snapshot`. An empty or missing hunk set is a composition failure: stop the review before any finder dispatch, and never dispatch a finder with nothing to review.
-
-### Step 4: Dispatch Four Reviewers
-
-Resolve the absolute path to this skill's `reviewers/` directory **once** (Glob `**/skills/review/reviewers/conformance.md` if you don't already know it). You pass this path to the agents — **do NOT read the reviewer files into this context.** The four reviewer files are ~8k tokens; reading them here and re-emitting them as prompts wastes ~18k tokens every review. Each agent reads its own instruction file in its own fresh context.
-
-#### Rung resolution (Claude only)
-
-Resolve the `finder` role through `contracts/models.md` exactly once, before emitting any of the four calls. All four dimensions run on that one resolved rung — never resolve per dimension and never mix rungs inside one audit. Finders are advisory and read-only, so an agent rung uses the rung's `readonly_agent`.
-
-#### Finder dispatch
-
-In ONE message, emit exactly four finder calls on that one resolved rung. A model rung emits four `general-purpose` Agent calls with `model:` set to the rung's alias — set it explicitly, never `inherit`; an agent rung emits four calls on the rung's `readonly_agent` with no `model:` at all. Each prompt is just: (1) a directive to read and follow that agent's instruction file by path, then (2) the review brief.
-
-```
-Agent subagent_type="general-purpose" model="<finder rung alias — contracts/models.md>" description="Conformance review" prompt="Read <abs>/reviewers/conformance.md — that file is your complete instructions; your FIRST action must be to Read it, then follow it exactly.\n\n## Review Brief\n\n[brief]"
-Agent subagent_type="general-purpose" model="<finder rung alias — contracts/models.md>" description="Security review"    prompt="Read <abs>/reviewers/security.md — that file is your complete instructions; your FIRST action must be to Read it, then follow it exactly.\n\n## Review Brief\n\n[brief]"
-Agent subagent_type="general-purpose" model="<finder rung alias — contracts/models.md>" description="Quality review"     prompt="Read <abs>/reviewers/quality.md — that file is your complete instructions; your FIRST action must be to Read it, then follow it exactly.\n\n## Review Brief\n\n[brief]"
-Agent subagent_type="general-purpose" model="<finder rung alias — contracts/models.md>" description="Performance review" prompt="Read <abs>/reviewers/performance.md — that file is your complete instructions; your FIRST action must be to Read it, then follow it exactly.\n\n## Review Brief\n\n[brief]"
-```
-
-**Parallelism is structural, not a reminder.** That single message contains four calls on the once-resolved finder rung and nothing else: no `Read` calls, no prose between them. Reading one reviewer file before each dispatch is *exactly* what forces the agents sequential; passing paths removes the read step, so there's nothing left to interleave. If you catch yourself using `Read` on a reviewer file, you've reverted to the old serializing pattern — stop and dispatch by path.
-
-
-Each reviewer will:
-- Read the changed files independently
-- Evaluate their dimensions with evidence
-- Fetch documentation or references from the web when local knowledge is insufficient or the code is sensitive/complex
-- Attach a `**Verify by:**` line to every Gap and Improvement (required — see each reviewer file's "Verification Requirement" section)
-- Return findings as APPROVED or GAPS FOUND
-
-**Critical:** Reviewers are strictly advisory. They must NOT run tests, execute commands, or edit files. All tests are already passing by the time review runs — their job is code analysis only. They DO have access to `WebFetch` and `WebSearch` and should use them to validate edge cases, check API documentation, verify security patterns, or confirm language-specific behavior when they aren't confident from code reading alone.
-
-### Step 5: Scope-Filter and Dedupe Candidate Findings
-
-Collect the four reviewer reports into one candidate list. Each finding carries a `**Verify by:**` line; assign each finding an opaque `id` (any stable string — reviewer name + sequence works).
-
-**Apply the frozen boundary mechanically before verification.** A candidate is eligible only when its cited anchor intersects a changed hunk in `review_base..review_snapshot`, or an explicit requirement directly names the non-code artifact it cites. Put rejected items in a non-blocking `Out of scope` audit trail with the failed boundary check. Do not send them to the verifier and do not create work from them.
-
-**Dedupe on byte-identical `(path, line_range, Verify by:)` tuples only. Do NOT dedupe on semantic similarity.**
-
-Semantic dedup ("these two findings sound alike, collapse them") silently drops true positives — different reviewers flagging the same line with *different* verify_by steps have different investigation paths, and losing one loses coverage. Only collapse when all three fields match byte-for-byte. The verifier handles near-duplicates downstream.
-
-**Before dispatching to the verifier, build a side-table keyed by `id`** recording each finding's `category` (gap or improvement), `verify_by` (original reviewer text), and `reviewer` (which of the four emitted it). The verifier never sees this side-table. Retain it to route verdicts, build complete ledger entries, and author any fix briefs; losing it breaks closure.
-
-The deduped list and frozen boundary go to the verifier in Step 6.
-
-### Step 6: Dispatch Verifier Sub-Agent
-
-Resolve the `verifier` role through `contracts/models.md` exactly once before dispatch, and retain
-that rung for closure. The verifier rung is resolved independently of the finder rung — the two
-roles have their own ladders. Verifying is read-only and advisory, so an agent rung uses the rung's
-`readonly_agent`.
-
-Dispatch ONE verifier on that rung. A model rung dispatches `general-purpose` with the rung's alias
-(never a rung below the role's entry — a weak verifier is forbidden for code/security review, where
-verifying a subtle finding is as hard as finding it); an agent rung dispatches the rung's
-`readonly_agent` with no `model:` at all. As with the reviewers, **pass the path — do NOT read
-`verifier.md` into this context.** The candidate list IS passed inline (it's dynamic):
-
-```
-Agent subagent_type="general-purpose" model="<verifier rung alias — contracts/models.md>" description="Verify candidates" prompt="Read <abs>/reviewers/verifier.md — that file is your complete instructions; your FIRST action must be to Read it, then follow it exactly.\n\nmode: initial\nreview_base: [revision]\nreview_snapshot: [revision]\n\n## Candidate Findings\n\n[deduped list with ids]"
-```
-
-**Do NOT include reviewer severity, category (Gap vs. Improvement), or reasoning chain in the candidate list.** The verifier receives the mode, frozen revisions, and only `id`, `path`, `line_range`, `body`, `verify_by` per candidate. Fresh context prevents anchoring. Retain stripped fields in the Step 5 side-table.
-
-**Do NOT verify findings in the main context.** The verifier owns factual classification.
-The root separately decides work admission from that evidence and the approved requirements;
-a true observation is not automatically an obligation to change code.
-
-Skip the verifier dispatch only if the candidate list is empty. Continue to Step 9 with an empty ledger; original criteria and the full project gate still require fresh evidence before APPROVED.
-
-### Step 7: Assemble Findings From Verifier Output
-
-The verifier returns one classification per candidate, each with `verdict`, `quoted_evidence`, `evidence_location`, `tool_calls_made`, `confidence`, and (for gaps) `gap_reason`.
-
-Route by verdict, using the Step 5 side-table to recover each finding's original `category`:
-
-- **confirmed** → preserve the original body and verifier evidence. Apply the admission check
-  below to both categories; the reviewer's Gap/Improvement label does not determine whether work
-  is mandatory. Keep unadmitted observations in a non-blocking "Optional improvements" section,
-  without pretending they were refuted.
-- **gap** → surface in a "🔍 Couldn't verify" section of the final report. NOT a confirmed finding — a coverage boundary. Include the verifier's `gap_reason` verbatim.
-- **refuted** → drop from the findings and the gate. But list each one **tersely in the "Refuted (dropped)" audit trail** (file:line + the reviewer's one-line claim + the verifier's quoted counter-evidence). This is the only window into the verifier's one documented failure mode — aggressive refutation suppressing a real bug. Do not act on refuted findings, create tasks for them, or let them block; the audit trail exists so you (and the user) can spot a bad refutation, not to re-litigate verdicts.
-
-**Admission check:** name the approved requirement or existing obligation the finding violates,
-or the concrete correctness/security/operational failure demonstrated by its evidence. For a
-risk-based claim, state supported inputs or reachable preconditions and the consequence.
-Hypothetical future use, stylistic preference, severity labels, and sunk work are not sufficient.
-Do not add a requirement to justify a finding. Actual credential leaks, corrupt results, missing
-required behavior/tests, and failing declared gates remain mandatory fixes.
-
-After initial verification and admission, create a **Review Closure Ledger** containing only
-confirmed findings that pass that check. An optional improvement may become new work only through
-explicit user-approved scope expansion, not through automatic promotion into the contract:
-
-```yaml
-review_base: <revision>
-review_snapshot: <revision>
-requirements: <approved contract/brief identity>
-open:
-  - id: <stable id>
-    category: <gap|improvement>
-    path: <path>
-    line_range: <range in review_snapshot>
-    body: <original claim>
-    verify_by: <original check>
-    evidence: <verifier quote + location>
-    admission_basis: <requirement/obligation or evidenced failure with preconditions and consequence>
-```
-
-The ledger is immutable: closure may change only an entry's status from open to resolved. Refuted,
-gap-classified, boundary-rejected, and unadmitted optional candidates stay in non-blocking audit
-trails and never automatically enter later work. Preserve the complete ledger in the review checkpoint; fix work must reference its IDs.
-
-### Step 8: Remediate and Close the Ledger
-
-Remediate admitted ledger entries through the owning workflow. Confirmation establishes truth,
-not mandatory scope: do not schedule unadmitted improvements or relabel them as misunderstood.
-Unrequired machinery may be removed instead of hardened when the remaining implementation still
-satisfies every requirement, existing obligation, and admitted finding. Verify those guarantees;
-never use simplification to drop required safety or compatibility.
-
-After any remediation, enter closure mode. **Do not dispatch the four finders again.** Dispatch the verifier with only open ledger entries.
-
-During closure, reuse the verifier rung resolved in Step 6; do not re-resolve the role or change
-rungs mid-ledger. The closure call is fresh and carries `mode: closure`, the original frozen
-revisions and boundary, `current_revision`, and only the original fields for open ledger IDs.
-Require one complete classification per supplied open ID.
-
-```
-Agent subagent_type="general-purpose" model="<verifier rung alias — contracts/models.md>" description="Close review ledger" prompt="Read <abs>/reviewers/verifier.md and follow it exactly.\n\nmode: closure\nreview_base: [revision]\nreview_snapshot: [original reviewed revision]\ncurrent_revision: [current HEAD]\n\n## Open Ledger Findings\n\n[original candidate fields for open IDs only]"
-```
-
-Interpret closure verdicts against the original claim:
-
-- `refuted` → the original claim no longer holds; mark that ID resolved.
-- `confirmed` → the defect remains; keep that same ID open.
-- `gap` → resolution lacks evidence; keep that same ID open with the literal wall.
-
-Then invoke `gambit:verification` to run each ledger item's targeted check, the original success criteria, and the full project gate. Verification may fail these declared claims but may not invent new ones. Check `review_snapshot..current_revision` for remediation scope: unrelated edits return to the worker for removal; they do not expand the ledger.
-
-Newly noticed issues from the frozen snapshot, process/history concerns, and unrelated observations are non-blocking `Outside frozen review boundary` notes. They cannot reopen an ID or create one. Only explicit user-approved requirement or implementation-scope expansion invalidates the ledger and authorizes a new initial audit.
-
-### Step 9: Gate Decision
-
-**APPROVED** requires either zero admitted ledger entries in initial mode, or every ledger ID
-resolved in closure mode, plus green original criteria and full project gate. Verified optional
-improvements do not block approval. This is the terminal condition; proceed directly to `gambit:finishing-branch` and pass the fresh test evidence.
-
-If entries remain open, report only those IDs with their evidence and complete fix briefs. Preserve the same ledger:
-
-Create or update fix Tasks for the open IDs only, each carrying its ledger ID and evidence references. A fix Task created now starts at `repairs_used: 0` and `awaiting_user: false`; a fix Task that already exists for that ID keeps its `repairs_used` and `awaiting_user` exactly as they are — closure never resets a counter or un-parks a task. Then STOP and return to `gambit:executing-plans` (or the owning standalone workflow), where each fix task gets one implementation and at most one informed repair like any other. The task descriptions retain the ledger fields needed for closure.
-
-Never create work from refuted, gap-classified-in-initial-mode, boundary-rejected, or newly noticed closure observations. Never replace closure with another full review merely because the verifier or tests found an open ledger item.
-
-## Integration
-
-**Called by:**
-- `gambit:executing-plans` (Step 5, when all tasks complete)
-- `gambit:refactoring` (mandatory, after final verification passes)
-- User via `/gambit:review`
-
-**Calls:**
-- `gambit:finishing-branch` (if approved)
-
-**Dispatches four finders (parallel, read-only) on the once-resolved `finder` rung (`contracts/models.md`). Each finder reads its own instruction file by path — main context never loads it:**
-- `reviewers/conformance.md` — completeness, architecture, dead code
-- `reviewers/security.md` — OWASP audit, secrets, auth, data exposure
-- `reviewers/quality.md` — language idioms, linter circumvention, test quality
-- `reviewers/performance.md` — scaling, N+1, resource management
-
-**Dispatches one verifier on the once-resolved `verifier` rung, also by path:**
-- `reviewers/verifier.md` — initial kill-or-keep classification; later bounded closure of the frozen ledger
-
-**Call chain (epic context):**
-```
-executing-plans (all tasks done) → review → finishing-branch
-                                      ↓
-                           (if ledger open: STOP → fix → close ledger)
-```
-
-**Call chain (task context):**
-```
-refactoring (changes verified) → review → finishing-branch
-                                    ↓
-                         (if ledger open: STOP → fix → close ledger)
-```
+Review never releases, performs Release actions, opens a pull request, or hands off to any integration or finishing step. Returning evidence to its caller is its final action. No result becomes a question to a person.
