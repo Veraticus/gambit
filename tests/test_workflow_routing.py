@@ -39,7 +39,7 @@ class WorkflowRoutingTest(unittest.TestCase):
         self.assertLess(len(re.findall(r"\b[\w-]+\b", body)), 200)
 
     def test_scout_sites_resolve_the_scout_rung(self) -> None:
-        for skill in ("brainstorming", "executing-plans"):
+        for skill in ("brainstorming",):
             text = (
                 ROOT / "skills" / skill / "SKILL.md"
             ).read_text(encoding="utf-8")

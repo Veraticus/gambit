@@ -697,44 +697,20 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
             cursor = location + len(part)
         return tuple(locations)
 
-    def test_parallel_wave_docs_require_atomic_combined_integration(self) -> None:
+    def test_integration_reference_structure_and_link(self) -> None:
         dispatch = (
             ROOT / "skills" / "executing-plans" / "references" / "wave-dispatch.md"
         ).read_text(encoding="utf-8")
         skill = (ROOT / "skills" / "executing-plans" / "SKILL.md").read_text(
             encoding="utf-8"
         )
-
-        workflow = (
-            "1. **Validate inputs.**",
-            "2. **Combine ordered commits.**",
-            "3. **Run one combined gate.**",
-            "4. **Fast-forward the exact tested head.**",
-            "5. **Clean up only after success.**",
+        self.assertEqual(
+            [line[3:] for line in dispatch.splitlines() if line.startswith("## ")],
+            ["Manifest", "Transaction"],
         )
-        for text in (dispatch, skill):
-            locations = self.assert_appears_in_order(text, workflow)
-            blocks = tuple(
-                text[start:end]
-                for start, end in zip(
-                    locations,
-                    (*locations[1:], len(text)),
-                    strict=True,
-                )
-            )
-            self.assertIn("temporary index", blocks[0])
-            self.assertIn("commit object per worker", blocks[1])
-            self.assertIn("manifest order", blocks[1])
-            self.assertIn("exactly once", blocks[2])
-            self.assertIn("combined", blocks[2])
-            self.assertIn("revalidate", blocks[3].lower())
-            self.assertIn("exact", blocks[3])
-            self.assertIn("only after", blocks[4])
-            self.assertIn("fast-forward succeeds", blocks[4])
-            self.assertIn("epic HEAD unmoved", blocks[4])
-            self.assertIn("retains", blocks[4])
-        self.assertNotIn("N × the suite", dispatch)
-        self.assertNotIn("integrate the returned diffs serially", skill)
+        self.assertIn("references/wave-dispatch.md", skill)
+        self.assertIn("scripts/integrate_wave.py", dispatch)
+        self.assertLessEqual(len(dispatch.split()), 700)
 
     def test_manifest_and_worker_brief_fields_have_exact_structure(self) -> None:
         dispatch = (

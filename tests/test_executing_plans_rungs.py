@@ -1,147 +1,108 @@
+"""Structure only; executing-plans behavior is judged by the trial fixtures."""
+
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILL_ROOT = ROOT / "skills" / "executing-plans"
+SECTIONS = (
+    "Start",
+    "Decompose the next effort",
+    "Build each task until good",
+    "Integrate and repeat",
+    "Review once",
+    "Release",
+    "Report and end",
+    "Human boundaries",
+)
+GATE_FIELDS = (
+    "Task",
+    "Lineage",
+    "Rung",
+    "Candidate revision",
+    "Contract items checked",
+    "Owned-files result",
+    "Mechanical-floor result",
+    "Premises touched",
+    "Verdict",
+    "Next action",
+)
+FORBIDDEN = (
+    r"\b(?:approval|permission)\b",
+    r"\bSTOP\b",
+    r"\b(?:ask|wait for|confirm with|consult)\s+(?:a |the )?(?:user|person|human)\b",
+    r"\b(?:wave|human) checkpoint\b",
+    r"one[- ]wave[- ]then[- ]stop",
+    r"awaiting_user|repairs_used",
+    r"circuit breaker|acceptance budget",
+    r"architecture(?:/scope)? preflight",
+    r"EnterWorktree|subagent_type|AskUserQuestion",
+    r"\bSkill\s+(?:tool|skill=)|\bSkill\(",
+    r"TaskCreate|TaskUpdate|TaskGet|TaskList|\bAgent\s+tool\b",
+    r"Success Criteria|Anti-Patterns|Validation Strategy|Delivery Constraints|Scope Boundaries",
+    r"gambit:(?:finishing-branch|verification|test-driven-development|debugging)\b",
+    r"legacy|migration|compatib\w*|previously",
+    r"\b(?:claude-[a-z0-9.-]*\d[a-z0-9.-]*|gpt-[a-z0-9.-]*\d[a-z0-9.-]*|o[1-9](?:-[a-z0-9.-]+)?|codex-mini)\b",
+    r"\b(?:anthropic|openai|bedrock|openrouter|sol-low|sol-xhigh|astra-high|astra-xhigh|luna-low|terra-medium)\b",
+)
 
 
-def bounded_section(text: str, start: str, end: str) -> str:
-    start_index = text.index(start)
-    end_index = text.index(end, start_index)
-    return text[start_index:end_index]
-
-
-class ExecutingPlansRungRoutingTest(unittest.TestCase):
+class ExecutingPlansStructureTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.text = (ROOT / "skills" / "executing-plans" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        cls.worker_dispatch = bounded_section(
-            cls.text,
-            "**Dispatch the wave to workers:**",
-            "3. **Route on the worker's returned status**",
-        )
-        cls.status_routing = bounded_section(
-            cls.text,
-            "3. **Route on the worker's returned status**",
-            "**One of the four statuses is the ONLY signal",
-        )
-        cls.gate = bounded_section(
-            cls.text,
-            "#### Checkpoint gate",
-            "#### When Hitting Obstacles",
-        )
+        cls.text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
 
-    def assertContainsAll(self, text: str, expected: tuple[str, ...]) -> None:
-        for item in expected:
-            with self.subTest(item=item):
-                self.assertIn(item, text)
+    def test_loop_sections_are_present_in_order(self) -> None:
+        self.assertEqual(tuple(re.findall(r"(?m)^## (.+)$", self.text)), SECTIONS)
 
-    def test_worker_rung_is_resolved_by_the_orchestrator_before_dispatch(self) -> None:
-        self.assertContainsAll(
-            self.worker_dispatch,
-            (
-                "Resolve the `worker` role through `contracts/models.md` before the initial dispatch",
-                "never a rung below the entry, and never a rung the worker picks for itself",
-                "always set `model:` explicitly to the rung's alias",
-                "never omit it, never pass `inherit`",
-                'Agent subagent_type="general-purpose" model="<worker rung alias — contracts/models.md>"',
-                'Agent subagent_type="<worker rung agent>"',
-            ),
-        )
+    def test_frontmatter_names_skill_and_routing_fields(self) -> None:
+        self.assertTrue(self.text.startswith("---\n"))
+        frontmatter, _ = self.text[4:].split("\n---\n", 1)
+        self.assertRegex(frontmatter, r"(?m)^name: executing-plans$")
+        for field in ("description", "when_to_use"):
+            self.assertRegex(frontmatter, rf"(?m)^{field}: [^\n]+$")
 
-    def test_agent_rung_dispatch_never_carries_a_model_parameter(self) -> None:
-        self.assertIn(
-            "pass **no `model:` at all** — a foreign model id in `model:` is silently"
-            " substituted rather than rejected",
-            self.worker_dispatch,
-        )
-        self.assertIn("the `model=` field removed entirely", self.worker_dispatch)
+    def test_dispatch_names_roles_and_registry_contract(self) -> None:
+        for role in ("worker", "escalation", "scout"):
+            with self.subTest(role=role):
+                self.assertRegex(self.text, rf"\b{role}\b")
+        for path in ("contracts/models.md", "contracts/worker.md", "contracts/scout.md"):
+            with self.subTest(path=path):
+                self.assertIn(path, self.text)
 
-    def test_skill_has_no_configured_executor_route(self) -> None:
-        for retired in (
-            "executors.json",
-            "contracts/executors.md",
-            "async-dispatch",
-            "gambit-wrapper",
-            "codex-reply",
-            "worker.tool",
-            "worker.reply_tool",
-            "escalation-final",
-            "TaskOutput",
-        ):
-            with self.subTest(retired=retired):
-                self.assertNotIn(retired, self.text)
+    def test_gate_record_has_exact_readme_fields(self) -> None:
+        tables = re.findall(r"(?m)^\| Field \| Value \|\n\|[^\n]+\n((?:\|[^\n]+\n)+)", self.text)
+        self.assertEqual(len(tables), 1, "one gate-record schema")
+        fields = tuple(line.split("|")[1].strip() for line in tables[0].splitlines())
+        self.assertEqual(fields, GATE_FIELDS)
 
-    def test_repairs_are_limited_to_one_informed_repair_then_the_user(self) -> None:
-        self.assertContainsAll(
-            self.status_routing,
-            (
-                "one implementation, then at most one informed repair on the `escalation` rung, then the user",
-                "read the task's `repairs_used`; if it is already `1`, or the task is `awaiting_user`, there is no dispatch to make",
-                "Resolve the `escalation` role through `contracts/models.md`",
-                "Record `repairs_used: 1` on the task's metadata with `TaskUpdate` BEFORE dispatching",
-                "There is no second repair, no climb beyond this rung, and no renamed or split descendant that starts fresh",
-                'Agent subagent_type="general-purpose" model="<escalation rung alias — contracts/models.md>"',
-                'set `subagent_type="<escalation rung agent>"` instead',
-                "routes as the one informed repair, never to a reviewer",
-                "A second NEEDS_CONTEXT on the same task",
-            ),
-        )
-        for retired in (
-            "delivery-judgment",
-            "CONTINUE-ONCE",
-            "USER-DECISION",
-            "allowance",
-            "followup_task",
-            "Terminal escalation",
-        ):
-            with self.subTest(retired=retired):
-                self.assertNotIn(retired, self.text)
+    def test_terminal_outcomes_are_named(self) -> None:
+        for outcome in ("released", "ended with gaps", "stopped on catastrophe"):
+            with self.subTest(outcome=outcome):
+                self.assertIn(outcome, self.text)
 
-    def test_checkpoint_gate_is_binary_against_the_baseline_with_no_reviewer(self) -> None:
-        self.assertContainsAll(
-            self.gate,
-            (
-                "there is no per-task reviewer dispatch",
-                "against the epic's baseline and nothing else",
-                "The verdict is binary and itemized",
-                "Verdict:       DONE | NOT DONE",
-                "Each NOT DONE names its baseline clause, the changed-code cause, and the evidence",
-                "is an observation: write it under the checkpoint's Notes and move on",
-                "There is no per-task reviewer.",
-                "Do NOT dispatch a finder, verifier, or judge from this gate",
-                "**Never edit the diff yourself — you judge and route; workers implement.**",
-            ),
-        )
-        for retired in (
-            "Quality review:",
-            "reviewers/quality.md",
-            "Escalate to an independent quality reviewer",
-            "escalation trigger",
-            "six sources",
-            "maximal standard",
-        ):
-            with self.subTest(retired=retired):
-                self.assertNotIn(retired, self.gate)
-        self.assertNotIn(
-            "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
-            self.text,
-        )
+    def test_normative_prose_excludes_forbidden_content(self) -> None:
+        for path in sorted(SKILL_ROOT.rglob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            for pattern in FORBIDDEN:
+                with self.subTest(path=path.relative_to(ROOT), pattern=pattern):
+                    self.assertIsNone(re.search(pattern, text, re.IGNORECASE), pattern)
 
-    def test_summaries_describe_rung_resolved_workers(self) -> None:
-        self.assertContainsAll(
-            self.text,
-            (
-                "a fresh worker on the resolved `worker` rung does the mechanical work",
-                "Each worker runs on the rung the `worker` role resolves to in"
-                " `contracts/models.md`, and a NOT DONE gets exactly one informed"
-                " repair on the `escalation` rung before the user decides.",
-            ),
-        )
+    def test_build_section_has_no_review_role_dispatch(self) -> None:
+        sections = dict(re.findall(r"(?ms)^## ([^\n]+)\n(.*?)(?=^## |\Z)", self.text))
+        build = sections.get("Build each task until good", "")
+        self.assertTrue(build)
+        self.assertNotRegex(build, r"(?i)\b(?:reviewer|judge|finder|verifier)\b")
+
+    def test_word_caps(self) -> None:
+        self.assertLessEqual(len(self.text.split()), 3000)
+        reference = SKILL_ROOT / "references" / "wave-dispatch.md"
+        if reference.exists():
+            self.assertLessEqual(len(reference.read_text(encoding="utf-8").split()), 700)
 
 
 if __name__ == "__main__":

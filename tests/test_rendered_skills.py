@@ -105,30 +105,5 @@ class RootSkillsTest(unittest.TestCase):
         ):
             self.assertIn(required, templates)
 
-    def test_execution_stops_negative_convergence_and_gates_acceptance(self) -> None:
-        executing = (
-            SKILLS / "executing-plans" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-
-        convergence = executing.split("#### Convergence Gate", 1)[1]
-        convergence = convergence.split("### 4. Commit and STOP Checkpoint", 1)[0]
-        for required in (
-            "two consecutive checkpoints",
-            "retire no success criterion or named blocker",
-            "remaining work grows",
-            "STOP autonomous continuation",
-            "at most one informed repair on the `escalation`",
-            "No judge, no second repair, no higher rung",
-            "explicit user approval",
-        ):
-            self.assertIn(required, convergence)
-
-        final_validation = executing.split("### 5. Epic Review", 1)[1]
-        architecture = final_validation.index("architecture/scope preflight")
-        acceptance = final_validation.index("release acceptance")
-        self.assertLess(architecture, acceptance)
-        self.assertIn("declared acceptance budget", final_validation)
-
-
 if __name__ == "__main__":
     unittest.main()

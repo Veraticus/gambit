@@ -52,15 +52,5 @@ class SkillConvergenceTests(unittest.TestCase):
                 self.assertIn("preconditions", text)
                 self.assertNotIn("WILL be implemented", text)
 
-    def test_execution_convergence_counts_required_delivery_not_optional_work(self):
-        text = (ROOT / "skills/executing-plans/SKILL.md").read_text()
-        normalized = " ".join(text.split())
-        self.assertIn("Choose a runnable delivery slice", text)
-        self.assertIn("A named blocker is a failing declared gate", text)
-        self.assertIn("optional improvements does not reset", normalized)
-        self.assertIn("Explicit user-selected mechanisms", text)
-        self.assertIn("Review confirmation alone does not authorize work", normalized)
-
-
 if __name__ == "__main__":
     unittest.main()

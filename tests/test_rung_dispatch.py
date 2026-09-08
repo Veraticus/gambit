@@ -72,7 +72,7 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
         )
 
     def test_scout_sites_resolve_the_scout_role(self) -> None:
-        for name in ("brainstorming", "executing-plans"):
+        for name in ("brainstorming",):
             with self.subTest(skill=name):
                 self.assertIn(
                     "Resolve the `scout` role through `contracts/models.md`",
@@ -85,19 +85,12 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
             self.skill("refactoring"),
         )
 
-    def test_worker_and_escalation_sites_resolve_their_roles(self) -> None:
+    def test_execution_dispatch_names_roles_and_registry(self) -> None:
         executing = self.skill("executing-plans")
-        self.assertIn(
-            "Resolve the `worker` role through `contracts/models.md`", executing
-        )
-        self.assertIn(
-            "Resolve the `escalation` role through `contracts/models.md`",
-            executing,
-        )
-        self.assertNotIn(
-            "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
-            executing,
-        )
+        self.assertIn("contracts/models.md", executing)
+        for role in ("worker", "escalation", "scout"):
+            with self.subTest(role=role):
+                self.assertRegex(executing, rf"\b{role}\b")
 
     def test_review_resolves_finder_and_verifier_roles(self) -> None:
         review = self.skill("review")
