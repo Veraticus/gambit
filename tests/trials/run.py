@@ -21,7 +21,9 @@ on 2026-09-08 confirmed that patchbay accepts ``output_config.effort``.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -313,7 +315,13 @@ def patchbay_transport(model: str, effort: str, prompt: str) -> str:
     except urllib.error.HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")
         raise TransportError(f"HTTP {error.code}: {detail}", error.code) from error
-    except (urllib.error.URLError, TimeoutError, OSError) as error:
+    except (
+        UnicodeDecodeError,
+        http.client.HTTPException,
+        urllib.error.URLError,
+        TimeoutError,
+        OSError,
+    ) as error:
         raise TransportError(str(error)) from error
     if status != 200:
         raise TransportError(f"HTTP {status}: {raw}", status)
@@ -424,22 +432,32 @@ def load_results(root: Path) -> dict[str, object]:
 def store_result(root: Path, identifier: str, record: dict[str, object]) -> None:
     path = root / RESULTS_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
-    results = load_results(root)
-    results[identifier] = record
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
-    )
-    temporary_path = Path(temporary_name)
+    directory_descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as temporary:
-            json.dump(results, temporary, indent=2, sort_keys=True)
-            temporary.write("\n")
-            temporary.flush()
-            os.fsync(temporary.fileno())
-        os.replace(temporary_path, path)
-    except BaseException:
-        temporary_path.unlink(missing_ok=True)
-        raise
+        fcntl.flock(directory_descriptor, fcntl.LOCK_EX)
+        try:
+            results = load_results(root)
+            results[identifier] = record
+            temporary_descriptor, temporary_name = tempfile.mkstemp(
+                prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+            )
+            temporary_path = Path(temporary_name)
+            try:
+                with os.fdopen(
+                    temporary_descriptor, "w", encoding="utf-8"
+                ) as temporary:
+                    json.dump(results, temporary, indent=2, sort_keys=True)
+                    temporary.write("\n")
+                    temporary.flush()
+                    os.fsync(temporary.fileno())
+                os.replace(temporary_path, path)
+            except BaseException:
+                temporary_path.unlink(missing_ok=True)
+                raise
+        finally:
+            fcntl.flock(directory_descriptor, fcntl.LOCK_UN)
+    finally:
+        os.close(directory_descriptor)
 
 
 def check_fresh(

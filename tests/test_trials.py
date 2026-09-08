@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
 import os
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -205,6 +207,68 @@ class TrialRunnerTest(unittest.TestCase):
         self.assertEqual("", record["response"])
         self.assertEqual([], record["items"])
         self.assertEqual(2, len(fake.calls))
+
+    def test_http_read_failures_retry_once_and_record_transport_failure(self) -> None:
+        fixture = self.load_one()
+        key_path = self.root / "patchbay-key"
+        key_path.write_text("secret-key\n", encoding="utf-8")
+
+        class Response:
+            status = 200
+
+            def __init__(self, outcome: object) -> None:
+                self.outcome = outcome
+
+            def __enter__(self) -> "Response":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                if isinstance(self.outcome, BaseException):
+                    raise self.outcome
+                assert isinstance(self.outcome, bytes)
+                return self.outcome
+
+        cases = {
+            "invalid UTF-8": lambda: b"\xff",
+            "incomplete body": lambda: http.client.IncompleteRead(b""),
+        }
+        for name, outcome in cases.items():
+            with self.subTest(name=name, call="_transport_call"):
+                with (
+                    mock.patch.object(trials, "PATCHBAY_KEY_FILE", key_path),
+                    mock.patch.object(
+                        trials.urllib.request,
+                        "urlopen",
+                        side_effect=lambda *args, **kwargs: Response(outcome()),
+                    ) as urlopen,
+                ):
+                    self.assertIsNone(
+                        trials._transport_call(
+                            trials.patchbay_transport, "model", "low", "prompt"
+                        )
+                    )
+                self.assertEqual(2, urlopen.call_count)
+
+            with self.subTest(name=name, call="run_cell"):
+                with (
+                    mock.patch.object(trials, "PATCHBAY_KEY_FILE", key_path),
+                    mock.patch.object(
+                        trials.urllib.request,
+                        "urlopen",
+                        side_effect=lambda *args, **kwargs: Response(outcome()),
+                    ) as urlopen,
+                ):
+                    record = trials.run_cell(
+                        self.root, fixture, "sol-low", trials.patchbay_transport
+                    )
+                self.assertEqual("transport_failure", record["status"])
+                self.assertFalse(record["pass"])
+                self.assertEqual("", record["response"])
+                self.assertEqual([], record["items"])
+                self.assertEqual(2, urlopen.call_count)
 
     def test_judge_output_matches_numbered_items_by_position(self) -> None:
         checklist = ("first item", "second item", "third item")
@@ -416,6 +480,52 @@ class TrialRunnerTest(unittest.TestCase):
         self.assertNotEqual(results_path, replacements[0][0])
         self.assertEqual(results_path, replacements[0][1])
         self.assertFalse(replacements[0][0].exists())
+
+    def test_concurrent_result_updates_preserve_both_cells(self) -> None:
+        barrier = threading.Barrier(2)
+        real_load_results = trials.load_results
+
+        def synchronized_load(root: Path) -> dict[str, object]:
+            loaded = real_load_results(root)
+            try:
+                barrier.wait(timeout=1)
+            except threading.BrokenBarrierError:
+                pass
+            return loaded
+
+        failures: list[BaseException] = []
+
+        def write(identifier: str) -> None:
+            try:
+                trials.store_result(
+                    self.root, identifier, {"status": "ok", "pass": True}
+                )
+            except BaseException as error:
+                failures.append(error)
+
+        threads = [
+            threading.Thread(target=write, args=("demo/first@sol-low",)),
+            threading.Thread(target=write, args=("demo/second@sol-low",)),
+        ]
+        with mock.patch.object(
+            trials, "load_results", side_effect=synchronized_load
+        ):
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=5)
+
+        self.assertTrue(all(not thread.is_alive() for thread in threads))
+        self.assertEqual([], failures)
+        stored = trials.load_results(self.root)
+        self.assertEqual(
+            {"demo/first@sol-low", "demo/second@sol-low"}, set(stored)
+        )
+        fixture_directory = self.root / "tests/fixtures/trials"
+        self.assertEqual(
+            ["demo", "results.json"],
+            sorted(entry.name for entry in fixture_directory.iterdir()),
+        )
 
     def test_cli_exit_codes_writes_results_and_never_networks_for_checks(self) -> None:
         self.write_fixture()

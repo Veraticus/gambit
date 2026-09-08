@@ -102,14 +102,20 @@ class ProseScanTest(unittest.TestCase):
             ["contracts/worker.md:1: concrete provider model id"], findings
         )
 
-    def test_deleted_readme_line_is_exempt_and_declares_deleted_skill_tokens(self) -> None:
+    def test_deleted_readme_line_exempts_only_deleted_skill_tokens(self) -> None:
         (self.root / "README.md").write_text(
             "# Gambit\n\n## Skills\n\n"
-            "Deleted: `debugging`, `verification`; legacy TODO ask the user.\n\n"
+            "Deleted: `debugging`, `verification`, `newly-retired`; legacy TODO.\n\n"
             "## Install\n",
             encoding="utf-8",
         )
-        self.assertEqual([], scan_prose.scan(self.root))
+        findings = scan_prose.scan(self.root)
+        self.assertEqual(
+            ["README.md:5: legacy", "README.md:5: TODO"], findings
+        )
+        self.assertFalse(any("debugging" in finding for finding in findings))
+        self.assertFalse(any("verification" in finding for finding in findings))
+        self.assertFalse(any("newly-retired" in finding for finding in findings))
 
     def test_brainstorming_exempts_only_the_three_boundary_phrases(self) -> None:
         (self.root / "skills/brainstorming/SKILL.md").write_text(
@@ -122,13 +128,35 @@ class ProseScanTest(unittest.TestCase):
             scan_prose.scan(self.root),
         )
 
-    def test_catastrophe_and_end_lines_are_fully_exempt(self) -> None:
-        (self.root / "skills/existing/SKILL.md").write_text(
-            "A catastrophe may say legacy TODO gambit:missing.\n"
-            "**End.** ask the user and wait for the user; gambit:absent.\n",
+    def test_boundary_lines_exempt_only_stop_and_report_phrases(self) -> None:
+        (self.root / "README.md").write_text(
+            "# Gambit\n\n## Boundaries\n\n"
+            "A catastrophe may STOP and report legacy TODO gambit:missing.\n"
+            "**End.** ask the user and wait for the user; migration TBD "
+            "gambit:absent.\n",
             encoding="utf-8",
         )
-        self.assertEqual([], scan_prose.scan(self.root))
+        (self.root / "contracts/worker.md").write_text(
+            "A catastrophe may STOP and report using gpt-4o.\n",
+            encoding="utf-8",
+        )
+        findings = scan_prose.scan(self.root)
+        self.assertEqual(
+            [
+                "README.md:5: legacy",
+                "README.md:5: TODO",
+                "README.md:5: unresolved skill reference missing",
+                "README.md:6: migration",
+                "README.md:6: TBD",
+                "README.md:6: unresolved skill reference absent",
+                "contracts/worker.md:1: concrete provider model id",
+            ],
+            findings,
+        )
+        self.assertFalse(any("STOP and" in finding for finding in findings))
+        self.assertFalse(any("ask the user" in finding for finding in findings))
+        self.assertFalse(any("wait for the user" in finding for finding in findings))
+        self.assertFalse(any("catastrophe" in finding for finding in findings))
 
     def test_unresolved_gambit_and_readme_skill_references_are_reported(self) -> None:
         (self.root / "skills/existing/SKILL.md").write_text(

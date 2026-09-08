@@ -58,6 +58,13 @@ BRAINSTORMING_EXEMPTIONS = {
     "user approval",
     "explicit approval",
 }
+BACKTICKED_TEXT = re.compile(r"`[^`]+`")
+BOUNDARY_EXEMPTIONS = {"ask the user", "STOP and", "wait for the user"}
+BOUNDARY_EXEMPT_PATTERNS = tuple(
+    pattern
+    for label, pattern in FORBIDDEN_PATTERNS
+    if label in BOUNDARY_EXEMPTIONS
+)
 
 
 def domain_files(root: Path) -> list[Path]:
@@ -72,10 +79,18 @@ def domain_files(root: Path) -> list[Path]:
     return files
 
 
-def _whole_line_exempt(relative: Path, line: str) -> bool:
+def _mask_match(match: re.Match[str]) -> str:
+    return " " * len(match.group(0))
+
+
+def _scannable_line(relative: Path, line: str) -> str:
+    scannable = line
     if relative == Path("README.md") and line.startswith("Deleted:"):
-        return True
-    return "catastrophe" in line.lower() or line.startswith("**End.**")
+        scannable = BACKTICKED_TEXT.sub(_mask_match, scannable)
+    if "catastrophe" in line.lower() or line.startswith("**End.**"):
+        for pattern in BOUNDARY_EXEMPT_PATTERNS:
+            scannable = pattern.sub(_mask_match, scannable)
+    return scannable
 
 
 def _brainstorming(relative: Path) -> bool:
@@ -103,8 +118,7 @@ def scan(root: Path = REPO_ROOT) -> list[str]:
                 elif in_skills_section and line.startswith("## "):
                     in_skills_section = False
 
-            if _whole_line_exempt(relative, line):
-                continue
+            scannable = _scannable_line(relative, line)
 
             for label, pattern in FORBIDDEN_PATTERNS:
                 if (
@@ -112,16 +126,16 @@ def scan(root: Path = REPO_ROOT) -> list[str]:
                     and label.lower() in BRAINSTORMING_EXEMPTIONS
                 ):
                     continue
-                if pattern.search(line):
+                if pattern.search(scannable):
                     findings.append(f"{relative.as_posix()}:{line_number}: {label}")
 
             if relative.parts and relative.parts[0] == "contracts":
-                if CONCRETE_PROVIDER_MODEL_IDS.search(line):
+                if CONCRETE_PROVIDER_MODEL_IDS.search(scannable):
                     findings.append(
                         f"{relative.as_posix()}:{line_number}: concrete provider model id"
                     )
 
-            for match in GAMBIT_REFERENCE.finditer(line):
+            for match in GAMBIT_REFERENCE.finditer(scannable):
                 name = match.group(1)
                 if name not in skills:
                     findings.append(
@@ -130,7 +144,7 @@ def scan(root: Path = REPO_ROOT) -> list[str]:
                     )
 
             if relative == Path("README.md") and in_skills_section:
-                for match in BACKTICKED_SKILL.finditer(line):
+                for match in BACKTICKED_SKILL.finditer(scannable):
                     name = match.group(1)
                     if name not in skills:
                         findings.append(
