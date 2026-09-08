@@ -774,19 +774,10 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
         self.assertIn("exact/path/to/source.ext", brief)
         self.assertIn("exact/path/to/test.ext", brief)
 
-        contract_intro = worker.split("\n\n", 2)[1]
-        self.assert_appears_in_order(
-            contract_intro,
-            (
-                "`## Task`",
-                "`## Files owned`",
-                "`## Hidden shared surfaces`",
-                "`## Neighbors`",
-                "`## Context`",
-                "`Test command:`",
-            ),
+        self.assertRegex(
+            worker,
+            r"(?is)leave\b.{0,80}\buncommitted\b.{0,100}\borchestrator\b.{0,80}\bcommits?\b",
         )
-        self.assertIn("untracked and binary artifacts as first-class deliverables", worker)
 
 
 if __name__ == "__main__":
