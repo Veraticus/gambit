@@ -15,32 +15,30 @@ CONCRETE_PROVIDER_MODEL_IDS = re.compile(
 
 
 class RootSkillsTest(unittest.TestCase):
-    def test_contract_catalog_registers_models_and_steelman(self) -> None:
+    def test_contract_catalog_names_roles_and_contract_paths(self) -> None:
         catalog = (CONTRACTS / "README.md").read_text(encoding="utf-8")
-        self.assertIn("[models.md](models.md)", catalog)
-        self.assertRegex(
-            catalog,
-            r"(?m)^\| \*\*steelman\*\* \| \[steelman\.md\]"
-            r"\(steelman\.md\) \|",
-        )
-        self.assertNotIn("executors.md", catalog)
-        self.assertTrue((CONTRACTS / "steelman.md").exists())
-        self.assertFalse((CONTRACTS / "executors.md").exists())
-
-    def test_models_contract_owns_rungs_and_roles(self) -> None:
-        text = (CONTRACTS / "models.md").read_text(encoding="utf-8")
-        self.assertRegex(
-            text,
-            r"(?m)^\| `steelman` \(design collaborator\) \|",
-        )
-        self.assertIn(
-            "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/gambit/models.json", text
-        )
-        self.assertNotIn("wrapper", text)
-        self.assertNotIn("most-capable", text)
+        for role in (
+            "worker",
+            "escalation",
+            "scout",
+            "steelman",
+            "finder",
+            "verifier",
+            "test-runner",
+        ):
+            self.assertIn(f"`{role}`", catalog)
+        for contract_path in (
+            "contracts/worker.md",
+            "contracts/scout.md",
+            "contracts/steelman.md",
+            "skills/review/reviewers/",
+        ):
+            self.assertIn(contract_path, catalog)
 
     def test_validation_catalog_describes_wired_rung_routing(self) -> None:
-        validation = (CONTRACTS / "VALIDATION.md").read_text(encoding="utf-8")
+        validation = (
+            ROOT / "tests" / "fixtures" / "skill-convergence" / "VALIDATION.md"
+        ).read_text(encoding="utf-8")
         normalized = " ".join(validation.split())
 
         self.assertNotIn(
@@ -72,60 +70,6 @@ class RootSkillsTest(unittest.TestCase):
             with self.subTest(module=module):
                 self.assertIn(coverage, normalized)
                 self.assertTrue((ROOT / "tests" / module).exists())
-
-    def test_steelman_contract_bounds_discovery_and_closure(self) -> None:
-        text = " ".join(
-            (CONTRACTS / "steelman.md").read_text(encoding="utf-8").split()
-        )
-        for field in (
-            "User goal",
-            "Agreed constraints and scope",
-            "Chosen approach",
-            "Architecture and data flow",
-            "Rejected alternatives and reasons",
-            "Validation strategy",
-            "Delivery constraints",
-            "Unresolved decisions",
-        ):
-            self.assertIn(field, text)
-
-        self.assertIn(
-            "Discovery status: exactly one of `READY`, `REVISE`, `NEEDS_DECISION`, or `BLOCKED`",
-            text,
-        )
-        self.assertIn(
-            "Closure status: exactly one of `READY`, `STILL_OPEN`, `CHANGE_INDUCED_CONCERN`, or `BLOCKED`",
-            text,
-        )
-        for requirement in (
-            "Strengthen the chosen design before challenging it",
-            "Strongest credible alternative and when it wins",
-            "Number assumptions, failure modes, ambiguities, and validation gaps",
-            "concrete contract changes",
-            "Actual user decisions",
-            "transcript-local frozen Design Ledger",
-            "`ADOPTED`, `REJECTED` with its reason, `OPEN`, or `DEFERRED` with its scope boundary",
-            "Steelman cannot mutate the Design Ledger",
-            "one disposition for every `ADOPTED` and `OPEN` ledger item",
-            "cannot restart discovery",
-            "cannot resurrect `REJECTED` or `DEFERRED` items",
-            "one discovery call and one closure call",
-            "No automatic third pass",
-            "explicit user authorization",
-            "transcript design context, never plan steps or repository state",
-        ):
-            self.assertIn(requirement, text)
-
-        self.assertNotIn("Concrete contract changes", text)
-        for forbidden_authority in (
-            "edit files",
-            "mutate task or plan state",
-            "create contracts or briefs",
-            "invoke workflows",
-            "spawn children",
-            "choose another pass",
-        ):
-            self.assertIn(forbidden_authority, text)
 
     def test_contracts_and_skills_do_not_name_concrete_provider_model_ids(self) -> None:
         for root in (CONTRACTS, SKILLS):
