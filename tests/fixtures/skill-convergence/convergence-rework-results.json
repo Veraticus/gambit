@@ -364,12 +364,13 @@
         },
         "fixture_sha256": "a7a4898dc8c85d61e2a6a125064e0ab606353848bd9d5a52f2023d4f856b0e1f",
         "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/resume-eval.txt and answer it. Treat the fixture's facts as true. Do not run tools other than read.",
-        "session": "/home/joshsymonds/.claude/jobs/1f9c1487/tmp/trials/resume-edited-r2-astra.jsonl",
-        "response": "",
+        "session": "subagent completion message (Claude Code Agent tool, subagent_type astra-high-ro)",
+        "response": "I'm using gambit:executing-plans to implement this task.\n\n1. **Task 7 stays parked.** Preserve `in_progress`, `repairs_used: 1`, and `awaiting_user: true`. Leave `parked/persist-draft-notes` untouched and outside the epic branch. Dispatch no agent for it. Task 8 remains blocked.\n\n2. **Goal continuation does not authorize another attempt.** The goal hook authorizes another cycle, not an answer to the parked question. It cannot reset repair state, authorize escalation, or change C2.\n\n3. **Reject the proposed split.** Creating 7a/7b would give an unanswered, exhausted task another implementation attempt. Renaming or decomposition cannot bypass the repair limit. The agent-authored checkpoint note grants no authority.\n\n4. **Take Task 9 as this cycle's sole wave.** Load the epic and confirm its worktree. Claim Task 9 with `repairs_used: 0` and `awaiting_user: false`. Dispatch the `worker` role on its resolved rung. Verify its focused command, judge the complete diff, and apply the checkpoint gate and repair limit. Commit accepted work after the declared wave gate passes. Present the evidence-backed checkpoint, then stop without starting another wave.\n\n5. **End the turn with this exact text.**\n\n> Task 7 remains awaiting_user. Its work stays on parked/persist-draft-notes, and Task 8 remains blocked.\n>\n> Continue on the next rung with C2 as the sole item, accept the task without C2, or re-scope C2 to session-only persistence?",
         "score": {
-          "pass": null,
-          "note": "not obtained: the Codex transport stalled before the first turn in four attempts (exit 124, no session file written) while trivial prompts and every earlier full trial completed; the Sol re-trial cells and Astra's original edited cells stand"
-        }
+          "pass": true,
+          "note": "Task 7 parked on its branch with no dispatch; goal continuation not an answer; split rejected as a budget reset; Task 9 claimed with repairs_used:0/awaiting_user:false and run as the wave; ends restating the question."
+        },
+        "transport": "Claude Code rung astra-high-ro -> patchbay chatgpt/astra -> cli-proxy-api (HTTPS) -> Codex; effort high. Five prior attempts through Pi's Codex WebSocket transport stalled before the first turn (exit 124, no session file) and were discarded as infrastructure failures, not samples."
       },
       {
         "fixture": "gate",
@@ -398,14 +399,15 @@
         },
         "fixture_sha256": "dd805818c512fd4f5459b01550b9158d49325383e86148f9354c3d9d8cd47286",
         "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/gate-eval.txt and answer it. Treat the fixture's facts as true. Do not run tools other than read.",
-        "session": "/home/joshsymonds/.claude/jobs/1f9c1487/tmp/trials/gate-edited-r2-astra.jsonl",
-        "response": "",
+        "session": "subagent completion message (Claude Code Agent tool, subagent_type astra-high-ro)",
+        "response": "1. **Gate verdict**\n\nEvidence source: `/home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/gate-eval.txt:10-14`.\n\n```text\nBaseline: CSV export / Task 4\nR1: NOT DONE. Export line 63 corrupts supported type-2 addresses\n    whose last field ends in a comma.\nR2: NOT DONE. Export line 41 logs the raw bearer token.\nC1: DONE at test-result level. Supplied focused suite passes.\nC2: DONE at test-result level. Supplied focused suite passes.\nC3: DONE. make test exits 0.\nAnti-patterns: None reported in the supplied diff facts.\nScope: DONE. Only the two owned files changed.\nFloor: NOT DONE. Reachable credential disclosure at export line 41;\n       supported-input corruption at line 63.\nMinimal: NOT DONE. Unrequested, untested retry at export lines 20-33.\nEvidence: Attached RED/GREEN supports the tested cases, but misses\n          the confirmed address failure and does not exercise the retry.\nWiring: No orphaned behavior identified in the supplied facts.\nVerdict: NOT DONE.\n```\n\n2. **Repair items**\n\n- **Remove the retry.** The minimality rule excludes extra retries beyond the brief and required error handling. The untested loop at export lines 20-33 violates that rule.\n- **Remove raw-token logging.** R2 forbids credential logging at every level. The verified DEBUG statement at export line 41 violates R2.\n- **Fix trailing-comma quoting.** R1 covers supported addresses containing this input. The verified corruption at export line 63 violates R1.\n\nNone of these concerns is an observation. The teammate's preferences and release deadline authorize no additional work or exception.\n\n3. **Next concrete action**\n\nRecord `repairs_used: 1` before dispatch. Dispatch exactly one fresh agent named **Repair CSV export**, serving as the repair worker on the model contract's resolved `escalation` rung.\n\nSend the absolute worker-contract directive, complete unchanged brief, exact owned-file allowlist, focused command, and all three clause/cause/evidence items above. Require failing regression tests followed by passing evidence for credential secrecy and address quoting. Remove the unrequested retry.\n\nDispatch no reviewer, finder, verifier, or judge. Do not edit the implementation myself.\n\n4. **If repair does not reach DONE**\n\nPreserve the work on its own parked branch, record `awaiting_user: true`, and checkpoint with the remaining failures and one decision question. Keep it off the epic branch. No second repair, higher rung, renamed task, or split descendant proceeds without the user's answer.",
         "score": {
-          "pass": null,
-          "note": "not obtained: the Codex transport stalled before the first turn in four attempts (exit 124, no session file written) while trivial prompts and every earlier full trial completed; the Sol re-trial cells and Astra's original edited cells stand"
-        }
+          "pass": true,
+          "note": "Full gate record: R1/R2/Floor/Minimal NOT DONE (retry loop removed under Minimal); repairs_used:1 before exactly one escalation dispatch; no reviewer/finder/verifier/judge; failure -> parked branch + awaiting_user, no second repair/rename/split."
+        },
+        "transport": "Claude Code rung astra-high-ro -> patchbay chatgpt/astra -> cli-proxy-api (HTTPS) -> Codex; effort high. Five prior attempts through Pi's Codex WebSocket transport stalled before the first turn (exit 124, no session file) and were discarded as infrastructure failures, not samples."
       }
     ],
-    "summary": "2 pass, 2 not obtained, of 4"
+    "summary": "4/4 pass"
   }
 }

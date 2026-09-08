@@ -204,12 +204,13 @@ itself requires; fresh tasks never initialized `repairs_used`/`awaiting_user` (n
 a pending task with no fields is fresh, an in-progress one is treated as parked); and
 `review/SKILL.md` still said the checkpoint gate reused the quality reviewer. It also corrected
 this file's "9/9" to 6/6. The revised resume and gate text was re-trialed under the edited
-condition: both `sol-low-ro` cells pass (parked branch untouched, Task 9 claimed with initialized
-fields; all three gate items NOT DONE, one repair, parking on failure). The two production-model
-re-trial cells were not obtained: four attempts stalled in the Codex transport before the first
-turn while trivial prompts and every earlier full trial completed. They should be re-run before a
-release; the record (`convergence-rework-results.json`, `post_review_retrial`) marks them as such
-rather than as passes.
+condition on both subjects, 4/4 pass: parked branch untouched, split rejected as a budget reset,
+Task 9 claimed with initialized fields and run as the wave; all three gate items NOT DONE with the
+retry loop under `Minimal`, one `escalation` dispatch after `repairs_used: 1`, no reviewer, and
+parking plus `awaiting_user` on failure. The production-model cells were obtained through a
+Claude Code rung agent over patchbay (HTTPS via cli-proxy-api) after five attempts through Pi's
+Codex WebSocket transport stalled before the first turn; those stalls were infrastructure
+failures, not samples, and are noted per cell in the record.
 
 Each agent class and the governance reflex was validated with **baseline-RED → GREEN-under-pressure → mis-prompt/injection**, using the gambit:writing-skills evaluation-driven method (a fresh subagent, a realistic scenario, a forced choice under combined pressure). Tested at the tier each class actually runs at — the cheap tier is where contracts earn their keep, since capable models are already disciplined by default. Summary of recorded results:
 
