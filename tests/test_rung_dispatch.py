@@ -308,10 +308,10 @@ class ModelsContractDefinesRungsAndRolesTest(unittest.TestCase):
             "never selects or changes its own rung",
             "Never re-dispatch the same rung on unchanged evidence",
             "moves UP the ladder",
-            "Escalation stays bounded by delivery state",
-            "must first follow",
-            "consumed allowance",
-            "terminal-rung selection remains native Claude",
+            "Escalation is one step",
+            "at most one informed repair on the `escalation` rung",
+            "There is no third dispatch",
+            "reachable only through that answer",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, prose)
@@ -366,8 +366,11 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
             "Resolve the `escalation` role through `contracts/models.md`",
             executing,
         )
-        self.assertIn(
-            "Resolve the `finder` role through `contracts/models.md`", executing
+        # The per-task checkpoint gate no longer dispatches a finder; the only
+        # finder site left in executing-plans is the end-of-epic preflight.
+        self.assertNotIn(
+            "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
+            executing,
         )
 
     def test_review_resolves_finder_and_verifier_roles(self) -> None:

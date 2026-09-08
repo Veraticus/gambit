@@ -346,17 +346,17 @@ security protections, and required behavior when revising implementation choices
 | Requirements (IMMUTABLE) | User outcomes, explicit constraints, and necessary guarantees, each with its basis |
 | Success Criteria | Objective, checkable items including "all tests passing" |
 | Anti-Patterns (FORBIDDEN) | Explicitly forbidden patterns with reasoning |
-| Quality Bar | gambit's fixed maximal standard for "good code" — the highest professional quality, written verbatim into every epic and judged against each diff by reviewers and the orchestrator at every checkpoint, beyond the objective Success Criteria |
+| Quality Bar | gambit's fixed definition of defect — bad code is unacceptable; an unmet ideal or an unnamed edge case is not a defect — written verbatim into every epic and applied to each diff by the checkpoint gate and by review |
 | Approach | 2-3 paragraph summary of chosen approach |
 | Approaches Considered | Rejected alternatives with DO NOT REVISIT conditions |
-| Delivery Constraints | Circuit breakers for non-convergence, repeated repairs, and scope growth |
+| Delivery Constraints | The convergence circuit breaker, the one-repair limit, and scope admission |
 | Validation Strategy | Focused worker command, wave/component gate, release acceptance, freshness, and acceptance budget |
 | Scope Boundaries | What this epic does and does not cover — read by `executing-plans` at the release architecture/scope preflight |
 
 [TEMPLATES.md](TEMPLATES.md) is canonical for both templates. The skeletons below are abbreviated
 for reading; emit from TEMPLATES.md so no required section is dropped.
 
-**The Quality Bar is fixed — write it verbatim, don't elicit it.** Every epic carries the same bar: the highest professional standard, the code a master engineer would ship — elegant, complete, built on a superb foundation. It is not a per-project preference and is never negotiated down. Copy it verbatim from [TEMPLATES.md](TEMPLATES.md) into the epic so the checkpoint gate and reviewers have it locally. It governs *craftsmanship, not scope* — how well the required work is built, never how much of it; project-specific prohibitions go in Anti-Patterns. It sits on top of the mechanical floor the worker contract enforces (no suppression, no weakened tests, no dead code).
+**The Quality Bar is fixed — write it verbatim, don't elicit it.** Every epic carries the same bar: failing, low-quality, or bad code is unacceptable, but failure to meet a mythic platonic ideal of code or cover literally every imaginable edge case is NOT itself a defect. It is not a per-project preference and is never negotiated in either direction. Copy it verbatim from [TEMPLATES.md](TEMPLATES.md) into the epic so the checkpoint gate and reviewers have it locally. It defines *defect*, not ambition: what the gate and review may return as NOT DONE, and nothing more; project-specific prohibitions go in Anti-Patterns. It sits on top of the mechanical floor the worker contract enforces (no suppression, no weakened tests, no dead code, no unhandled errors).
 
 ```
 <!-- gambit-backend:claude -->
@@ -378,8 +378,9 @@ Present in the root transcript as "Epic: [Feature Name]":
     - NO [pattern] (reason: [why])
 
     ## Quality Bar
-    The highest professional standard — code a master engineer would ship: elegant, complete,
-    built on a superb foundation. Fixed for every epic; copy it verbatim from TEMPLATES.md.
+    Failing, low-quality, or bad code is unacceptable, but failure to meet a mythic platonic
+    ideal of code or cover literally every imaginable edge case is NOT itself a defect. Fixed
+    for every epic; copy it verbatim from TEMPLATES.md.
 
     ## Approach
     [2-3 paragraph summary]
@@ -391,9 +392,8 @@ Present in the root transcript as "Epic: [Feature Name]":
 
     ## Delivery Constraints
     - Stop after two consecutive non-converging checkpoints; require explicit user approval
-      before expanding scope, architecture, or budget. An ordinary first informed repair may stay
-      within the brief; material expansion, failed repair, escalation, or a terminal-rung repeat
-      requires independent delivery judgment and at most one consumed bounded continuation.
+      before expanding scope, architecture, or budget. One implementation, then at most one
+      informed repair on the `escalation` rung; a task still NOT DONE is `awaiting_user`.
 
     ## Validation Strategy
     - Focused worker command: [fast exact command]
@@ -496,8 +496,8 @@ Scan for:
 - **Scope drift:** Remove work the requirements don't justify from the task, or present it separately as proposed scope for an explicit user decision. Never add a requirement merely to justify a task, a review suggestion, or already-written code.
 - **Ambiguity:** Any sentence where two readers could reach different implementations. Pick one and say it.
 - **Internal consistency:** The first task's files, function names, and success criteria should match the epic's stated approach. Mismatches mean one of them is wrong.
-- **Quality Bar present:** Does the epic carry the fixed Quality Bar verbatim from [TEMPLATES.md](TEMPLATES.md), unweakened? It's the same standard on every epic — restore it if it's missing, paraphrased, or watered down.
-- **Convergence bounded:** Does Delivery Constraints stop autonomous continuation after two consecutive checkpoints that retire no success criterion or named blocker, require independent delivery judgment before material repair/escalation, bound continuation to one consumed attempt, and require explicit user approval for scope or budget growth?
+- **Quality Bar present:** Does the epic carry the fixed Quality Bar verbatim from [TEMPLATES.md](TEMPLATES.md), neither weakened nor strengthened? It's the same definition of defect on every epic — restore it if it's missing, paraphrased, or turned back into a maximal standard.
+- **Convergence bounded:** Does Delivery Constraints stop autonomous continuation after two consecutive checkpoints that retire no success criterion or named blocker, limit each task to one implementation and one informed repair before `awaiting_user`, and require explicit user approval for scope or budget growth?
 - **Validation tiered:** Does Validation Strategy distinguish the focused worker command, wave/component gate, and release acceptance, including freshness and an acceptance budget?
 
 <!-- gambit-backend:claude -->

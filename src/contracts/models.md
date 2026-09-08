@@ -144,24 +144,23 @@ because an operator declared one in the config file.
   same call twice; something must change first.
 - **Each escalation step moves UP the ladder**, carrying the updated evidence the previous rung
   produced — the cited defect, the failing output, the missing value.
-- **Escalation stays bounded by delivery state.** A material expansion, failed informed repair,
-  escalation, or repeat of the terminal rung must first follow
-  `skills/executing-plans/references/delivery-judgment.md`. A consumed allowance or failed endpoint
-  pauses for user decision; a rung, rename, descendant, or later checkpoint cannot renew it. For
-  the roles that escalate — `worker` and `escalation` — terminal-rung selection remains native
-  Claude by config design. The historical tiltyard 100%-solve result is rationale for that selection,
-  not a current unlimited-dispatch mandate. An advisory or test-running role whose `ladder` is its
-  entry rung alone never escalates at all.
+- **Escalation is one step.** A task gets one implementation on the `worker` rung and at most one
+  informed repair on the `escalation` rung, carrying the itemized NOT DONE list. There is no third
+  dispatch: a task still NOT DONE is `awaiting_user`, and no rung, rename, split, judge, or later
+  checkpoint continues it until the user answers. The rungs above `escalation`'s entry are
+  reachable only through that answer. The historical tiltyard 100%-solve result is rationale for
+  where the ladder's rungs sit, not a mandate to climb them automatically. An advisory or
+  test-running role whose `ladder` is its entry rung alone never escalates at all.
 
 ## Roles
 
 | Role | What it dispatches | Why its default entry |
 |---|---|---|
-| `steelman` (design/delivery collaborator) | read-only bounded discovery, closure, or delivery judgment | strengthens architecture or independently evaluates a delivery intervention without implementation authority |
+| `steelman` (design collaborator) | read-only bounded discovery and closure | strengthens architecture without implementation authority |
 | `finder` (review reviewers) | read-only audit of changed code | recall ceiling — a missed finding is unrecoverable, no verifier recovers it |
 | `verifier` (review verifier) | read-only kill-or-keep of candidate findings | verifying a subtle or security finding is as hard as finding it; a weak verifier rubber-stamps coherent-but-wrong findings and over-refutes real ones |
 | `worker` (implementation) | one bounded task from a complete brief | mechanical work from a clear brief, with the ladder above it for what the brief could not anticipate |
-| `escalation` (blocked worker) | a re-dispatch of the worker contract carrying updated evidence | the rung a worker's defect climbs to; never selected by the worker itself |
+| `escalation` (informed repair) | one re-dispatch of the worker contract carrying the itemized NOT DONE list | the rung a task's single repair runs on; never selected by the worker itself |
 | `scout` (read-only investigation) | bounded `file:line` discovery | output is cheaply checkable — the orchestrator spot-checks the cited `file:line` |
 | `test-runner` | one exact command plus its report | objective oracle (exit code) |
 

@@ -19,15 +19,15 @@ Each class dispatches on the rung its role resolves to — defaults: `contracts/
 
 | Class | Contract | Use it when |
 |-------|----------|-------------|
-| **steelman** | [steelman.md](steelman.md) | fresh read-only design collaboration during bounded discovery/closure or independent delivery judgment |
+| **steelman** | [steelman.md](steelman.md) | fresh read-only design collaboration during bounded discovery/closure |
 | **worker** | [worker.md](worker.md) | implementing a task's code for executing-plans |
 | **scout** | [scout.md](scout.md) | read-only investigation — find code/patterns/answers and return evidence (brainstorming, executing-plans, debugging) |
-| **finder** | `skills/review/reviewers/{conformance,security,quality,performance}.md` | reviewing changed code for issues — all four at end-of-epic review; the `quality` finder alone, scoped to one diff, as the `executing-plans` checkpoint gate's escalation reviewer |
+| **finder** | `skills/review/reviewers/{conformance,security,quality,performance}.md` | reviewing changed code for issues — all four at end-of-epic review, and the `conformance` finder alone for the release architecture/scope preflight; never per task |
 | **verifier** | `skills/review/reviewers/verifier.md` | kill-or-keep verifying candidate findings |
 | **test-runner** | (none — a command + report) | running a test/build command and reporting its exact output + exit code |
 
-`escalation` re-dispatches the **worker** contract on the next rung up the worker ladder; it is a
-role, not a separate class.
+`escalation` re-dispatches the **worker** contract once, as a task's single informed repair; it is
+a role, not a separate class.
 
 Every default entry rung, every ladder, and the
 `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/gambit/models.json` config that overrides them are defined

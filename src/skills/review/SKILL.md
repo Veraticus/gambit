@@ -396,10 +396,10 @@ improvements do not block approval. This is the terminal condition; proceed dire
 If entries remain open, report only those IDs with their evidence and complete fix briefs. Preserve the same ledger:
 
 <!-- gambit-backend:claude -->
-Create or update fix Tasks for the open IDs only, retaining the existing delivery-family identity, verdict, consumed allowance, endpoint, and evidence references. Then STOP and return to `gambit:executing-plans` (or the owning standalone workflow); remediation cannot launder a spent allowance into a new family. The task descriptions retain the ledger fields needed for closure.
+Create or update fix Tasks for the open IDs only, each carrying its ledger ID and evidence references and starting at `repairs_used: 0`. Then STOP and return to `gambit:executing-plans` (or the owning standalone workflow), where each fix task gets one implementation and at most one informed repair like any other. The task descriptions retain the ledger fields needed for closure.
 <!-- /gambit-backend -->
 <!-- gambit-backend:codex -->
-Write complete fix worker briefs for the open IDs only in the root checkpoint, retaining the existing delivery-family identity, verdict, consumed allowance, endpoint, and evidence references. Update the existing native wave plan with concise fix-wave summaries, preserving completed waves, then STOP and return to `gambit:executing-plans` (or the owning standalone workflow); remediation cannot launder a spent allowance into a new family. The ledger remains in the transcript, never in plan text.
+Write complete fix worker briefs for the open IDs only in the root checkpoint, each carrying its ledger ID and evidence references and starting at `repairs_used: 0`. Update the existing native wave plan with concise fix-wave summaries, preserving completed waves, then STOP and return to `gambit:executing-plans` (or the owning standalone workflow), where each fix gets one implementation and at most one informed repair like any other. The ledger remains in the transcript, never in plan text.
 <!-- /gambit-backend -->
 
 Never create work from refuted, gap-classified-in-initial-mode, boundary-rejected, or newly noticed closure observations. Never replace closure with another full review merely because the verifier or tests found an open ledger item.

@@ -29,21 +29,16 @@ TaskCreate
     - NO [Pattern 3] (reason: [why forbidden])
 
     ## Quality Bar
-    The highest professional standard — code a master engineer would be proud to ship: elegant,
-    complete, and built on a superb foundation. This bar is FIXED for every epic; write it
-    verbatim — never elicit it, weaken it, or make it a per-project preference. It governs how
-    well the required work is built — craftsmanship, not scope: it never licenses doing less than
-    the Requirements demand, only doing it well. Project-specific prohibitions belong in
-    Anti-Patterns, not here. It sits on top of the mechanical floor the worker contract already
-    enforces (no suppression, no weakened tests, no dead code). The orchestrator at each
-    checkpoint and the reviewers judge every diff against these standards:
-    - Elegant: the simplest design that fully solves the problem — no abstraction, layer, or
-      option the requirements don't demand, and none they do demand left out.
-    - Idiomatic: reads like the code around it — same naming, structure, and conventions.
-    - Complete: handles the real edge and error cases, not just the happy path; no stubs, TODOs,
-      or "good enough for now" left behind.
-    - Minimal surface: nothing exported or generalized beyond what the requirements need.
-    - Self-documenting: names say what things are; comments only where the WHY isn't obvious.
+    Failing, low-quality, or bad code is unacceptable, but failure to meet a mythic platonic
+    ideal of code or cover literally every imaginable edge case is NOT itself a defect. This
+    bar is FIXED for every epic; write it verbatim — never elicit it, strengthen it, or make it a
+    per-project preference. A defect is exactly one of: a Requirement or Success Criterion not
+    met; an Anti-Pattern present; a change outside the task's owned files; a violation of the
+    worker contract's mechanical floor (a suppressed check, a weakened or tautological test,
+    dead code, an unhandled error); or a security or data-loss failure with a reachable
+    precondition. Everything else the orchestrator or a reviewer notices is an observation — it
+    may be recorded, it never becomes work without the user. The craftsmanship asked of the
+    worker is one line: simple, foundational, secure; match the surrounding code.
 
     ## Approach
     [Chosen implementation, revisable while preserving Requirements and explicit constraints.
@@ -82,10 +77,11 @@ TaskCreate
       retire no success criterion or named blocker, or when remaining work grows at both
       checkpoints. Report the evidence and require explicit user approval before changing scope,
       architecture, or the delivery budget.
-    - Repair ladder: an ordinary first informed repair may stay within the original brief. Material
-      expansion, a failed informed repair, escalation, or a terminal-rung repeat requires one fresh
-      independent delivery judgment and at most one consumed bounded continuation; a failed endpoint
-      pauses for explicit user decision. Descendants and resumes retain the same delivery family.
+    - Repair limit: one implementation, then at most one informed repair on the `escalation`
+      rung. A task still NOT DONE after that repair is preserved uncommitted, marked
+      `awaiting_user`, and checkpointed with its diff and one question; no worker, higher rung,
+      judge, or renamed task continues it until the user answers. `repairs_used` and
+      `awaiting_user` travel with the task through splits, renames, and Goal resumes.
     - Scope growth: every newly discovered worker must map to an immutable requirement, an
       admitted review-ledger finding, or a failing declared validation gate. A true observation
       alone does not authorize work. Optional improvements are not convergence milestones.

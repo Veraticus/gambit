@@ -41,10 +41,15 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             "3. **Route on the worker's returned status**",
             "**One of the four statuses is the ONLY signal",
         )
-        cls.checkpoint_finder = bounded_section(
+        cls.claude_gate = bounded_section(
             cls.claude,
-            "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
-            "This solo dispatch has no verifier behind it",
+            "#### Checkpoint gate",
+            "#### When Hitting Obstacles",
+        )
+        cls.codex_gate = bounded_section(
+            cls.codex,
+            "#### Checkpoint gate",
+            "#### When Hitting Obstacles",
         )
 
     @classmethod
@@ -92,44 +97,73 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             with self.subTest(retired=retired):
                 self.assertNotIn(retired, self.claude)
 
-    def test_repairs_route_through_independent_bounded_delivery_judgment(self) -> None:
+    def test_repairs_are_limited_to_one_informed_repair_then_the_user(self) -> None:
         self.assertContainsAll(
             self.claude_status_routing,
             (
-                "Before any corrective dispatch, quality repair, escalation, or terminal-rung repeat",
-                "references/delivery-judgment.md",
-                "Consume `CONTINUE-ONCE` before its worker",
-                "unknown existing-family allowance pauses",
+                "one implementation, then at most one informed repair on the `escalation` rung, then the user",
+                "read the task's `repairs_used`; if it is already `1`, or the task is `awaiting_user`, there is no dispatch to make",
                 "Resolve the `escalation` role through `contracts/models.md`",
-                "selected rung",
+                "Record `repairs_used: 1` on the task with `TaskUpdate` BEFORE dispatching",
+                "There is no second repair, no climb beyond this rung, and no renamed or split descendant that starts fresh",
                 'Agent subagent_type="general-purpose" model="<escalation rung alias — contracts/models.md>"',
                 'set `subagent_type="<escalation rung agent>"` instead',
+                "routes as the one informed repair, never to a reviewer",
+                "A second NEEDS_CONTEXT on the same task",
             ),
         )
         self.assertContainsAll(
             self.codex_status_routing,
             (
-                "exactly one informed repair turn to the same worker thread",
-                "followup_task",
-                "If judgment returned `CONTINUE-ONCE`",
+                "one implementation, then at most one informed repair, then the user",
+                "Record `repairs_used: 1` in the checkpoint first",
                 'SpawnAgent agent_type="escalation"',
-                "no automatic retry",
+                "3. **No second repair.**",
+                "Do not dispatch another worker, a higher rung, a judge, or a renamed descendant",
             ),
         )
+        for retired in (
+            "delivery-judgment",
+            "CONTINUE-ONCE",
+            "USER-DECISION",
+            "allowance",
+            "followup_task",
+            "Terminal escalation",
+        ):
+            with self.subTest(retired=retired):
+                self.assertNotIn(retired, self.claude)
+                self.assertNotIn(retired, self.codex)
 
-    def test_checkpoint_finder_resolves_the_finder_rung_and_stays_advisory(self) -> None:
-        self.assertContainsAll(
-            self.checkpoint_finder,
-            (
-                "Finders are read-only and advisory",
-                "an agent rung uses the rung's `readonly_agent` and passes no `model:` at all",
-                'Agent subagent_type="general-purpose" model="<finder rung alias — contracts/models.md>"',
-                "actual frozen diff hunks",
-                "empty or missing hunk set is a composition failure before dispatch",
-                "root orchestrator remains the adjudicator",
-            ),
+    def test_checkpoint_gate_is_binary_against_the_baseline_with_no_reviewer(self) -> None:
+        for gate in (self.claude_gate, self.codex_gate):
+            self.assertContainsAll(
+                gate,
+                (
+                    "there is no per-task reviewer dispatch",
+                    "against the epic's baseline and nothing else",
+                    "The verdict is binary and itemized",
+                    "Verdict:       DONE | NOT DONE",
+                    "Each NOT DONE names its baseline clause, the changed-code cause, and the evidence",
+                    "is an observation: write it under the checkpoint's Notes and move on",
+                    "There is no per-task reviewer.",
+                    "Do NOT dispatch a finder, verifier, or judge from this gate",
+                    "**Never edit the diff yourself — you judge and route; workers implement.**",
+                ),
+            )
+            for retired in (
+                "Quality review:",
+                "reviewers/quality.md",
+                "Escalate to an independent quality reviewer",
+                "escalation trigger",
+                "six sources",
+                "maximal standard",
+            ):
+                with self.subTest(retired=retired):
+                    self.assertNotIn(retired, gate)
+        self.assertNotIn(
+            "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
+            self.claude,
         )
-        self.assertNotIn("finder tier", self.checkpoint_finder)
 
     def test_claude_summaries_describe_rung_resolved_workers(self) -> None:
         self.assertContainsAll(
@@ -137,8 +171,8 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             (
                 "a fresh worker on the resolved `worker` rung does the mechanical work",
                 "Each worker runs on the rung the `worker` role resolves to in"
-                " `contracts/models.md`, and a defect climbs that role's ladder"
-                " through `escalation`.",
+                " `contracts/models.md`, and a NOT DONE gets exactly one informed"
+                " repair on the `escalation` rung before the user decides.",
             ),
         )
 
@@ -147,7 +181,7 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             self.codex,
             (
                 'SpawnAgent agent_type="worker"',
-                'SpawnAgent agent_type="finder"',
+                'SpawnAgent agent_type="escalation"',
                 "Resolve the worker role",
                 "codex-contracts/worker.md",
             ),

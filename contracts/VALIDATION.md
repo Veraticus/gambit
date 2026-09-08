@@ -79,15 +79,18 @@ coverage. `tests/test_rung_dispatch.py` pins the `models.json` config path, the 
 schema, the two dispatch shapes, the foreign-model-id prohibition, the built-in defaults, and the
 ladder invariants — and proves the Claude render carries no Codex-MCP executor machinery.
 `tests/test_brainstorming_steelman.py` covers Steelman rung resolution and call wiring for design modes;
-`tests/test_delivery_judgment.py` covers the delivery mode, independent repair-routing seam, and isolated controller actions; and
-`tests/test_executing_plans_rungs.py` covers worker, escalation, and checkpoint-finder routing;
+`tests/test_executing_plans_rungs.py` covers worker and escalation routing and the binary checkpoint gate;
 `tests/test_review_rungs.py` covers finder and verifier routing; and
 `tests/test_workflow_routing.py` covers scout and test-runner routing. Together they check source
-and rendered backend behavior, including the Discovery/Closure and separate delivery Steelman modes,
-exact statuses, the frozen Design Ledger, authority boundaries, the design two-call circuit breaker,
-and per-role rung resolution.
+and rendered backend behavior, including the Discovery/Closure Steelman modes, exact statuses, the
+frozen Design Ledger, authority boundaries, the design two-call circuit breaker, the one-repair
+limit, and per-role rung resolution.
 
-## Delivery judgment exercise (2026-09-06)
+## Delivery judgment exercise (2026-09-06) — historical; layer removed 2026-09-07
+
+The delivery-judgment layer this section validated (the reference, steelman Mode 3, the `DELIVERY`
+record, its controller and tests) was removed on 2026-09-07; see the next section for why and for
+the trials that replaced it. The record below is kept as the evidence trail for that decision.
 
 Ten fresh subjects used the configured `sol-low` agent at low effort; exact reported model IDs
 are retained in the fixture JSON rather than pinned in this contract. The bounded set was declared before calls; no additional samples or
@@ -134,6 +137,58 @@ Scripted worker/judge adapters isolate root routing; they do not prove actual ch
 integration. Both backend renders have structural coverage, but behavior trials use Claude-format
 instructions and adapters, not native Codex orchestration. No statistical, cross-model, hard-runtime-
 enforcement or faster-real-delivery claim follows.
+
+## Per-stage review removal and the one-repair limit (2026-09-07)
+
+Baseline commit `abd3ef8` (v1.20.0). Field evidence: a 31-hour gpt-6-astra orchestrator session
+(2026-09-06/07) made 85 `Agent` dispatches for 71M tokens; waves took 6–11 dispatches inside one
+checkpoint, so the two-checkpoint circuit breaker never engaged, and the elaboration originated in
+orchestrator policy and per-task review, with workers implementing the expanded briefs. Of those 85
+dispatches, 50 went to building and evaluating the delivery-judgment layer itself after the epic was
+shelved; that implementation looped and ended BLOCKED on its own bookkeeping.
+
+**Edits.** The per-task checkpoint gate is a binary, itemized record judged only against the epic
+baseline (Requirements, Success Criteria, Anti-Patterns, Scope, `Files owned`, the worker
+contract's floor, and a `Minimal` line); the per-task escalated quality-reviewer dispatch is
+removed; the repair ladder is one implementation, one informed repair on the `escalation` rung,
+then `awaiting_user` recorded on the task and inherited across renames, splits, and Goal resumes,
+with parked tasks leaving disjoint ready work free to proceed; the delivery-judgment layer is
+deleted; the Quality Bar is a fixed definition of defect; the worker contract gains a minimal-edit
+line, narrows `DONE_WITH_CONCERNS` to named behavior or the floor, drops the "choose
+DONE_WITH_CONCERNS" tiebreaker, and adds a non-routing `## Notes` section. `gambit:review` is
+unchanged except that fix tasks start at `repairs_used: 0`.
+
+**Trials.** Three new decision fixtures — `gate-eval.txt` (a worker return carrying a credential
+log, a parser defect, and an unrequested retry loop under deadline and teammate pressure),
+`resume-eval.txt` (an exhausted repair under Goal continuation with a tempting task split), and
+`concerns-eval.txt` (a clean return with three out-of-brief concerns and a senior engineer asking
+for a reviewer and a lock) — under matched none / current / edited instruction conditions, on two
+subjects: the configured `sol-low-ro` rung (GPT-5.6 Sol, low) and the production orchestrator
+(gpt-6-astra via Pi, thinking high, read-only). Eighteen cells declared before execution, one run
+each; one cell was re-run once after a Codex stream disconnect produced no answer.
+`tests/fixtures/skill-convergence/convergence-rework-results.json` retains prompts, instruction
+hashes, model ids, verbatim responses, and scores.
+
+| Fixture | Subject | none | current (main) | edited |
+|---|---|---|---|---|
+| gate | Sol | defects caught, one repair, **retry loop kept** | defects caught; **finder review before the repair**, then **steelman judge → CONTINUE-ONCE → sol-xhigh** on failure | all three NOT DONE incl. Minimal; `repairs_used: 1` then one `escalation`; no reviewer; `awaiting_user` |
+| gate | Astra | all three, one repair, then decision | defects caught; **dispatches nothing** (review packet incomplete → blocked checkpoint); failed repair → **delivery judgment** | all three; config-resolved `escalation` rung; no reviewer; `awaiting_user` |
+| resume | Sol | parks 7, runs 9 | parks 7, **leaves 9 pending** (cycle hang) | parks 7, runs 9 |
+| resume | Astra | parks 7, runs 9 | `USER-DECISION`, **9 pending, nothing dispatched** | parks 7, runs 9 |
+| concerns | Sol | DONE, observations, no agents | DONE, observations, no agents | DONE, Notes, no agents |
+| concerns | Astra | DONE, observations, no agents | acceptance withheld; **prepares a finder review** | DONE, Notes, "no per-task reviewer" |
+
+- **Observed RED (current skill vs unaided):** on the gate fixture both subjects inserted reviewer
+  and judge machinery around the single repair; on the resume fixture both subjects froze the cycle
+  with independent work pending; on the concerns fixture Astra prepared a per-task reviewer for a
+  hypothetical. These are the instruction-induced regressions the edit targets.
+- **Edited GREEN:** 9/9 edited cells match or exceed unaided behavior. Controls preserved: the
+  credential log and the parser defect are NOT DONE in 6/6 gate cells; no edited cell dispatched a
+  reviewer, judge, second repair, split, rename, or higher rung. The gate/Sol edited cell also
+  returns the unrequested retry loop as NOT DONE where the unaided cell kept it (the `Minimal` line).
+- **Not claimed:** real-epic convergence, token cost, or long-context behavior; the fixtures supply
+  verified facts rather than exercising discovery; one sample per cell; the concerns fixture showed
+  no Sol regression, so that edit's evidence rests on the Astra cell.
 
 Each agent class and the governance reflex was validated with **baseline-RED → GREEN-under-pressure → mis-prompt/injection**, using the gambit:writing-skills evaluation-driven method (a fresh subagent, a realistic scenario, a forced choice under combined pressure). Tested at the tier each class actually runs at — the cheap tier is where contracts earn their keep, since capable models are already disciplined by default. Summary of recorded results:
 

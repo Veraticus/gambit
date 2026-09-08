@@ -249,7 +249,7 @@ class RenderedSkillsTest(unittest.TestCase):
                 text = path.read_text(encoding="utf-8")
                 self.assertRegex(
                     text,
-                    r"(?m)^\| `steelman` \(design/delivery collaborator\) \|",
+                    r"(?m)^\| `steelman` \(design collaborator\) \|",
                 )
                 self.assertIn(
                     "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/gambit/models.json", text
@@ -295,7 +295,7 @@ class RenderedSkillsTest(unittest.TestCase):
                 "test_brainstorming_steelman.py",
             ),
             (
-                "`tests/test_executing_plans_rungs.py` covers worker, escalation, and checkpoint-finder routing",
+                "`tests/test_executing_plans_rungs.py` covers worker and escalation routing and the binary checkpoint gate",
                 "test_executing_plans_rungs.py",
             ),
             (
@@ -759,7 +759,7 @@ class RenderedSkillsTest(unittest.TestCase):
         self.assertLess(commit, checkpoint)
         self.assertLess(checkpoint, completion)
 
-    def test_executing_plans_uses_same_worker_repair_then_escalation(self) -> None:
+    def test_executing_plans_uses_one_worker_then_one_repair_then_the_user(self) -> None:
         executing = (
             CODEX_PLUGIN / "skills" / "executing-plans" / "SKILL.md"
         ).read_text(encoding="utf-8")
@@ -770,17 +770,17 @@ class RenderedSkillsTest(unittest.TestCase):
         )[0]
 
         worker = routing.index('SpawnAgent agent_type="worker"')
-        same_thread_repair = routing.index("followup_task")
-        escalation = routing.index('SpawnAgent agent_type="escalation"')
-        self.assertLess(worker, same_thread_repair)
-        self.assertLess(same_thread_repair, escalation)
-        terminal = routing.split(
-            "4. **Terminal escalation — no automatic retry.**", 1
-        )[1].split("Route the bounded continuation result", 1)[0]
-        self.assertNotIn("SpawnAgent", terminal)
-        self.assertNotIn("escalation-final", terminal)
-        self.assertIn("same worker thread and agent configuration", routing)
-        self.assertIn("exactly one informed repair turn", routing)
+        repair = routing.index('SpawnAgent agent_type="escalation"')
+        self.assertLess(worker, repair)
+        self.assertEqual(1, routing.count("SpawnAgent agent_type=\"escalation\""))
+        stop = routing.split("3. **No second repair.**", 1)[1].split(
+            "Route the repair result", 1
+        )[0]
+        self.assertNotIn("SpawnAgent", stop)
+        self.assertIn("mark the worker `awaiting_user`", stop)
+        self.assertIn("Record `repairs_used: 1` in the checkpoint first", routing)
+        self.assertNotIn("followup_task", executing)
+        self.assertNotIn("delivery-judgment", executing)
         self.assertNotIn("re-dispatch a FRESH worker", executing)
 
         self.assertLess(len(executing.splitlines()), 520)
@@ -834,7 +834,8 @@ class RenderedSkillsTest(unittest.TestCase):
 
         for required in (
             "two consecutive checkpoints",
-            "independent delivery judgment and at most one consumed bounded continuation",
+            "one implementation, then at most one informed repair on the `escalation`",
+            "`awaiting_user`",
             "explicit user approval",
             "Focused worker command",
             "Wave/component gate",
@@ -855,7 +856,8 @@ class RenderedSkillsTest(unittest.TestCase):
             "retire no success criterion or named blocker",
             "remaining work grows",
             "STOP autonomous continuation",
-            "one independently justified continuation at most is consumed before dispatch",
+            "at most one informed repair on the `escalation`",
+            "No judge, no second repair, no higher rung",
             "explicit user approval",
         ):
             self.assertIn(required, convergence)
