@@ -71,6 +71,13 @@ class ModelsContractTest(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertNotIn(token.casefold(), folded)
 
+    def test_unresolvable_role_becomes_per_task_gaps(self) -> None:
+        sections = dict(re.findall(r"(?ms)^## ([^\n]+)\n(.*?)(?=^## |\Z)", self.text))
+        self.assertRegex(
+            sections.get("Resolving a dispatch", ""),
+            r"(?is)\bevery task\b.*\bgap\b.*\bindependent\b.*\bno executable work remains\b",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

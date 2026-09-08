@@ -74,6 +74,13 @@ class ExecutingPlansStructureTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIn(path, self.text)
 
+    def test_unresolvable_role_becomes_per_task_gaps(self) -> None:
+        sections = dict(re.findall(r"(?ms)^## ([^\n]+)\n(.*?)(?=^## |\Z)", self.text))
+        self.assertRegex(
+            sections.get("Start", ""),
+            r"(?is)\bevery task\b.*\bgap\b.*\bindependent\b.*\bno executable work remains\b",
+        )
+
     def test_gate_record_has_exact_readme_fields(self) -> None:
         tables = re.findall(r"(?m)^\| Field \| Value \|\n\|[^\n]+\n((?:\|[^\n]+\n)+)", self.text)
         self.assertEqual(len(tables), 1, "one gate-record schema")

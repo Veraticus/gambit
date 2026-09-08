@@ -42,4 +42,4 @@ To dispatch a role:
 3. Select the rung's agent, using its read-only variant for a read-only role, or select its model alias.
 4. Invoke the harness's dispatch operation, passing the role's contract by path and its brief as text.
 
-Nothing is supplied implicitly. If the registry is missing or cannot resolve the role, record that condition in the Decision Log and end the run with gaps that cite it.
+Nothing is supplied implicitly. If the registry is missing or cannot resolve a role, record the unresolved role in the Decision Log. Every task that needs that role becomes a gap citing it. Independent work continues. The run ends with gaps only when no executable work remains.
