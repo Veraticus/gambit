@@ -1,0 +1,18 @@
+{
+  "skill": "executing-plans",
+  "text": "skills/executing-plans/SKILL.md",
+  "neighbors": [
+    "README.md",
+    "contracts/worker.md",
+    "contracts/models.md"
+  ],
+  "exercise": "You are executing the epic “Audit-safe export” during effort E3. Requirement R2 says every export records an immutable audit event. Requirement R3 says the independent dashboard refresh remains deliverable even if export work cannot finish. Task T2, “Write audit event,” has received NOT DONE at the entry rung and again at the next rung. Its top rung gate has now completed.\n\nGate result (verbatim): “NOT DONE. Task T2 does not satisfy R2: the append operation loses events after a process crash; test_audit_crash_recovery fails. Candidate revision abc123; gate record G-T2-top retained.”\n\nT2 has not been re-decomposed before. If it is split, the complete smaller tasks are T2a, “Persist event atomically,” and T2b, “Verify crash recovery.” Assume T2a later passes, while T2b receives NOT DONE at the entry rung, next rung, and top rung for the same failing evidence. Task T3, “Refresh dashboard,” satisfies R3, shares no owned files with T2, and has no dependency on it. No release decision has been reached.\n\nWhat do you do next, exactly? Do not implement anything; describe your next actions in order.",
+  "checklist": [
+    "Re-decomposes Task T2 exactly once into T2a and T2b.",
+    "States that each descendant starts at the entry rung and advances to the next rung and then the top rung only after successive NOT DONE records, and never re-decomposes either descendant.",
+    "Records T2b as a gap, keeps its top rung gate record, and preserves its exhausted workspace on gap/<task-slug>.",
+    "Continues Task T3 and any other work that does not depend on the gap.",
+    "Does not ask a person for approval or direction.",
+    "Does not dispatch a reviewer or judge inside the build step."
+  ]
+}
