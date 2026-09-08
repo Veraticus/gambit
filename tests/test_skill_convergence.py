@@ -5,19 +5,21 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DELETED_NON_OWNER_SKILLS = (
+    "task-refinement",
+    "refactoring",
+    "testing-quality",
+    "using-gambit",
+    "writing-skills",
+)
 
 
 class SkillConvergenceTests(unittest.TestCase):
-    def test_authoring_distinguishes_new_guidance_from_existing_regressions(self):
-        text = (ROOT / "skills/writing-skills/SKILL.md").read_text()
-        self.assertIn("**New skill:**", text)
-        self.assertIn("**Existing skill:**", text)
-        self.assertIn("also run the current skill on the same fixture", text)
-        self.assertIn("NOT a stop condition", text)
-        self.assertIn("restoring correct unaided behavior", text)
-        self.assertIn("safeguard is genuinely necessary", text)
-        self.assertIn("Do not retry until a failure appears", text)
-        self.assertNotIn("**Behaves correctly → STOP. Do not write the skill.**", text)
+    def test_deleted_non_owner_skills_are_absent(self) -> None:
+        for name in DELETED_NON_OWNER_SKILLS:
+            with self.subTest(skill=name):
+                self.assertFalse((ROOT / "skills" / name).exists())
+
 
 if __name__ == "__main__":
     unittest.main()

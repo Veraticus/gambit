@@ -71,12 +71,6 @@ class SkillDispatchSitesResolveThroughModelsTest(unittest.TestCase):
             .split()
         )
 
-    def test_test_runner_site_resolves_the_test_runner_role(self) -> None:
-        self.assertIn(
-            "Resolve the `test-runner` role through `contracts/models.md`",
-            self.skill("refactoring"),
-        )
-
     def test_execution_dispatch_names_roles_and_registry(self) -> None:
         executing = self.skill("executing-plans")
         self.assertIn("contracts/models.md", executing)
