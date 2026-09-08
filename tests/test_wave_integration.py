@@ -14,7 +14,7 @@ from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "src" / "skills" / "executing-plans" / "scripts" / "integrate_wave.py"
+SCRIPT = ROOT / "skills" / "executing-plans" / "scripts" / "integrate_wave.py"
 
 
 def load_integrator() -> object:
@@ -699,9 +699,9 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
 
     def test_parallel_wave_docs_require_atomic_combined_integration(self) -> None:
         dispatch = (
-            ROOT / "src" / "skills" / "executing-plans" / "references" / "wave-dispatch.md"
+            ROOT / "skills" / "executing-plans" / "references" / "wave-dispatch.md"
         ).read_text(encoding="utf-8")
-        skill = (ROOT / "src" / "skills" / "executing-plans" / "SKILL.md").read_text(
+        skill = (ROOT / "skills" / "executing-plans" / "SKILL.md").read_text(
             encoding="utf-8"
         )
 
@@ -738,12 +738,12 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
 
     def test_manifest_and_worker_brief_fields_have_exact_structure(self) -> None:
         dispatch = (
-            ROOT / "src" / "skills" / "executing-plans" / "references" / "wave-dispatch.md"
+            ROOT / "skills" / "executing-plans" / "references" / "wave-dispatch.md"
         ).read_text(encoding="utf-8")
-        templates = (ROOT / "src" / "skills" / "brainstorming" / "TEMPLATES.md").read_text(
+        templates = (ROOT / "skills" / "brainstorming" / "TEMPLATES.md").read_text(
             encoding="utf-8"
         )
-        worker = (ROOT / "src" / "contracts" / "worker.md").read_text(encoding="utf-8")
+        worker = (ROOT / "contracts" / "worker.md").read_text(encoding="utf-8")
 
         manifest_text = dispatch.split("```json\n", 1)[1].split("\n```", 1)[0]
         manifest = json.loads(manifest_text)
@@ -758,8 +758,7 @@ class WaveIntegrationDocumentationTest(unittest.TestCase):
         )
         self.assertIsInstance(manifest["workers"][0]["owned_paths"], list)
 
-        brief_start = templates.index('Draft for user review as "Worker Brief:')
-        brief = templates[brief_start : templates.index("```", brief_start)]
+        brief = templates.split("## First Task Template", 1)[1]
         self.assert_appears_in_order(
             brief,
             (

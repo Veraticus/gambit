@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import tempfile
 import unittest
 from pathlib import Path
 
-from tools import render_skills
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def bounded_section(text: str, start: str, end: str) -> str:
@@ -16,45 +16,24 @@ def bounded_section(text: str, start: str, end: str) -> str:
 class ExecutingPlansRungRoutingTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temporary = tempfile.TemporaryDirectory(prefix="gambit-rungs-exec-")
-        temporary_root = Path(cls.temporary.name)
-        claude_skills, _ = render_skills.render_backend("claude", temporary_root)
-        codex_skills, _ = render_skills.render_backend("codex", temporary_root)
-        cls.claude = (claude_skills / "executing-plans" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        cls.codex = (codex_skills / "executing-plans" / "SKILL.md").read_text(
+        cls.text = (ROOT / "skills" / "executing-plans" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         cls.worker_dispatch = bounded_section(
-            cls.claude,
+            cls.text,
             "**Dispatch the wave to workers:**",
             "3. **Route on the worker's returned status**",
         )
-        cls.claude_status_routing = bounded_section(
-            cls.claude,
+        cls.status_routing = bounded_section(
+            cls.text,
             "3. **Route on the worker's returned status**",
             "**One of the four statuses is the ONLY signal",
         )
-        cls.codex_status_routing = bounded_section(
-            cls.codex,
-            "3. **Route on the worker's returned status**",
-            "**One of the four statuses is the ONLY signal",
-        )
-        cls.claude_gate = bounded_section(
-            cls.claude,
+        cls.gate = bounded_section(
+            cls.text,
             "#### Checkpoint gate",
             "#### When Hitting Obstacles",
         )
-        cls.codex_gate = bounded_section(
-            cls.codex,
-            "#### Checkpoint gate",
-            "#### When Hitting Obstacles",
-        )
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.temporary.cleanup()
 
     def assertContainsAll(self, text: str, expected: tuple[str, ...]) -> None:
         for item in expected:
@@ -82,7 +61,7 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
         )
         self.assertIn("the `model=` field removed entirely", self.worker_dispatch)
 
-    def test_claude_render_has_no_configured_executor_route(self) -> None:
+    def test_skill_has_no_configured_executor_route(self) -> None:
         for retired in (
             "executors.json",
             "contracts/executors.md",
@@ -95,11 +74,11 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             "TaskOutput",
         ):
             with self.subTest(retired=retired):
-                self.assertNotIn(retired, self.claude)
+                self.assertNotIn(retired, self.text)
 
     def test_repairs_are_limited_to_one_informed_repair_then_the_user(self) -> None:
         self.assertContainsAll(
-            self.claude_status_routing,
+            self.status_routing,
             (
                 "one implementation, then at most one informed repair on the `escalation` rung, then the user",
                 "read the task's `repairs_used`; if it is already `1`, or the task is `awaiting_user`, there is no dispatch to make",
@@ -112,16 +91,6 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
                 "A second NEEDS_CONTEXT on the same task",
             ),
         )
-        self.assertContainsAll(
-            self.codex_status_routing,
-            (
-                "one implementation, then at most one informed repair, then the user",
-                "Record `repairs_used: 1` in the checkpoint first",
-                'SpawnAgent agent_type="escalation"',
-                "3. **No second repair.**",
-                "Do not dispatch another worker, a higher rung, a judge, or a renamed descendant",
-            ),
-        )
         for retired in (
             "delivery-judgment",
             "CONTINUE-ONCE",
@@ -131,88 +100,47 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
             "Terminal escalation",
         ):
             with self.subTest(retired=retired):
-                self.assertNotIn(retired, self.claude)
-                self.assertNotIn(retired, self.codex)
+                self.assertNotIn(retired, self.text)
 
     def test_checkpoint_gate_is_binary_against_the_baseline_with_no_reviewer(self) -> None:
-        for gate in (self.claude_gate, self.codex_gate):
-            self.assertContainsAll(
-                gate,
-                (
-                    "there is no per-task reviewer dispatch",
-                    "against the epic's baseline and nothing else",
-                    "The verdict is binary and itemized",
-                    "Verdict:       DONE | NOT DONE",
-                    "Each NOT DONE names its baseline clause, the changed-code cause, and the evidence",
-                    "is an observation: write it under the checkpoint's Notes and move on",
-                    "There is no per-task reviewer.",
-                    "Do NOT dispatch a finder, verifier, or judge from this gate",
-                    "**Never edit the diff yourself — you judge and route; workers implement.**",
-                ),
-            )
-            for retired in (
-                "Quality review:",
-                "reviewers/quality.md",
-                "Escalate to an independent quality reviewer",
-                "escalation trigger",
-                "six sources",
-                "maximal standard",
-            ):
-                with self.subTest(retired=retired):
-                    self.assertNotIn(retired, gate)
+        self.assertContainsAll(
+            self.gate,
+            (
+                "there is no per-task reviewer dispatch",
+                "against the epic's baseline and nothing else",
+                "The verdict is binary and itemized",
+                "Verdict:       DONE | NOT DONE",
+                "Each NOT DONE names its baseline clause, the changed-code cause, and the evidence",
+                "is an observation: write it under the checkpoint's Notes and move on",
+                "There is no per-task reviewer.",
+                "Do NOT dispatch a finder, verifier, or judge from this gate",
+                "**Never edit the diff yourself — you judge and route; workers implement.**",
+            ),
+        )
+        for retired in (
+            "Quality review:",
+            "reviewers/quality.md",
+            "Escalate to an independent quality reviewer",
+            "escalation trigger",
+            "six sources",
+            "maximal standard",
+        ):
+            with self.subTest(retired=retired):
+                self.assertNotIn(retired, self.gate)
         self.assertNotIn(
             "Resolve the `finder` role through `contracts/models.md` for this one advisory dispatch",
-            self.claude,
+            self.text,
         )
 
-    def test_claude_summaries_describe_rung_resolved_workers(self) -> None:
+    def test_summaries_describe_rung_resolved_workers(self) -> None:
         self.assertContainsAll(
-            self.claude,
+            self.text,
             (
                 "a fresh worker on the resolved `worker` rung does the mechanical work",
                 "Each worker runs on the rung the `worker` role resolves to in"
                 " `contracts/models.md`, and a NOT DONE gets exactly one informed"
                 " repair on the `escalation` rung before the user decides.",
             ),
-        )
-
-    def test_native_codex_output_is_isolated_from_claude_rung_routing(self) -> None:
-        self.assertContainsAll(
-            self.codex,
-            (
-                'SpawnAgent agent_type="worker"',
-                'SpawnAgent agent_type="escalation"',
-                "Resolve the worker role",
-                "codex-contracts/worker.md",
-            ),
-        )
-        for claude_only in (
-            "rung alias",
-            "readonly_agent",
-            "Resolve the `worker` role",
-            "Resolve the `escalation` role",
-        ):
-            with self.subTest(claude_only=claude_only):
-                self.assertNotIn(claude_only, self.codex)
-
-    def test_generated_outputs_are_current(self) -> None:
-        repository = Path(__file__).resolve().parents[1]
-        self.assertEqual(
-            self.claude,
-            (repository / "skills" / "executing-plans" / "SKILL.md").read_text(
-                encoding="utf-8"
-            ),
-        )
-        self.assertEqual(
-            self.codex,
-            (
-                repository
-                / "plugins"
-                / "gambit"
-                / "skills"
-                / "executing-plans"
-                / "SKILL.md"
-            ).read_text(encoding="utf-8"),
         )
 
 

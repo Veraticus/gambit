@@ -1,6 +1,0 @@
-interface:
-  display_name: "Writing Skills"
-  short_description: "Validates that a new or modified skill actually changes model behavior before it ships. Use when..."
-  default_prompt: "Use $gambit:writing-skills for this task."
-policy:
-  allow_implicit_invocation: true

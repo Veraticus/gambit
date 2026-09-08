@@ -1,6 +1,0 @@
-interface:
-  display_name: "Brainstorming Ideas Into Designs"
-  short_description: "Turns a rough idea into an approved epic contract with immutable requirements, anti-patterns, and..."
-  default_prompt: "Use $gambit:brainstorming for this task."
-policy:
-  allow_implicit_invocation: true

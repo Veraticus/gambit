@@ -1,6 +1,0 @@
-interface:
-  display_name: "Safe Refactoring"
-  short_description: "Restructures code that already has a green test suite, without changing behavior. Use this implem..."
-  default_prompt: "Use $gambit:refactoring for this task."
-policy:
-  allow_implicit_invocation: false
