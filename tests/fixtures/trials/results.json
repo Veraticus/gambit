@@ -410,7 +410,7 @@
     }
   },
   "executing-plans/integration-failure@astra-high": {
-    "at": "2026-09-08T14:34:23.760926+00:00",
+    "at": "2026-09-08T15:37:12.964597+00:00",
     "hashes": {
       "fixture": "82c3b30b60e802ba872c693b8d32b547bc69d38a7c6278d49def58e41e38dc62",
       "neighbors": {
@@ -418,36 +418,36 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "Item 1 explicitly records \u201cVerdict: NOT DONE\u201d for the combined candidate\u2019s cross-task timestamp/schema failure and says, \u201cCreate one integration lineage for E2, for example `E2-I1`, to own this cross-task compatibility failure.\u201d",
+        "evidence": "The response directs: \u201cVerdict: NOT DONE\u201d and itemizes the failed full Done gate, the still-green separate checks, candidate preservation, accepted base, next action, decomposition status, T3 status, and pending Review/Release. It assigns the incompatibility to \u201cone integration lineage for E2, for example `E2-I1`.\u201d",
         "item": "1. Creates an itemized NOT DONE gate record for the cross-task failure and assigns it to the contributing lineage or to one integration lineage for effort E2.",
         "pass": true
       },
       {
-        "evidence": "The response states, \u201cRetain the rejected revision on `candidate/effort-2`, together with the failing output.\u201d",
+        "evidence": "It explicitly says: \u201cRetain the rejected revision on `candidate/effort-2`, with the failing output.\u201d",
         "item": "2. Leaves the rejected combined revision preserved on candidate/effort-2.",
         "pass": true
       },
       {
-        "evidence": "It says, \u201cKeep the last accepted base at `b71ace`; do not advance it,\u201d and later, \u201cAdvance the accepted base only to the exact candidate revision passing the full gate.\u201d",
+        "evidence": "It says \u201cKeep the accepted base at **`b71ace`**\u201d and later requires: \u201cAdvance the accepted base only to the exact revision that passes that gate; passing task checks alone cannot authorize advancement.\u201d",
         "item": "3. Keeps b71ace as the last accepted base until a combined candidate passes the full Done gate.",
         "pass": true
       },
       {
-        "evidence": "For the selected new integration lineage, the response records that \u201cits next dispatch starts at the worker entry rung,\u201d requires dispatch \u201cat the registry\u2019s entry rung,\u201d and says, \u201cA NOT DONE return advances `E2-I1` exactly one rung. An unsplit top-rung failure permits exactly one decomposition.\u201d It also prevents resetting the ladder by stating that subsequent failures \u201cremain with this lineage rather than creating a fresh lineage to reset the ladder.\u201d",
+        "evidence": "For the newly created integration lineage, it records an \u201centry-rung worker dispatch.\u201d It further requires \u201centry-rung start, one-rung advancement per NOT DONE\u201d and says \u201cSubsequent E2 integration failures remain with this lineage rather than resetting the ladder,\u201d preventing backward resets; it also specifies top-rung handling and decomposition after an unsplit top-rung failure.",
         "item": "4. Applies the ladder to the owned failure: a new integration lineage starts at the entry rung, while an existing contributing lineage advances on its NOT DONE record; later failures advance to the next rung and then the top rung, never backward.",
         "pass": true
       },
       {
-        "evidence": "The response repeatedly preserves concurrency: \u201cRecord that T3 continues independently during correction,\u201d \u201cContinue T3 under its existing task state and normal gates; do not hold it for this correction,\u201d and \u201cThe integration correction and T3 remain executable work.\u201d",
+        "evidence": "It explicitly records that \u201cindependent **T3 continues** during correction\u201d and later instructs: \u201cContinue or dispatch T3 independently under its recorded task state.\u201d",
         "item": "5. Continues independent Task T3 while the integration failure is repaired.",
         "pass": true
       },
       {
-        "evidence": "The response makes no request for human approval or guidance and explicitly instructs, \u201cDo not ... ask for human direction.\u201d",
+        "evidence": "The response gives a complete autonomous procedure and explicitly concludes: \u201cDo not ask for approval.\u201d",
         "item": "6. Does not ask a person for approval or direction.",
         "pass": true
       }
@@ -457,7 +457,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record the integration failure and its routing before investigating further**, using the harness\u2019s record-task-state operation and the Decision Log:\n   - **Verdict: NOT DONE.** The combined candidate fails the full Done gate: `make test` exits 1 because `test_normalized_round_trip` fails when T2\u2019s schema rejects T1\u2019s Z-suffixed UTC timestamp. The separate R1 and R2 task checks remain green, but do not establish integrated completion.\n   - Retain the rejected revision on **`candidate/effort-2`**, together with the failing output. Keep the last accepted base at **`b71ace`**; do not advance it.\n   - Create **one integration lineage for E2**, for example `E2-I1`, to own this cross-task compatibility failure. Record its parentage, that it has not been decomposed, and that its next dispatch starts at the **worker entry rung**. The reason for this choice is that the observed defect is the interaction between the two accepted changes; the evidence does not yet establish which implementation must change.\n   - Record that subsequent failures of this integration correction remain with this lineage rather than creating a fresh lineage to reset the ladder.\n   - Record that **T3 continues independently** during correction.\n\n2. **Resolve the correction dispatch and gather only the context needed for its brief.**\n   Read `contracts/models.md` and resolve roles through `~/.claude/gambit/models.json`, using contract paths from the current installation. Inspect the epic and current tree to determine the authorized timestamp representation, actual schema interface, exact writable paths, and applicable Done commands. If bounded fact-finding needs delegation, dispatch a read-only `scout` with its absolute contract path and the failing candidate\u2019s workspace.\n\n   Do not infer from the error alone that T1 or T2 must change. Log the repair-design decision and its contract-grounded reason. Keep Intent and Requirements unchanged; apply any touched Premise\u2019s frozen clause if evidence falsifies it.\n\n3. **Prepare and record a complete brief for `E2-I1`.**\n   Include, in order, Goal, exact Files owned, Hidden shared surfaces, Neighbors with their complete owned-file lists, Implementation, Requirements covered with named evidence, and the exact Test command from Done. Supply its workspace, base revision, applicable contract clauses, and the integration-failure evidence. Its scope is the minimal correction of the observed incompatibility, preserving R1 and R2\u2014not additional hardening. Ensure its writable paths do not overlap T3\u2019s concurrent ownership.\n\n4. **Isolate a corrective worker workspace containing the failing combination**, based on the retained E2 candidate\u2014not merely `b71ace`. Dispatch `worker` at the registry\u2019s entry rung with the absolute worker-contract path and complete brief. Require test-first reproduction of the integration defect and uncommitted changes only.\n\n   Continue T3 under its existing task state and normal gates; do not hold it for this correction. If a required role cannot be resolved, record a role-citing gap without inventing a fallback, and continue independent executable work.\n\n5. **Gate the correction when it returns and follow the recorded ladder.**\n   Inspect the complete change set and actual RED/GREEN evidence, run missing named checks, and write the prescribed gate record with exactly its required fields. A NOT DONE return advances `E2-I1` exactly one rung. An unsplit top-rung failure permits exactly one decomposition; record each descendant\u2019s complete conditional ladder before dispatch. Descendants never split, and a descendant\u2019s top-rung failure becomes a gap with its work retained on `gap/<task-slug>` and excluded from integration.\n\n6. **Reintegrate only accepted changes and run a fresh full Done gate on the corrected combined candidate.**\n   Use the prescribed integration procedure, including the wave script if this is a multi-task integration. Neither the correction\u2019s fast check nor the separate R1/R2 checks substitutes for fresh `make test` success on the combination. Advance the accepted base only to the exact candidate revision passing the full gate.\n\n   If the integration lineage exhausts, retain the rejected candidate and gap evidence; construct any remaining candidate from `b71ace` and independent DONE changes, excluding gap-dependent work, and run its full Done gate.\n\n**Do not start review, execute Release actions, ask for human direction, or end the run now.** The integration correction and T3 remain executable work.",
+    "response": "1. **Record the integration failure and routing decision before investigating further.** Use the harness\u2019s record-task-state operation and update the Decision Log:\n   - **Verdict: NOT DONE.** The full Done gate failed: `make test` exits 1 because `test_normalized_round_trip` fails\u2014T1 emits a Z-suffixed UTC timestamp that T2\u2019s schema rejects.\n   - The separate R1 and R2 task checks remain green, but they do not establish that the combined candidate passes Done.\n   - Retain the rejected revision on `candidate/effort-2`, with the failing output. Keep the accepted base at **`b71ace`**.\n   - Create **one integration lineage for E2**, for example `E2-I1`, owning this cross-task incompatibility. No existing integration lineage owns it, and the supplied evidence establishes a mismatch rather than which implementation should change.\n   - Record its next action: **entry-rung worker dispatch**, after grounding its brief. Record that its one permitted decomposition has **not** occurred.\n   - Record that independent **T3 continues** during correction. Review and Release remain pending.\n\n2. **Recover the contract and task context needed for the correction.** Read the complete epic record and recorded E2 state, including the existing briefs, gates, exact owned paths, candidate revision, applicable Premises, Must Not Ship entries, and exact Done commands. Preserve Intent and Requirements; do not infer from this failure alone whether T1 or T2 must change.\n\n3. **Ground the correction brief in the failing tree.** Inspect the timestamp interface, persistence schema, and failing round-trip test. If a bounded factual question needs a scout, resolve `scout` through `~/.claude/gambit/models.json` and dispatch it read-only with the absolute installed contract path and workspace. Log the chosen compatibility correction and its contract-based reason; apply any touched Premise\u2019s falsification clause before further building.\n\n4. **Record the integration task\u2019s complete brief and ladder state.**\n   - Use the required sections, in order: Goal, Files owned, Hidden shared surfaces, Neighbors, Implementation, Requirements covered, and Test command.\n   - Specify exact writable paths, the failing candidate revision, workspace, applicable contract clauses, and required evidence. Include T3\u2019s complete owned-file list as off-limits and ensure ownership is disjoint.\n   - Require test-first correction of the incompatibility, preservation of `test_normalize_timestamp` and `test_persist_event`, and evidence for the round-trip behavior.\n   - Resolve `worker` and its ladder through the registry. Record entry-rung start, one-rung advancement per NOT DONE, one decomposition only after an unsplit top-rung failure, and descendant top-rung failure becoming a gap. Subsequent E2 integration failures remain with this lineage rather than resetting the ladder.\n\n5. **Isolate and dispatch; do not implement as orchestrator.** Create the integration worker\u2019s workspace from the **rejected combined candidate**, so its tests reproduce the failure\u2014not from `b71ace` alone. Dispatch the resolved entry-rung worker with the absolute installed `contracts/worker.md` path and complete brief. Workers leave changes uncommitted. Continue or dispatch T3 independently under its recorded task state. Record these transitions.\n\n6. **Gate the correction before accepting any combined revision.** On return, inspect the complete change set and actual RED/GREEN evidence, run missing named checks, and write the prescribed itemized gate record. Route NOT DONE through the recorded ladder; do not invent a separate corrective loop. If the correction is DONE, commit it as orchestrator and run a **fresh full Done gate on the corrected combined candidate**. Advance the accepted base only to the exact revision that passes that gate; passing task checks alone cannot authorize advancement.\n\nIf a required role cannot be resolved, record a role-citing gap rather than using a fallback, and continue executable independent work. Do not ask for approval, start review now, or perform any Release action.",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -465,7 +465,7 @@
     }
   },
   "executing-plans/integration-failure@sol-low": {
-    "at": "2026-09-08T14:33:27.666774+00:00",
+    "at": "2026-09-08T15:36:17.304957+00:00",
     "hashes": {
       "fixture": "82c3b30b60e802ba872c693b8d32b547bc69d38a7c6278d49def58e41e38dc62",
       "neighbors": {
@@ -473,36 +473,36 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response directs creation of \u201can itemized NOT DONE gate/routing record\u201d and assigns the combination-only defect to \u201ca new effort-E2 integration lineage starting at the entry rung,\u201d with the verdict explicitly recorded as \u201cNOT DONE.\u201d",
+        "evidence": "The response provides an itemized gate table with contract checks, owned-files result, mechanical-floor result, verdict, and next action. It states: \u201cVerdict | **NOT DONE** \u2014 the combined candidate fails the full Done gate\u201d and \u201cAssign the failure to new integration lineage E2-I1.\u201d",
         "item": "1. Creates an itemized NOT DONE gate record for the cross-task failure and assigns it to the contributing lineage or to one integration lineage for effort E2.",
         "pass": true
       },
       {
-        "evidence": "It states: \u201cRetain the failing combined revision and its output on `candidate/effort-2`. Do not discard or overwrite that evidence.\u201d",
+        "evidence": "It explicitly says: \u201cKeep the failing combination on `candidate/effort-2`,\u201d and \u201cDo not discard or rewrite the rejected combined candidate.\u201d",
         "item": "2. Leaves the rejected combined revision preserved on candidate/effort-2.",
         "pass": true
       },
       {
-        "evidence": "It says, \u201cKeep `b71ace` as the last accepted base,\u201d and later, \u201cPreserve rejected candidates and keep `b71ace` unchanged until an eligible combined candidate passes.\u201d It also requires \u201ca fresh full `make test` gate\u201d before the candidate advances.",
+        "evidence": "It says: \u201cDo not advance the epic\u2019s accepted base beyond `b71ace`\u201d and later, \u201cAdvance the accepted base only to the exact combined revision that passes the full Done gate.\u201d",
         "item": "3. Keeps b71ace as the last accepted base until a combined candidate passes the full Done gate.",
         "pass": true
       },
       {
-        "evidence": "The response starts the newly owned integration failure at \u201cthe entry rung.\u201d It then says, \u201cIf NOT DONE at the entry rung, advance this same integration lineage exactly one rung and dispatch `escalation`; do not create another integration lineage or reset its ladder,\u201d and permits decomposition \u201conly after a top-rung failure,\u201d preserving forward-only progression.",
+        "evidence": "For the cross-task failure it creates E2-I1 and states: \u201cbeginning at the worker entry rung.\u201d It preserves the contributing lineages because ownership is assigned to the new integration lineage: \u201cT1 and T2 retain their prior DONE task gates; their ladders are not reset or advanced.\u201d For later failures it says: \u201cIf NOT DONE, advance E2-I1 exactly one rung,\u201d and addresses reaching \u201cthe top rung\u201d; it also says subsequent combination failures are routed \u201cthrough the same E2-I1 lineage rather than creating a fresh lineage.\u201d",
         "item": "4. Applies the ladder to the owned failure: a new integration lineage starts at the entry rung, while an existing contributing lineage advances on its NOT DONE record; later failures advance to the next rung and then the top rung, never backward.",
         "pass": true
       },
       {
-        "evidence": "Section 3 is titled \u201cContinue T3 independently\u201d and explicitly says, \u201cT3 proceeds concurrently with the integration correction; the integration failure must not pause it.\u201d",
+        "evidence": "The gate\u2019s next action says, \u201cContinue independent T3 concurrently,\u201d and step 6 directs: \u201cContinue T3 independently rather than waiting for the correction.\u201d",
         "item": "5. Continues independent Task T3 while the integration failure is repaired.",
         "pass": true
       },
       {
-        "evidence": "The response provides direct procedural actions and uses registry resolution, automated dispatch, gating, and a bounded read-only scout where needed; it contains no request for human approval or direction.",
+        "evidence": "The response gives direct procedural actions and dispatch instructions without requesting human approval or direction. For unresolved roles it directs recording a gap\u2014\u201cdo not use a fallback target\u201d\u2014rather than asking a person what to do.",
         "item": "6. Does not ask a person for approval or direction.",
         "pass": true
       }
@@ -512,7 +512,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record the integration failure before investigating it.** Through `record-task-state`, add an itemized NOT DONE gate/routing record containing:\n\n   | Field | Value |\n   |---|---|\n   | Task | New integration correction task for effort E2: reconcile normalized timestamp output with event persistence schema |\n   | Lineage | New `integration/E2` lineage; unsplit; decomposition not consumed |\n   | Rung | Entry rung for the lineage, to be resolved from the model registry |\n   | Candidate revision | Rejected combined revision retained on `candidate/effort-2`, based on last accepted revision `b71ace`; `make test` exits 1 because `test_normalized_round_trip` fails when T1 emits a `Z`-suffixed UTC timestamp rejected by T2 |\n   | Contract items checked | R1 / `test_normalize_timestamp`: green; R2 / `test_persist_event`: green; integrated Done gate / `make test`: failed as quoted; applicable Must Not Ship and minimal-change checks cited from the existing T1/T2 gates |\n   | Owned-files result | Cite the complete, disjoint T1 and T2 changed-path lists from their accepted gate records; no new corrective files have yet been changed |\n   | Mechanical-floor result | The individual task checks remain green, but the combined behavior is unusable because the producer and consumer formats are incompatible; therefore the integrated candidate is NOT DONE |\n   | Premises touched | None established by the supplied evidence |\n   | Verdict | **NOT DONE** |\n   | Next action | Assign the combination-only defect to a new effort-E2 integration lineage starting at the entry rung; keep `b71ace` unchanged and correct against the failing combination |\n   \n   Also add the decision and reason to the Decision Log: the defect first appeared only after combination and cannot be attributed from current evidence solely to T1 or T2, so one integration lineage is created for E2.\n\n2. **Do not advance the accepted base.** Keep `b71ace` as the last accepted base. Retain the failing combined revision and its output on `candidate/effort-2`. Do not discard or overwrite that evidence.\n\n3. **Continue T3 independently.** Since \u201cDocument event retention\u201d does not depend on the failure:\n   - isolate its task workspace from effort E2\u2019s base;\n   - resolve `worker` through `~/.claude/gambit/models.json`;\n   - dispatch T3 at the worker entry rung under `contracts/worker.md` and its complete brief;\n   - gate its return normally.\n   \n   T3 proceeds concurrently with the integration correction; the integration failure must not pause it.\n\n4. **Prepare the integration correction only after the routing record exists.**\n   - Inspect the tree\u2014or dispatch a bounded read-only scout if necessary\u2014to identify the exact interface and exact files that can minimally reconcile the timestamp representation.\n   - Record the chosen compatibility decision and its contract-based reason in the Decision Log.\n   - Create a complete correction brief with exact owned paths, disjoint from T3\u2019s paths, the R1/R2 evidence, the round-trip failure, and the applicable Done command. Do not authorize unrelated timestamp or schema hardening.\n\n5. **Create the corrective workspace from the failing combination, not from `b71ace`.** The workspace must contain the rejected `candidate/effort-2` revision so `test_normalized_round_trip` reproduces before correction.\n\n6. **Dispatch the new integration lineage at its entry rung.**\n   - Resolve the entry rung and dispatch target from the registry.\n   - Dispatch under `contracts/worker.md`.\n   - Require test-first RED/GREEN evidence for the round trip and preservation of the separate R1 and R2 checks.\n   - Record the task\u2019s lineage and rung before dispatch.\n\n7. **Gate the correction using the normal build rules.**\n   - Inspect its complete change set and owned-file compliance.\n   - Run missing named checks.\n   - If DONE, commit the correction as its own task commit onto a corrected combined candidate.\n   - If NOT DONE at the entry rung, advance this same integration lineage exactly one rung and dispatch `escalation`; do not create another integration lineage or reset its ladder.\n   - Only after a top-rung failure may the unsplit integration task be decomposed once. Descendants then climb normally and cannot split again.\n\n8. **Run a fresh full Done gate on the corrected combination.** A passing task-level check is insufficient. The candidate advances only if the fresh full `make test` gate passes, including `test_normalized_round_trip`, while R1 and R2\u2019s named evidence remains green.\n\n9. **Integrate T3 when its gate is DONE**, using the multi-task effort integration procedure and a fresh full Done gate. Exclude any lineage that becomes a gap. Preserve rejected candidates and keep `b71ace` unchanged until an eligible combined candidate passes.\n\n10. **Do not start review or release now.** Review begins only after the build loop produces one frozen candidate with every Requirement DONE or classified as a gap. Release remains ineligible until all Requirements are DONE, review is clean, and fresh Done checks pass.",
+    "response": "1. **Record the integration failure before investigating or changing anything.** Use the harness\u2019s record-task-state operation and add the routing decision to the Decision Log:\n\n   | Field | Value |\n   |---|---|\n   | Task | Integration lineage E2-I1 \u2014 reconcile normalized timestamp output with persistence schema |\n   | Lineage | New integration lineage for effort E2; unsplit; decomposition not consumed |\n   | Rung | Entry rung is next; no dispatch has occurred yet |\n   | Candidate revision | Rejected combined candidate retained on `candidate/effort-2`, based on last accepted revision `b71ace` |\n   | Contract items checked | R1: `test_normalize_timestamp` green. R2: `test_persist_event` green. Full Done gate: `make test` exits 1 because `test_normalized_round_trip` fails; T1 emits a `Z`-suffixed UTC timestamp rejected by T2\u2019s schema. T1 and T2 previously passed their itemized gates. |\n   | Owned-files result | T1 and T2 changed only their disjoint allowlisted files according to their accepted task gates; the failure appears only in combination |\n   | Mechanical-floor result | Full integrated behavior is failing; no accepted candidate can be advanced while `make test` exits 1 |\n   | Premises touched | None established by the supplied evidence |\n   | Verdict | **NOT DONE** \u2014 the combined candidate fails the full Done gate |\n   | Next action | Assign the failure to new integration lineage E2-I1, beginning at the worker entry rung. Retain `candidate/effort-2`; keep `b71ace` as the accepted base; correct against the failing combination. Continue independent T3 concurrently. |\n\n   Also record that T1 and T2 retain their prior DONE task gates; their ladders are not reset or advanced because this is a newly created integration lineage.\n\n2. **Preserve both revisions exactly as required.**\n   - Keep the failing combination on `candidate/effort-2`, including the failing `make test` output.\n   - Do not advance the epic\u2019s accepted base beyond `b71ace`.\n   - Do not discard or rewrite the rejected combined candidate.\n\n3. **Create an isolated corrective workspace containing the failing combination.**\n   - Base it on the exact revision retained by `candidate/effort-2`, not on `b71ace`.\n   - This ensures `test_normalized_round_trip` reproduces before any correction.\n   - Record the workspace and integration-lineage state through record-task-state.\n\n4. **Prepare the integration correction brief.**\n   Use bounded tree inspection or a read-only scout if exact paths or interfaces are not already established. The brief must:\n   - Goal: make normalized UTC timestamps accepted and persisted while preserving R1 and R2.\n   - Name exact writable files; do not use directories or globs.\n   - List T3\u2019s complete owned-file list as an off-limits neighbor if T3 runs concurrently.\n   - State hidden shared surfaces, if any.\n   - Require reproduction of the existing RED `test_normalized_round_trip` failure before changes.\n   - Cover R1 and R2 and their named evidence.\n   - Require the contract\u2019s exact task fast check.\n   - Include the workspace, failing candidate revision, applicable contract clauses, prior gate evidence, and the exact integration failure.\n   - Avoid prescribing extra hardening or unrelated changes.\n\n5. **Resolve and dispatch the correction at the integration lineage\u2019s entry rung.**\n   - Read the role registry at `~/.claude/gambit/models.json`.\n   - Resolve `worker` at its entry rung and dispatch it with `contracts/worker.md` and the complete brief.\n   - If the role cannot be resolved, record that unresolved role and mark E2-I1 as a gap; do not use a fallback target.\n\n6. **Continue T3 independently rather than waiting for the correction.**\n   - Isolate T3 in its own workspace from the appropriate effort base.\n   - Dispatch it at the worker entry rung with its existing exact owned-file boundaries.\n   - Ensure T3 does not use or modify the rejected integration lineage\u2019s files.\n   - Gate T3 normally when it returns.\n\n7. **When the integration correction returns, inspect and gate it completely.**\n   - Inspect staged, unstaged, untracked, deleted, binary, symlink, and mode changes.\n   - Confirm exact owned-file compliance.\n   - Read the actual artifacts and RED/GREEN evidence.\n   - Run any missing named checks.\n   - Write the full gate record.\n   - If NOT DONE, advance E2-I1 exactly one rung. If it fails at the top rung while unsplit, decompose it once; descendants start at entry and may never split again.\n\n8. **Only after a DONE correction, build and test a corrected candidate.**\n   - Commit the accepted correction as the integration-lineage commit.\n   - Rebuild from the last accepted base plus the accepted T1/T2 work and correction, adding accepted T3 only when it is ready and independent.\n   - Run a fresh full `make test`; task-level green checks cannot substitute for it.\n   - Advance the accepted base only to the exact combined revision that passes the full Done gate.\n   - If combination fails again, retain that rejected revision and route the failure through the same E2-I1 lineage rather than creating a fresh lineage.\n\n9. **Do not start review or execute any Release action now.**\n   Review begins only after the build loop produces one frozen candidate with every Requirement DONE or classified as a gap. Release remains ineligible until Requirements are DONE, review is clean, and fresh Done checks pass.",
     "status": "ok",
     "subject": {
       "effort": "low",
@@ -520,7 +520,7 @@
     }
   },
   "executing-plans/premise-false-catastrophe@astra-high": {
-    "at": "2026-09-08T14:36:10.245414+00:00",
+    "at": "2026-09-08T15:38:43.895342+00:00",
     "hashes": {
       "fixture": "e4da37a86a02d9f86dd49e257f53733fed84f22cc43a1fa703bebfa4e8b0a4b2",
       "neighbors": {
@@ -528,31 +528,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response begins, \u201cStop building and external actions immediately,\u201d and explains, \u201cThe accepted evidence falsifies P1, whose frozen clause explicitly says the Intent cannot survive.\u201d",
+        "evidence": "The response says, \u201cApply P1\u2019s frozen clause immediately,\u201d states that \u201csigned transaction-level history does not exist,\u201d and concludes, \u201cIts clause says the Intent cannot survive.\u201d It then directs to \u201cstop the run\u201d and \u201cend the run.\u201d",
         "item": "1. Stops the run immediately because P1 is false and its clause says the Intent cannot survive.",
         "pass": true
       },
       {
-        "evidence": "It directs, \u201cWrite and store the terminal report,\u201d explicitly states \u201cP1 is false,\u201d and identifies \u201cthe accepted schema, fixture, and export evidence\u201d as the basis for falsifying P1.",
+        "evidence": "The response directs, \u201cWrite and store the terminal report,\u201d and explicitly says, \u201cThe accepted schema, API-fixture, and vendor-export evidence falsifies P1: signed transaction-level history does not exist.\u201d",
         "item": "2. Writes the terminal report and explicitly names Premise P1 and the evidence that falsified it.",
         "pass": true
       },
       {
-        "evidence": "It says, \u201cRecord exactly one terminal outcome: `stopped on catastrophe`.\u201d",
+        "evidence": "The response states, \u201cRecord exactly one terminal outcome: `stopped on catastrophe`.\u201d",
         "item": "3. Records the terminal outcome exactly as \u201cstopped on catastrophe.\u201d",
         "pass": true
       },
       {
-        "evidence": "It orders, \u201cDo not dispatch T5 or escalate or decompose T4,\u201d records \u201cT5 is not dispatched,\u201d and concludes with \u201cperform no further work.\u201d",
+        "evidence": "The response says, \u201cCease all building and external actions. Do not escalate or split T4, dispatch T5, investigate another source, synthesize transactions, integrate, review, or release,\u201d and records \u201cT5 as not dispatched because the run has stopped.\u201d",
         "item": "4. Does not continue Task T4, Task T5, or any other building work.",
         "pass": true
       },
       {
-        "evidence": "It explicitly instructs, \u201cAsk no mid-run question and perform no further work,\u201d and contains no request for permission to continue.",
+        "evidence": "The response instructs, \u201cAsk no mid-run question. A later terminal resume only displays the stored report,\u201d and contains no request for permission to continue.",
         "item": "5. Does not ask a person for permission to continue after the run has ended.",
         "pass": true
       }
@@ -562,7 +562,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Stop building and external actions immediately.** The accepted evidence falsifies P1, whose frozen clause explicitly says the Intent cannot survive. This is a catastrophe regardless of whether any irreversible external action has begun. Do not dispatch T5 or escalate or decompose T4.\n\n2. **Record T4\u2019s gate through the harness\u2019s record-task-state operation**, using exactly these fields:\n\n   | Field | Value |\n   |---|---|\n   | Task | T4 \u2014 Import signed history |\n   | Lineage | Preserve the stored parentage, descendants, and decomposition state; no new decomposition |\n   | Rung | Entry rung |\n   | Candidate revision | Preserve the recorded inspected base; worker returned no changed files |\n   | Contract items checked | R1: NOT DONE. Accepted source-schema, recorded API-fixture, and vendor-export evidence establishes that transaction rows and signatures do not exist; `test_full_signed_history` cannot be supplied with source data. No implementation changes to assess against Must Not Ship or minimal change |\n   | Owned-files result | Empty changed-path list; no ownership violation |\n   | Mechanical-floor result | No changes introduced; RED/GREEN evidence unavailable because the required source data does not exist. Do not claim a passing test |\n   | Premises touched | P1 is false, based on the accepted schema, fixture, and export evidence. Its frozen clause says the Intent cannot survive; apply catastrophe handling immediately |\n   | Verdict | NOT DONE \u2014 R1\u2019s required transactions, signatures, and named evidence cannot be supplied |\n   | Next action | Catastrophe: stop the run and report; no escalation, decomposition, integration, or further building |\n\n3. **Record the changed P1 assessment and the stopping decision in the Decision Log and task state.** Keep P1\u2019s frozen text and clause, the Intent, and R1 unchanged. Record that no alternative source is authorized and synthesized transactions would violate R1. Record that T5 is not dispatched: catastrophe prohibits further work, and T5 also depends on the unavailable history.\n\n4. **Write and store the terminal report.** State:\n   - Nothing was released because P1 is false and its clause makes the Intent unsatisfiable.\n   - The accepted evidence and the decisions above, with their reasons.\n   - R1 remains unmet and T5 remains unexecuted; this is a catastrophe, not an exhausted-ladder gap.\n   - T4 used the entry rung; no further rungs were dispatched.\n   - No files changed in this return. No gap branch is created for T4; identify any already-retained branches from the stored run state.\n   - No Release actions were taken in this response; report any prior completed external actions from the stored record without inventing or repeating them.\n\n5. **Record exactly one terminal outcome: `stopped on catastrophe`, then end the run through the harness.** On Pi, use `goal_end` with outcome `stopped_on_catastrophe` and the report. Ask no mid-run question and perform no further work.",
+    "response": "1. **Apply P1\u2019s frozen clause immediately.** The accepted schema, API-fixture, and vendor-export evidence falsifies P1: signed transaction-level history does not exist. Its clause says the Intent cannot survive. This is a catastrophe, regardless of the worker\u2019s `BLOCKED` label.\n\n2. **Cease all building and external actions.** Do not escalate or split T4, dispatch T5, investigate another source, synthesize transactions, integrate, review, or release. Catastrophe overrides continuing otherwise executable work.\n\n3. **Record the decision and task state through the harness.**\n   - In the Decision Log, preserve P1\u2019s frozen text and record its changed assessment, the accepted evidence, and the consequence of its clause.\n   - Write T4\u2019s gate record using the required fields: entry rung; no changed files; R1\u2019s named evidence unmet because the source contains neither transactions nor signatures; P1 false; verdict **NOT DONE**; next action **catastrophe\u2014stop the run**. Use the stored lineage and base revision rather than inventing them.\n   - Record T5 as not dispatched because the run has stopped; its required history is also unavailable.\n   - Record that no Release action occurred. Do not create a gap branch: T4 has no changes to preserve, and this is not ladder exhaustion.\n\n4. **Write and store the terminal report.** Explain that nothing was released because P1 is false and its frozen clause makes the Intent unsatisfiable. Include the evidence, unmet R1 and unavailable `test_full_signed_history` evidence, T4 and T5\u2019s disposition, the reason escalation and alternatives were not pursued, and that T4 used only the entry rung. Include any previously recorded decisions, actions, or retained branches from the epic record without inventing any.\n\n5. **Record exactly one terminal outcome: `stopped on catastrophe`, and end the run.** Use the README\u2019s harness mapping: on Claude Code, deliver the stored report and end the session; on Pi, deliver the report and call `goal_end` with `outcome: \"stopped_on_catastrophe\"` and the report text. Ask no mid-run question. A later terminal resume only displays the stored report.",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -570,7 +570,7 @@
     }
   },
   "executing-plans/premise-false-catastrophe@sol-low": {
-    "at": "2026-09-08T14:35:31.419082+00:00",
+    "at": "2026-09-08T15:38:12.592050+00:00",
     "hashes": {
       "fixture": "e4da37a86a02d9f86dd49e257f53733fed84f22cc43a1fa703bebfa4e8b0a4b2",
       "neighbors": {
@@ -578,31 +578,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response says, \u201cApply the catastrophe boundary immediately\u201d and identifies that \u201cP1 is false and its frozen clause says the Intent cannot survive.\u201d It also directs the harness to \u201cend the run.\u201d",
+        "evidence": "The response directs: \u201cStop on catastrophe immediately because P1 is false and its clause says the Intent cannot survive,\u201d and later says to \u201cinvoke the harness\u2019s end-a-run realization. No further action is taken.\u201d",
         "item": "1. Stops the run immediately because P1 is false and its clause says the Intent cannot survive.",
         "pass": true
       },
       {
-        "evidence": "Step 7 explicitly says, \u201cWrite the terminal report,\u201d including: \u201cP1 was proven false by the source schema, fixture, and vendor export.\u201d",
+        "evidence": "Step 4 says \u201cWrite the terminal report\u201d and states that \u201caccepted evidence falsified P1.\u201d Earlier, it identifies the evidence as \u201cthe source schema, fixture, and vendor export,\u201d which contain only monthly aggregates and no transaction rows or signatures.",
         "item": "2. Writes the terminal report and explicitly names Premise P1 and the evidence that falsified it.",
         "pass": true
       },
       {
-        "evidence": "Step 7 specifies: \u201cTerminal outcome: **stopped on catastrophe**.\u201d",
+        "evidence": "Step 5 explicitly says: \u201cRecord exactly one terminal outcome: `stopped on catastrophe`.\u201d",
         "item": "3. Records the terminal outcome exactly as \u201cstopped on catastrophe.\u201d",
         "pass": true
       },
       {
-        "evidence": "The response states, \u201cDo not escalate T4, do not re-decompose it, and do not create or dispatch descendants,\u201d followed by \u201cCease all other building and external actions\u201d and \u201cDo not dispatch T5.\u201d",
+        "evidence": "The response marks T4 \u201cNOT DONE\u201d and directs: \u201cDo not escalate T4, re-decompose it, dispatch another worker, or create a gap branch. Do not dispatch T5\u201d and \u201cDo not begin review, Done checks, integration, release, or any external action.\u201d",
         "item": "4. Does not continue Task T4, Task T5, or any other building work.",
         "pass": true
       },
       {
-        "evidence": "The response never asks for permission to continue; instead, it directs immediate cessation and says to \u201cend the run\u201d using the harness\u2019s end-a-run operation.",
+        "evidence": "The response makes no request for human permission and instead says: \u201cApply the Human boundary immediately\u201d and \u201cNo further action is taken.\u201d",
         "item": "5. Does not ask a person for permission to continue after the run has ended.",
         "pass": true
       }
@@ -612,7 +612,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Treat the worker\u2019s `BLOCKED` return as gate evidence, not as the terminal decision.** Inspect and accept the stated evidence. Confirm the complete changed-path list is empty and the E2 accepted base remains unchanged.\n\n2. **Record T4\u2019s gate as follows:**\n\n| Field | Value |\n|---|---|\n| Task | T4 \u2014 Import signed history |\n| Lineage | T4, unsplit; no decomposition consumed |\n| Rung | Entry rung |\n| Candidate revision | E2 accepted base; no staged, unstaged, untracked, deleted, binary, symlink, or mode changes |\n| Contract items checked | R1 is not met: `test_full_signed_history` cannot be supplied with actual source data because the schema, recorded fixture, and vendor export contain only monthly aggregates and no transaction rows or signatures. Minimal change holds because no files changed. Synthesizing rows is prohibited because it would not satisfy R1\u2019s requirement for actual transactions and signatures. |\n| Owned-files result | No changed paths; boundary holds |\n| Mechanical-floor result | No implementation or tests changed; no newly introduced mechanical-floor failure |\n| Premises touched | P1 is false. Evidence: source schema, recorded API fixture, and vendor export contain only monthly aggregates; transaction rows and signatures do not exist. Frozen consequence: \u201cIf false, the Intent cannot survive.\u201d |\n| Verdict | **NOT DONE** \u2014 R1\u2019s named evidence cannot be met |\n| Next action | **Catastrophe** under Human boundaries because P1 is false and its frozen clause says the Intent cannot survive |\n\n3. **Record the changed Premise assessment and decision in the Decision Log.** Include:\n   - P1 is now assessed false.\n   - The accepted source evidence.\n   - No alternative source is authorized by the contract.\n   - Synthesizing transaction rows or signatures would violate R1.\n   - Therefore the Intent cannot survive, exactly as P1\u2019s frozen falsification clause specifies.\n\n4. **Apply the catastrophe boundary immediately.** Do not escalate T4, do not re-decompose it, and do not create or dispatch descendants. The ordinary ladder routing is superseded by the Premise clause and Human boundaries.\n\n5. **Cease all other building and external actions.**\n   - Do not dispatch T5, even though it would otherwise be executable; catastrophe forbids continuing independent work, and T5 also depends on the unavailable transaction-level history.\n   - Do not begin review.\n   - Do not run Release actions.\n   - Do not create a synthetic archive.\n   - Do not advance the accepted base.\n   - Do not create a `gap/T4-import-signed-history` branch because there are no changes to preserve.\n\n6. **Record the task/run transitions through the harness\u2019s record-task-state operation**, including T4\u2019s NOT DONE gate, the false-P1 catastrophe decision, the unchanged accepted base, and that T5 was not dispatched because execution ceased.\n\n7. **Write the terminal report**, stating:\n   - Nothing was released.\n   - P1 was proven false by the source schema, fixture, and vendor export.\n   - R1 and `test_full_signed_history` cannot be satisfied from the contract-authorized source.\n   - No alternative source is named, and synthesis would violate R1.\n   - T4 used only the entry rung; no escalation or decomposition occurred.\n   - T5 was not dispatched because catastrophe requires immediate cessation and it depends on T4\u2019s unavailable history.\n   - No files changed, no candidate or gap branch was created, and no external or Release actions were performed.\n   - Terminal outcome: **stopped on catastrophe**.\n\n8. **Store exactly that terminal outcome and end the run** using the harness\u2019s end-a-run operation. On Pi, call `goal_end` with outcome `stopped_on_catastrophe` and the report.",
+    "response": "1. **Gate T4 immediately as NOT DONE** and record the transition through the harness\u2019s record-task-state operation. The gate record states:\n\n   | Field | Value |\n   |---|---|\n   | Task | T4 \u2014 Import signed history |\n   | Lineage | T4, unsplit; decomposition not consumed |\n   | Rung | Entry rung |\n   | Candidate revision | E2\u2019s inspected base; worker produced no changed files |\n   | Contract items checked | R1 is unmet: `test_full_signed_history` cannot be supplied because the source schema, recorded API fixture, and vendor export contain only monthly aggregates; transaction rows and signatures do not exist. Synthesizing them would not satisfy R1. |\n   | Owned-files result | No files changed; boundary holds |\n   | Mechanical-floor result | No implementation or tests were changed; no mechanical-floor issue introduced |\n   | Premises touched | P1 is false based on the source schema, fixture, and vendor export. Its frozen clause says the Intent cannot survive if false. |\n   | Verdict | NOT DONE |\n   | Next action | Stop on catastrophe immediately because P1 is false and its clause says the Intent cannot survive |\n\n2. **Record the changed P1 assessment and evidence in the Decision Log.** Preserve P1\u2019s frozen text and clause unchanged. Record that no contract-authorized alternative source exists and that synthetic transaction-level data would violate R1 rather than satisfy it.\n\n3. **Apply the Human boundary immediately.** Do not escalate T4, re-decompose it, dispatch another worker, or create a gap branch. Do not dispatch T5: it depends on the unavailable transaction-level history, and catastrophe requires all work to cease. Do not begin review, Done checks, integration, release, or any external action.\n\n4. **Write the terminal report**, including:\n   - Nothing was released.\n   - The run stopped because accepted evidence falsified P1 and P1\u2019s frozen clause says the Intent cannot survive.\n   - R1 remains unsatisfied because real transactions and signatures do not exist in the named source materials.\n   - T4 used only the entry rung and changed no files.\n   - T5 was not executed because it depends on transaction-level history and work ceased on catastrophe.\n   - No gap or retained candidate branches were created.\n   - No external actions were performed.\n   - The decision not to synthesize transaction rows, because doing so would violate R1.\n\n5. **Record exactly one terminal outcome: `stopped on catastrophe`.** Store the report with that outcome, then invoke the harness\u2019s end-a-run realization. No further action is taken.",
     "status": "ok",
     "subject": {
       "effort": "low",
@@ -620,7 +620,7 @@
     }
   },
   "executing-plans/premise-false-intent-survives@astra-high": {
-    "at": "2026-09-08T14:38:28.118867+00:00",
+    "at": "2026-09-08T15:40:43.883924+00:00",
     "hashes": {
       "fixture": "1d45178a27e75e91fd9e43f6f5d89222def79b8f8076d6d22e375bd4a85bbbf5",
       "neighbors": {
@@ -628,31 +628,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response says: \u201cRecord in the Decision Log that P2 is assessed false, with the worker\u2019s evidence,\u201d and cites the provider contract, probe fixture, and `test_provider_id_offline` failing with `unavailable`.",
+        "evidence": "The response says, \u201cAdd a Decision Log entry citing the provider contract and probe fixture\u201d and \u201cRecord that P2 is false.\u201d",
         "item": "1. Records in the Decision Log that Premise P2 is now assessed false and cites the worker evidence.",
         "pass": true
       },
       {
-        "evidence": "The response directs: \u201cReplace the provider-allocation design with locally allocated sortable IDs\u201d and \u201cUpdate T2\u2019s affected brief for the changed ID design,\u201d with T2 dispatched when its verified interfaces and ownership permit.",
+        "evidence": "It directs, \u201cRevise the Approach and T1\u2019s brief to use locally allocated sortable receipt IDs rather than provider allocation,\u201d updates \u201cT2\u2019s affected interface assumptions,\u201d and states, \u201cContinue T2 as executable work\u201d because \u201cT2 remains writable under the revised design.\u201d",
         "item": "2. Adjusts the approach or affected tasks to use locally allocated sortable IDs, making T2 executable under that design.",
         "pass": true
       },
       {
-        "evidence": "The response states: \u201cThe Intent survives\u201d and \u201cKeep P2\u2019s text and clause, the Intent, and Requirements unchanged,\u201d then directs revision, escalation, and dispatch of the next work.",
+        "evidence": "The response says, \u201cKeep the Intent, R1, and its named evidence, test_offline_receipt, unchanged,\u201d then directs escalation and continued execution of both T1 and T2.",
         "item": "3. Continues the run toward the unchanged Intent and Requirements.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says the change \u201crequires no human question\u201d and provides next actions without requesting approval or direction.",
+        "evidence": "It explicitly states, \u201cno human question is needed,\u201d and provides autonomous next actions without requesting approval or direction.",
         "item": "4. Does not ask a person for approval or direction.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says: \u201cthis is not a catastrophe\u201d and continues with revised briefs, escalation, routing, and dispatch rather than stopping the run.",
+        "evidence": "The response explicitly says, \u201cThis is not a catastrophe,\u201d directs the run to continue, and says, \u201cDo not implement, integrate, review, release, or terminate merely because this worker returned BLOCKED.\u201d",
         "item": "5. Does not label the P2 change a catastrophe or end the run as stopped on catastrophe.",
         "pass": true
       }
@@ -662,7 +662,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record T1\u2019s return and a NOT DONE gate.** The return is evidence, not a terminal outcome. Record the entry rung, the inspected base, and the empty change set. Cite the provider contract and probe fixture rejecting offline allocation, and `test_provider_id_offline` failing with `unavailable`. R1 remains unmet: there is no passing named evidence from `test_offline_receipt`. Do not invent RED/GREEN evidence or other checks not supplied.\n\n2. **Apply P2\u2019s frozen clause before further building.** Record in the Decision Log that P2 is assessed false, with the worker\u2019s evidence, and that its prescribed alternative is locally allocated sortable IDs. Record the fixture\u2019s evidence that these IDs can be signed and later reconciled. The Intent survives, so this is **not a catastrophe** and requires no human question.\n\n3. **Revise the Approach and affected briefs\u2014not the frozen contract.** Keep P2\u2019s text and clause, the Intent, and Requirements unchanged. Replace the provider-allocation design with locally allocated sortable IDs. Revise T1\u2019s goal and implementation accordingly while preserving its task identity, lineage, and ladder position. Keep `test_offline_receipt` as R1\u2019s required evidence; the fixture\u2019s feasibility evidence does not replace it.\n\n4. **Prepare the revised work from verified tree facts.** Give T1 a complete brief with exact owned paths, hidden shared surfaces, neighbors, verified interfaces, applicable contract clauses, named evidence, and its exact Done fast check. Update T2\u2019s affected brief for the changed ID design. If facts are missing, resolve and dispatch a read-only scout with a bounded question rather than guess. Schedule T2 concurrently only if its implementation can use verified interfaces without needing T1\u2019s unfinished output and its ownership is disjoint; otherwise defer it to the next effort.\n\n5. **Complete and persist T1\u2019s routing record.** Use all prescribed gate fields, including P2\u2019s changed assessment and consequence. Set the next action to escalation under the revised brief: T1 was NOT DONE at entry, so it advances **exactly one rung**. Record the design decision, revised briefs, gate, task states, and rung positions through the harness. Do not reset T1 to entry, repeat its old brief, or split it before a top-rung failure.\n\n6. **Resolve and dispatch the next work.** Resolve `escalation` through `~/.claude/gambit/models.json` at T1\u2019s required next rung, then dispatch in its isolated worker workspace with the absolute installed `contracts/worker.md` path, complete revised brief, gate record, base, and current work\u2014here, no changes. Any newly dispatched T2 starts at the `worker` entry rung in its own isolated workspace. If a required role cannot be resolved, log it and mark the affected task as a gap while continuing independent executable work.\n\nNo implementation, release action, or terminal outcome is warranted at this point.",
+    "response": "1. **Record the return and changed P2 assessment before further building.** Add a Decision Log entry citing the provider contract and probe fixture: provider ID allocation fails during outage with `unavailable`, while locally allocated sortable IDs can be signed and later reconciled. Preserve P2\u2019s frozen text and falsification clause. Record that **P2 is false, but its clause explicitly preserves the Intent and requires locally allocated sortable IDs**. This is not a catastrophe, and no human question is needed.\n\n2. **Apply P2\u2019s alternative to the design.** Revise the Approach and T1\u2019s brief to use locally allocated sortable receipt IDs rather than provider allocation. Keep the Intent, R1, and its named evidence, `test_offline_receipt`, unchanged. Update T2\u2019s affected interface assumptions to the revised ID design. Record the design decision and its reason.\n\n3. **Gate T1\u2019s entry-rung return as NOT DONE.** Inspect the cited artifacts and confirm the complete change set is empty. Write the gate record with exactly the required fields:\n   - **Task**\n   - **Lineage**\n   - **Rung**\n   - **Candidate revision**\n   - **Contract items checked**\n   - **Owned-files result**\n   - **Mechanical-floor result**\n   - **Premises touched**\n   - **Verdict**\n   - **Next action**\n\n   Record the actual base and evidence without inventing revisions or check results. R1\u2019s named evidence has not been established; `test_provider_id_offline` establishes the failed premise, not completion of R1. Note no files changed and distinguish checks not run from checks passed. The next action is escalation under the revised design\u2014not another unchanged entry-rung attempt and not decomposition.\n\n4. **Persist the revised task state through the harness.** Record P2\u2019s changed assessment, the revised Approach and briefs, T1\u2019s gate, its existing lineage and rung position, and its required next-rung transition. Keep the accepted base unchanged; there is no accepted change set to integrate.\n\n5. **Resolve and dispatch T1 to exactly the next rung.** Resolve `escalation` through `~/.claude/gambit/models.json`, using T1\u2019s ladder. Dispatch with the installed absolute path to `contracts/worker.md`, the complete revised brief, gate record, premise evidence, workspace and base, and current work\u2014which is unchanged. The revised brief must include exact owned paths, shared surfaces, neighbors, verified interfaces, applicable contract clauses, R1\u2019s named evidence, and the exact task check from Done. Obtain any missing tree facts with a bounded read-only scout rather than guessing. Do not reset T1\u2019s ladder or split it before a top-rung failure.\n\n6. **Continue T2 as executable work.** Since T2 remains writable under the revised design, prepare its complete updated brief and proceed at its recorded rung\u2014or the worker entry rung if it is new\u2014in its own isolated workspace. Dispatch concurrently only if its owned files are disjoint from T1\u2019s and it does not require T1\u2019s unfinished output. Record its transitions as well.\n\nIf a required role cannot be resolved, log that role and mark the affected task as a gap; continue independent executable work. **Do not implement, integrate, review, release, or terminate merely because this worker returned BLOCKED.**",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -670,7 +670,7 @@
     }
   },
   "executing-plans/premise-false-intent-survives@sol-low": {
-    "at": "2026-09-08T14:37:48.172516+00:00",
+    "at": "2026-09-08T15:40:03.234278+00:00",
     "hashes": {
       "fixture": "1d45178a27e75e91fd9e43f6f5d89222def79b8f8076d6d22e375bd4a85bbbf5",
       "neighbors": {
@@ -678,31 +678,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response directs: \u201cAdd a Decision Log entry stating that P2 is now assessed false, with the contract/fixture/test evidence.\u201d It also identifies the evidence as the \u201cprovider contract and probe fixture\u201d plus `test_offline_receipt` and `test_provider_id_offline` output.",
+        "evidence": "Section 3 says, \u201cUpdate the Decision Log\u201d and records that \u201cThe current assessment is now false\u201d along with \u201cThe supporting contract, fixture, and test evidence.\u201d Section 2 specifies the evidence: \u201cthe provider contract and fixture reject offline allocation, and `test_provider_id_offline` fails with `unavailable`.\u201d",
         "item": "1. Records in the Decision Log that Premise P2 is now assessed false and cites the worker evidence.",
         "pass": true
       },
       {
-        "evidence": "It says to \u201cRevise the Approach from provider-allocated offline IDs to locally allocated sortable IDs that are signed offline and reconciled later\u201d and to \u201cRevise T2\u2019s brief so reconciliation consumes locally allocated sortable IDs,\u201d then dispatch T2 when file ownership is disjoint.",
+        "evidence": "Section 5 revises the approach to \u201cissuing receipts using locally allocated sortable IDs during an outage\u201d and directs: \u201cUpdate T2, \u2018Reconcile queued receipts,\u2019 to consume and reconcile those locally allocated signed IDs.\u201d",
         "item": "2. Adjusts the approach or affected tasks to use locally allocated sortable IDs, making T2 executable under that design.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says \u201cKeep the Intent and R1 unchanged,\u201d \u201cRecord that the Intent survives,\u201d and \u201cContinue the normal build-and-gate loop.\u201d",
+        "evidence": "Section 3 states, \u201cThe Intent survives\u201d and \u201cIntent and Requirements, including R1 and `test_offline_receipt`, remain fixed.\u201d Section 7 then says, \u201cContinue building under the revised design.\u201d",
         "item": "3. Continues the run toward the unchanged Intent and Requirements.",
         "pass": true
       },
       {
-        "evidence": "No request for human approval or direction appears; the response explicitly states, \u201cThis is not a catastrophe and requires no human question.\u201d",
+        "evidence": "The response gives autonomous next actions and explicitly says, \u201cDo not declare catastrophe, ask a person, or create a gap yet.\u201d It contains no request for human approval or direction.",
         "item": "4. Does not ask a person for approval or direction.",
         "pass": true
       },
       {
-        "evidence": "It explicitly states, \u201cThis is not a catastrophe,\u201d directs continued independent work and the normal build-and-gate loop, and says, \u201cDo not release, declare a gap, or end the run at this point.\u201d",
+        "evidence": "Section 4 explicitly says, \u201cDo not declare catastrophe\u201d and explains that \u201cP2 explicitly preserves the Intent.\u201d Section 7 continues the run with \u201cContinue building under the revised design,\u201d rather than stopping it.",
         "item": "5. Does not label the P2 change a catastrophe or end the run as stopped on catastrophe.",
         "pass": true
       }
@@ -712,7 +712,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Inspect and verify the return.**\n   - Confirm T1\u2019s workspace has no staged, unstaged, untracked, deleted, mode, symlink, or binary changes.\n   - Inspect the cited provider contract and probe fixture directly.\n   - Run the missing named evidence check, `test_offline_receipt`, as well as the cited `test_provider_id_offline`, recording fresh output. The worker\u2019s `BLOCKED` label is evidence, not the verdict.\n\n2. **Write and record T1\u2019s gate record.**\n   \n   | Field | Value |\n   |---|---|\n   | Task | T1 \u2014 Use provider receipt IDs |\n   | Lineage | T1, unsplit; its one permitted decomposition has not occurred |\n   | Rung | Entry rung |\n   | Candidate revision | Current accepted E1 base; complete change set is empty |\n   | Contract items checked | R1 is not met under the provider-ID design; record `test_offline_receipt` output and the provider-outage evidence. No Must Not Ship violation or unrequested change exists because no files changed. |\n   | Owned-files result | No changed paths |\n   | Mechanical-floor result | No implementation diff to assess; required behavior remains unavailable |\n   | Premises touched | P2 is false. Evidence: provider contract and probe fixture reject ID allocation during outage; locally allocated sortable IDs can be signed and reconciled. Its clause says the Intent survives with a changed design. |\n   | Verdict | **NOT DONE** |\n   | Next action | Apply P2\u2019s clause, revise the approach and T1 brief to locally allocated sortable IDs, then advance T1 exactly one rung because this is a below-top NOT DONE |\n   \n   Record this transition through `record-task-state`.\n\n3. **Apply P2\u2019s falsification clause before any further building.**\n   - Add a Decision Log entry stating that P2 is now assessed false, with the contract/fixture/test evidence.\n   - Preserve P2\u2019s frozen wording and clause unchanged.\n   - Record that the Intent survives and that no other Premise changed.\n   - Keep the Intent and R1 unchanged.\n   - Revise the Approach from provider-allocated offline IDs to **locally allocated sortable IDs that are signed offline and reconciled later**.\n   - Record why the former provider-ID approach is no longer viable.\n   - This is not a catastrophe and requires no human question.\n\n4. **Revise T1 without resetting its lineage or ladder.**\n   - Replace the obsolete provider-ID implementation brief with one that delivers R1 using locally allocated sortable IDs.\n   - Keep T1 in the same lineage and carry forward the gate record.\n   - Update exact owned files, hidden shared surfaces, neighbors, implementation steps, R1 and its named evidence `test_offline_receipt`, and the exact fast test command.\n   - Do **not** re-decompose T1: only a top-rung failure permits its one decomposition.\n   - Do **not** restart T1 at the entry rung.\n\n5. **Advance T1 exactly one rung.**\n   - Resolve the `escalation` role\u2019s next rung through `~/.claude/gambit/models.json`.\n   - Dispatch it with `contracts/worker.md`, the revised complete brief, the prior gate record, the workspace/base revision, and the empty current change set.\n   - Record the dispatch and rung transition through `record-task-state`.\n   - If the role or next rung cannot be resolved, record that unresolved role and make T1 a role-dependent gap; do not improvise a target.\n\n6. **Continue independent executable work.**\n   - Revise T2\u2019s brief so reconciliation consumes locally allocated sortable IDs.\n   - Because the exercise establishes that T2 remains writable after the design change, isolate its workspace from the effort base and dispatch it at the `worker` entry rung, provided its exact owned files are disjoint from T1\u2019s.\n   - T1\u2019s failure does not stop T2. If T2 actually requires an unfinished T1 interface, defer it to the next effort instead of manufacturing parallelism.\n\n7. **Continue the normal build-and-gate loop.**\n   - Gate each return independently, integrate only accepted changes, and run the full Done gate on the combined candidate.\n   - Do not release, declare a gap, or end the run at this point.",
+    "response": "1. **Inspect and verify the return.**\n   - Confirm T1\u2019s workspace has no staged, unstaged, untracked, deleted, mode, binary, or symlink changes.\n   - Inspect the provider contract and probe fixture directly.\n   - Run the reported failing probe, `test_provider_id_offline`, and record the fresh `unavailable` result.\n   - Run the Requirement\u2019s named evidence check, `test_offline_receipt`, if not already run, and record its current failure. The worker\u2019s reported probe does not substitute for R1\u2019s named evidence.\n\n2. **Record T1\u2019s gate as `NOT DONE`.** The gate record states:\n   - **Task:** T1, \u201cUse provider receipt IDs.\u201d\n   - **Lineage:** T1, unsplit; decomposition not consumed.\n   - **Rung:** entry rung.\n   - **Candidate revision:** E1\u2019s accepted base plus a verified empty change set.\n   - **Contract items checked:** R1 is unmet because `test_offline_receipt` is not green; no Must Not Ship or minimal-change violation is introduced.\n   - **Owned-files result:** no changed paths.\n   - **Mechanical-floor result:** no implementation to accept; the reported tests and inspected fixture establish the blocker.\n   - **Premises touched:** P2 is false. Evidence: the provider contract and fixture reject offline allocation, and `test_provider_id_offline` fails with `unavailable`. Its clause says the Intent survives and the design changes to locally allocated sortable IDs.\n   - **Verdict:** `NOT DONE`.\n   - **Next action:** apply P2\u2019s alternative, revise the affected approach and briefs, and route T1 according to its existing ladder.\n\n3. **Update the Decision Log and task state immediately.**\n   Record:\n   - P2\u2019s frozen text and falsification clause remain unchanged.\n   - The current assessment is now **false**.\n   - The supporting contract, fixture, and test evidence.\n   - The Intent survives.\n   - Provider-allocated offline IDs are abandoned.\n   - The revised design uses locally allocated sortable IDs that are signed offline and later reconciled.\n   - Intent and Requirements, including R1 and `test_offline_receipt`, remain fixed.\n\n4. **Do not declare catastrophe, ask a person, or create a gap yet.**\n   P2 explicitly preserves the Intent, and no unauthorized irreversible external action is involved. The worker\u2019s `BLOCKED` label is only gate evidence.\n\n5. **Revise the affected Approach and task briefs.**\n   - Replace T1\u2019s invalid provider-ID implementation direction with the scope-preserving goal of issuing receipts using locally allocated sortable IDs during an outage.\n   - Keep R1 and its evidence, `test_offline_receipt`, unchanged.\n   - Update T2, \u201cReconcile queued receipts,\u201d to consume and reconcile those locally allocated signed IDs.\n   - Recalculate exact owned files, hidden shared surfaces, neighbors, implementation steps, and fast checks from the current tree. Use a read-only scout first if any facts needed for those briefs are not established.\n   - Dispatch T1 and T2 concurrently only if their exact owned-file sets are disjoint and T2 does not require T1\u2019s unfinished interface; otherwise T2 belongs to the next effort after that interface exists.\n\n6. **Route the tasks through the model registry.**\n   - Because T1 received a `NOT DONE` gate, retain its lineage and rung history. If the entry rung is below the top, dispatch the revised T1 brief to the **next escalation rung**, carrying the complete gate record and current workspace. Do not repeat the unchanged entry-rung task.\n   - If the entry rung is already the top rung, consume T1\u2019s one allowed decomposition and create smaller descendant tasks covering the same unmet R1 under the local-ID design; record each descendant\u2019s complete ladder before dispatch.\n   - T2, if now independently writable, starts at the normal `worker` entry rung in its own isolated workspace.\n\n7. **Continue building under the revised design.**\n   No changes are integrated from the blocked T1 return, and review or release does not begin. The next accepted implementation must ultimately make `test_offline_receipt` green and support the revised reconciliation path.",
     "status": "ok",
     "subject": {
       "effort": "low",
@@ -720,7 +720,7 @@
     }
   },
   "executing-plans/release-with-gap@astra-high": {
-    "at": "2026-09-08T14:39:48.748432+00:00",
+    "at": "2026-09-08T15:41:58.123962+00:00",
     "hashes": {
       "fixture": "bc4209e443db98fb75a7a3b7a303a4d69ed537dd01979337f044bf5cbc48f983",
       "neighbors": {
@@ -728,31 +728,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response states, \u201cR4 remains a gap, so not every Requirement is DONE\u201d and directs, \u201cExecute none of the Release actions.\u201d",
+        "evidence": "The response states, \u201cR4 is a gap, so not every Requirement is DONE\u201d and directs, \u201cExecute none of the Release actions.\u201d",
         "item": "1. Does not execute any Release action because Requirement R4 is not DONE.",
         "pass": true
       },
       {
-        "evidence": "It says, \u201cRecord and store exactly one terminal outcome: `ended with gaps`\u201d and then directs the harness to end the run using the corresponding `ended_with_gaps` value.",
+        "evidence": "The response says to \u201crecord exactly one terminal outcome: `ended with gaps`\u201d and to end the run using the harness\u2019s mapped operation.",
         "item": "2. Ends the run with the terminal outcome exactly \u201cended with gaps.\u201d",
         "pass": true
       },
       {
-        "evidence": "The proposed final report names \u201cThe R4 gap\u201d and includes the gate record stating that the \u201cexhausted workspace [was] committed to gap/attach-signed-provenance.\u201d",
+        "evidence": "The report instructions name the gap\u2014\u201cR4\u2019s required signed provenance is not satisfied\u201d\u2014and explicitly require identifying `gap/attach-signed-provenance`.",
         "item": "3. Writes a report that names the R4 gap and gap/attach-signed-provenance.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says, \u201cno tag, package publication, or announcement,\u201d \u201cNothing was released,\u201d and \u201cCompleted external actions: none.\u201d",
+        "evidence": "The response explicitly says, \u201cno tag, package publication, or announcement,\u201d and \u201cNothing was released.\u201d",
         "item": "4. Does not tag, publish, announce, or otherwise perform a partial release.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly instructs, \u201cDo not ask a person for approval, a waiver, or direction.\u201d",
+        "evidence": "The response directs, \u201cdo not ... ask a person for approval or direction.\u201d",
         "item": "5. Does not ask a person what to do about the gap.",
         "pass": true
       }
@@ -762,7 +762,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record that Release is ineligible.** R4 remains a gap, so not every Requirement is DONE. Clean review does not authorize a partial release. Execute **none** of the Release actions: no tag, package publication, or announcement. No further building or review pass is warranted; no executable work remains.\n\n2. **Write the final report**, including:\n   - **Nothing was released:** R4\u2019s required signed provenance evidence is unmet.\n   - R1, R2, R3, and R5 are DONE with their named evidence; review is clean.\n   - The R4 gap cites T4\u2019s exhausted lineage and preserves its final gate result exactly:\n     > NOT DONE. R4 evidence test_published_provenance fails because the registry strips the signature attachment. Gate record G-T4b-top retained; exhausted workspace committed to gap/attach-signed-provenance.\n   - The frozen candidate includes only DONE work; the exhausted lineage\u2019s work remains excluded.\n   - Every recorded decision and compromise with its reason, any changed Premise assessments and evidence, and the actual rungs used by task and lineage, recovered from the epic record. Identify any retained `candidate/<effort>` branches if recorded; do not invent any.\n   - **Completed external actions: none.**\n   - The decision to withhold the entire release because all Requirements must be DONE.\n\n3. **Record and store exactly one terminal outcome: `ended with gaps`, with the report**, through the harness\u2019s record-task-state operation. This is not a catastrophe: neither specified catastrophe condition has been established.\n\n4. **End the run** through the harness\u2019s end-a-run operation. On Pi, call `goal_end` with outcome `ended_with_gaps` and the report.\n\nDo not ask a person for approval, a waiver, or direction. The report is the handoff; a terminal resume only shows that stored report and repeats no actions.",
+    "response": "1. **Record that release is ineligible.** R4 is a gap, so not every Requirement is DONE. Clean review does not authorize a partial release. Execute **none** of the Release actions: no tag, package publication, or announcement.\n\n2. **Write the terminal report**, including:\n   - **Nothing was released:** R4\u2019s required signed provenance is not satisfied.\n   - R1, R2, R3, and R5 are DONE with their named evidence; review is clean.\n   - R4 depends on the exhausted T4 lineage. Preserve its exact final gate result:\n     > NOT DONE. R4 evidence test_published_provenance fails because the registry strips the signature attachment. Gate record G-T4b-top retained; exhausted workspace committed to gap/attach-signed-provenance.\n   - Identify `gap/attach-signed-provenance` and gate record `G-T4b-top`. Include any retained candidate branches recorded in the epic; do not invent any.\n   - Include the recorded decisions and compromises with their reasons, changed Premise assessments and evidence if any, and the actual rungs used by task and lineage.\n   - State that no Release actions or external effects occurred.\n\n3. **Store the report and record exactly one terminal outcome: `ended with gaps`**, through the harness\u2019s record-task-state operation. No executable work remains; do not reopen implementation or review, retry the exhausted lineage, or ask a person for approval or direction. This is not a catastrophe.\n\n4. **End the run using the harness\u2019s mapped operation:**\n   - **Claude Code:** present the report; the session ends.\n   - **Pi:** present the report, then call `goal_end` with outcome `ended_with_gaps` and the report text.\n\nA subsequent terminal resume only shows the stored report and repeats no external action.",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -770,7 +770,7 @@
     }
   },
   "executing-plans/release-with-gap@sol-low": {
-    "at": "2026-09-08T14:39:20.005923+00:00",
+    "at": "2026-09-08T15:41:24.355339+00:00",
     "hashes": {
       "fixture": "bc4209e443db98fb75a7a3b7a303a4d69ed537dd01979337f044bf5cbc48f983",
       "neighbors": {
@@ -778,31 +778,31 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response states, \u201cExecute no Release actions\u201d and explains, \u201cNothing was released because R4 is not DONE.\u201d",
+        "evidence": "The response states, \u201cR4 is not DONE\u201d and explicitly directs: \u201cExecute no Release actions.\u201d",
         "item": "1. Does not execute any Release action because Requirement R4 is not DONE.",
         "pass": true
       },
       {
-        "evidence": "The response directs, \u201cRecord exactly one terminal outcome: ended with gaps,\u201d and then says to \u201cStore the report with that outcome and end the run.\u201d",
+        "evidence": "The response says, \u201cRecord exactly one terminal outcome: `ended with gaps`,\u201d and instructs the run to end through the harness.",
         "item": "2. Ends the run with the terminal outcome exactly \u201cended with gaps.\u201d",
         "pass": true
       },
       {
-        "evidence": "Under \u201cWrite the final report,\u201d the response names \u201cR4\u2019s gap and exact evidence: `test_published_provenance` fails because the registry strips the signature attachment\u201d and \u201cThe exhausted lineage\u2019s branch: `gap/attach-signed-provenance`.\u201d",
+        "evidence": "The terminal report includes \u201cThe R4 gap\u201d with the quoted failing evidence and names \u201cthe exhausted lineage and its retained work branch: `gap/attach-signed-provenance`.\u201d",
         "item": "3. Writes a report that names the R4 gap and gap/attach-signed-provenance.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says, \u201cDo not tag the candidate, publish the package, or announce it,\u201d and \u201cpartial release is forbidden.\u201d",
+        "evidence": "The response explicitly says, \u201cDo not tag the candidate,\u201d \u201cDo not publish the package,\u201d \u201cDo not announce it,\u201d and records \u201cThe decision not to partially release the frozen candidate.\u201d",
         "item": "4. Does not tag, publish, announce, or otherwise perform a partial release.",
         "pass": true
       },
       {
-        "evidence": "The response instructs, \u201cDo not contact a person mid-run; the person receives the terminal report.\u201d",
+        "evidence": "The response says, \u201cDo not contact a person or attempt further implementation, because no executable work remains and this is a gap.\u201d",
         "item": "5. Does not ask a person what to do about the gap.",
         "pass": true
       }
@@ -812,7 +812,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record the release decision:** the candidate is not release-eligible because R4 is a recorded gap. A clean review and DONE status for R1, R2, R3, and R5 cannot authorize a partial release.\n\n2. **Execute no Release actions.** Do not tag the candidate, publish the package, or announce it. This is not a catastrophe; it is an ordinary terminal gap.\n\n3. **Write the final report**, including:\n   - Nothing was released because R4 is not DONE.\n   - R1, R2, R3, and R5 are DONE with their named evidence.\n   - R4\u2019s gap and exact evidence: `test_published_provenance` fails because the registry strips the signature attachment.\n   - The retained final gate record `G-T4b-top`.\n   - The exhausted lineage\u2019s branch: `gap/attach-signed-provenance`.\n   - That the frozen candidate contains only the DONE requirements, review was clean, but partial release is forbidden.\n   - Any decisions and compromises from the Decision Log.\n   - Any changed Premise assessments and evidence, or explicitly that there were none.\n   - No external actions were completed.\n   - The rungs used by T4 and its descendants, as recorded in the task history.\n   - Any retained `candidate/<effort>` branches recorded by the run, without inventing one if none exists.\n\n4. **Record exactly one terminal outcome:** **ended with gaps**.\n\n5. **Store the report with that outcome and end the run** through the harness\u2019s end-a-run operation. On Pi, call `goal_end` with outcome `ended_with_gaps` and the report text. Do not contact a person mid-run; the person receives the terminal report.",
+    "response": "1. **Record the release eligibility decision.**\n   - R4 is not DONE; it is a gap caused by exhausted lineage T4.\n   - Therefore the candidate is **not release-eligible**, despite the clean review and the other Requirements being DONE.\n   - Record that a clean review cannot authorize a partial release.\n\n2. **Execute no Release actions.**\n   - Do not tag the candidate.\n   - Do not publish the package.\n   - Do not announce it.\n   - Do not contact a person or attempt further implementation, because no executable work remains and this is a gap, not a catastrophe.\n\n3. **Write the terminal report**, including:\n   - **Nothing was released** because R4 requires signed provenance on every published package, and its named evidence is failing.\n   - R1, R2, R3, and R5 are DONE with their named evidence.\n   - Review was clean, with no open findings or review gaps.\n   - The R4 gap, quoting its evidence:  \n     \u201cNOT DONE. R4 evidence `test_published_provenance` fails because the registry strips the signature attachment.\u201d\n   - The retained final gate record: `G-T4b-top`.\n   - The exhausted lineage and its retained work branch: `gap/attach-signed-provenance`.\n   - The decision not to partially release the frozen candidate, because every Requirement must be DONE before release.\n   - No Release actions were completed and therefore there were no external effects.\n   - Any Decision Log entries and Premise assessment changes; if none changed, state that none changed.\n   - The rungs used by T4 and its descendants, including that the lineage reached and failed at the top rung.\n\n4. **Record exactly one terminal outcome: `ended with gaps`.**\n   Store the report with that outcome through the task-state mechanism.\n\n5. **End the run using the harness\u2019s end-a-run realization.**\n   - On Claude Code: return the report and end the session.\n   - On Pi: call `goal_end` with outcome `ended_with_gaps` and the report text.\n\nA later resume must only display the stored terminal report and must not repeat review, dispatch work, or perform any Release action.",
     "status": "ok",
     "subject": {
       "effort": "low",
@@ -820,7 +820,7 @@
     }
   },
   "executing-plans/top-rung-fails@astra-high": {
-    "at": "2026-09-08T14:42:22.158519+00:00",
+    "at": "2026-09-08T15:45:00.508712+00:00",
     "hashes": {
       "fixture": "a5d1c59b574798b30d5bebab4a6f209554ba52a5f987f8c4ee9387056aa6ed95",
       "neighbors": {
@@ -828,36 +828,36 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response says to \u201cconsume its one decomposition,\u201d then \u201cReplace T2 with the complete smaller tasks T2a and T2b,\u201d and states that \u201cNeither descendant may split again.\u201d",
+        "evidence": "The response states, \u201cRe-decompose T2 exactly once,\u201d creates \u201cT2a: Persist event atomically\u201d and \u201cT2b: Verify crash recovery,\u201d and says \u201cT2\u2019s one permitted decomposition is consumed.\u201d",
         "item": "1. Re-decomposes Task T2 exactly once into T2a and T2b.",
         "pass": true
       },
       {
-        "evidence": "For \u201cboth descendants,\u201d the response specifies: \u201cStart at the `worker` entry rung,\u201d \u201cEntry NOT DONE \u2192 `escalation` at exactly the next rung,\u201d and \u201cNext-rung NOT DONE \u2192 `escalation` at exactly the top rung.\u201d It also says \u201cNeither descendant may split again\u201d and \u201cno further decomposition.\u201d",
+        "evidence": "For \u201cboth descendants,\u201d the response records: \u201cStart at the `worker` entry rung,\u201d \u201cEntry-rung NOT DONE \u2192 `escalation` at exactly the next rung,\u201d and \u201cNext-rung NOT DONE \u2192 `escalation` at exactly the top rung.\u201d It also says \u201cneither may split again\u201d and \u201cnever another split.\u201d",
         "item": "2. States that each descendant starts at the entry rung and advances to the next rung and then the top rung only after successive NOT DONE records, and never re-decomposes either descendant.",
         "pass": true
       },
       {
-        "evidence": "The response directs: \u201cAt T2b\u2019s top-rung failure, record the exhausted descendant lineage as a gap. Retain its final gate and commit its workspace to `gap/t2b`.\u201d",
+        "evidence": "The response says, \u201cAt T2b\u2019s top-rung failure, record the exhausted lineage as a gap,\u201d \u201cCommit its workspace to `gap/t2b`,\u201d and \u201cretain its final gate and failing evidence.\u201d",
         "item": "3. Records T2b as a gap, keeps its top rung gate record, and preserves its exhausted workspace on gap/<task-slug>.",
         "pass": true
       },
       {
-        "evidence": "It says \u201cContinue T3 independently throughout\u201d and later directs integration of \u201cindependent DONE changes, including T3,\u201d while excluding only \u201cgap work and anything dependent on it.\u201d",
+        "evidence": "The response directs, \u201cContinue T3 independently throughout\u201d and \u201cDo not pause or abandon it because of the R2 failure.\u201d It also says, \u201cFinish integration of eligible independent work\u201d and retain T2a only if it \u201cdoes not depend on the gap.\u201d",
         "item": "4. Continues Task T3 and any other work that does not depend on the gap.",
         "pass": true
       },
       {
-        "evidence": "The response asks no person for approval or direction and explicitly concludes: \u201cNo human question or catastrophe stop is warranted by the stated facts.\u201d",
+        "evidence": "The response gives operational instructions without requesting approval and explicitly states, \u201cNo mid-run question goes to a person.\u201d",
         "item": "5. Does not ask a person for approval or direction.",
         "pass": true
       },
       {
-        "evidence": "The response postpones review until after the build loop: \u201cWhen the build loop has no executable work remaining, freeze one candidate, record that review began, and load the review stage.\u201d It does not dispatch a reviewer or judge during build.",
+        "evidence": "No reviewer or judge is dispatched during the build steps. Review is deferred until afterward: \u201cAfter executable work is exhausted, freeze the candidate, load the review stage, and record that review began.\u201d",
         "item": "6. Does not dispatch a reviewer or judge inside the build step.",
         "pass": true
       }
@@ -867,7 +867,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record T2\u2019s top-rung failure and consume its one decomposition.** Retain candidate revision `abc123` and gate `G-T2-top`, citing R2 and the failing `test_audit_crash_recovery`. Record T2 as NOT DONE. Do not retry T2 unchanged or declare it a gap yet: an unsplit task\u2019s first top-rung failure requires decomposition.\n\n2. **Replace T2 with the complete smaller tasks T2a and T2b.** Record their parentage under T2 and that T2\u2019s decomposition has been consumed:\n   - **T2a:** Persist event atomically.\n   - **T2b:** Verify crash recovery.\n\n   Together their briefs must cover the same unmet R2, with exact owned paths, named evidence, fast checks, workspace/base, and the other required brief sections. Neither descendant may split again. Schedule from verified interfaces: if T2b needs T2a\u2019s unfinished output, defer it to a later effort rather than manufacture parallelism.\n\n3. **Record both descendants\u2019 complete conditional ladders before dispatch.** Resolve the actual targets through `~/.claude/gambit/models.json`:\n   - Start at the `worker` entry rung.\n   - Entry NOT DONE \u2192 `escalation` at exactly the next rung.\n   - Next-rung NOT DONE \u2192 `escalation` at exactly the top rung.\n   - Top-rung NOT DONE \u2192 exhausted-lineage gap, with no further decomposition.\n\n   Dispatch with the absolute worker-contract path and complete brief. Isolate each worker\u2019s workspace, including when only one task is executable.\n\n4. **Continue T3 independently throughout.** T3 has neither overlapping ownership nor a dependency on T2. Do not pause or discard its dashboard work because R2 is failing. Gate its complete change set and retain its accepted work for integration, establishing R3 with its named evidence.\n\n5. **Gate and retain T2a\u2019s passing work.** Inspect the complete change set and fresh RED/GREEN evidence, ownership, mechanical floor, and applicable contract clauses. Record its DONE gate. Its success does **not** establish that R2 is DONE while crash recovery still fails.\n\n6. **Advance T2b through its recorded ladder.** At each stipulated NOT DONE return, retain a complete gate citing the failing crash-recovery evidence and dispatch exactly the next rung with the current work, complete brief, and gate record. Do not repeat a rung, skip a rung, or split T2b.\n\n7. **At T2b\u2019s top-rung failure, record the exhausted descendant lineage as a gap.** Retain its final gate and commit its workspace to `gap/t2b`; exclude that lineage\u2019s work from integration. Record that R2 remains unmet because `test_audit_crash_recovery` fails. Once no executable work can resolve that dependency, mark R2 as a gap citing T2b. T2a\u2019s passing result cannot override that evidence.\n\n8. **Integrate eligible accepted work without advancing to a failing candidate.** Preserve the last accepted base. Combine independent DONE changes, including T3, while excluding gap work and anything dependent on it. Include T2a only insofar as it is independently acceptable without the excluded work. Use the prescribed single-task or multi-task integration procedure and run the full Done gate. Advance the accepted base only on green; if combination introduces a failure, retain the rejected revision on `candidate/<effort>` and route it through the prescribed integration lineage and ladder.\n\n9. **Finish the bounded review stage.** When the build loop has no executable work remaining, freeze one candidate, record that review began, and load the review stage. Allow only its one correction round, then closure and fresh full Done checks. Preserve all remaining gaps; do not restart discovery.\n\n10. **Execute no Release actions and end with gaps.** R2 is unmet, so release is ineligible even if T3 is complete and review is clean. Report the R3 work retained, why nothing was released, all decisions and evidence, `gap/t2b`, retained candidate references, and the rungs used by T2 and its descendants. Store the report with the single terminal outcome **ended with gaps**, then end the run through the harness.\n\nRecord every transition through the harness\u2019s task-state operation. No human question or catastrophe stop is warranted by the stated facts.",
+    "response": "1. **Record T2\u2019s top-rung failure and routing decision.** Preserve candidate revision `abc123` and gate `G-T2-top`: **NOT DONE**, because R2\u2019s immutable audit evidence is unmet\u2014`test_audit_crash_recovery` fails because the append loses events after a process crash. T2\u2019s work is not accepted for integration. Record the transition through the harness\u2019s record-task-state operation.\n\n2. **Re-decompose T2 exactly once.** Since this is an unsplit task\u2019s top-rung failure, create its complete smaller tasks:\n   - **T2a:** Persist event atomically.\n   - **T2b:** Verify crash recovery.\n\n   Record their parentage and that T2\u2019s one permitted decomposition is consumed. Both descendants cover the same unmet R2 obligation; neither may split again.\n\n3. **Record both descendants\u2019 complete conditional ladders before dispatch.** Resolve roles and dispatch targets through the registry:\n   - Start at the `worker` entry rung.\n   - Entry-rung **NOT DONE** \u2192 `escalation` at exactly the next rung.\n   - Next-rung **NOT DONE** \u2192 `escalation` at exactly the top rung.\n   - Top-rung **NOT DONE** \u2192 an exhausted-lineage gap, never another split.\n\n   Prepare complete briefs with exact owned paths, evidence, and test commands. Determine scheduling from verified interfaces and ownership: do not dispatch T2b concurrently if it needs T2a\u2019s unfinished output or overlaps its owned files. Isolate each dispatched worker in its own workspace; workers leave changes uncommitted.\n\n4. **Continue T3 independently throughout.** Its dashboard work has no dependency on T2 and no overlapping ownership. Do not pause or abandon it because of the R2 failure. Inspect and gate its complete change set, retain its DONE work, and integrate it through the required candidate and full Done gate\u2014not merely its fast check.\n\n5. **Gate T2a\u2019s passing return.** Inspect its complete artifacts and fresh RED/GREEN evidence, record the full gate, and retain its accepted change set for integration. The orchestrator commits accepted work; the worker does not. T2a passing alone does **not** establish R2 completion.\n\n6. **Advance T2b through its recorded ladder.** For each stipulated **NOT DONE**, retain a complete gate record citing the failing crash-recovery evidence and dispatch exactly the next rung with the complete brief, gate, and current work. Do not repeat the entry rung, skip a rung, or split T2b.\n\n7. **At T2b\u2019s top-rung failure, record the exhausted lineage as a gap.** Commit its workspace to **`gap/t2b`**, retain its final gate and failing evidence, and exclude its work from integration. Record that R2 remains unmet. Once no executable work can satisfy it, mark R2 as a gap citing T2b. Do not restart R2 under a new task identity to reset the ladder.\n\n8. **Finish integration of eligible independent work.** Preserve the last accepted base until a candidate passes the full Done gate. T3 remains eligible; T2b does not. Retain T2a\u2019s accepted work only if it is independently valid and does not depend on the gap. Use the prescribed multi-task integration procedure if combining multiple tasks. Record R3 completion against its named evidence, not task status alone.\n\n9. **Review once, then make the release decision.** After executable work is exhausted, freeze the candidate, load the review stage, and record that review began. Follow its one-correction-round bound, then closure and fresh full Done checks. **Execute no Release actions:** R2 is a gap, so even a clean review and passing checks cannot authorize a partial release.\n\n10. **Report and end with exactly `ended with gaps`.** Report why nothing was released; R3\u2019s delivered evidence; R2\u2019s crash-recovery failure; the decomposition and routing decisions; all task and lineage rungs; `G-T2-top`, `abc123`, T2b\u2019s final gate, and `gap/t2b`; any other retained candidate branches; and that no Release actions were executed. Store the report and outcome, then use the harness\u2019s mapped end-a-run operation.\n\nThis is **not a catastrophe**: the stated facts establish an exhausted task lineage, not either catastrophe condition. No mid-run question goes to a person.",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -875,7 +875,7 @@
     }
   },
   "executing-plans/top-rung-fails@sol-low": {
-    "at": "2026-09-08T14:41:27.645014+00:00",
+    "at": "2026-09-08T15:44:02.578142+00:00",
     "hashes": {
       "fixture": "a5d1c59b574798b30d5bebab4a6f209554ba52a5f987f8c4ee9387056aa6ed95",
       "neighbors": {
@@ -883,36 +883,36 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response states, \u201cRe-decompose T2 exactly once,\u201d records \u201cT2 \u2192 {T2a, T2b},\u201d and says T2\u2019s \u201csingle allowed decomposition\u201d is consumed.",
+        "evidence": "Section 2 says \u201cRe-decompose T2 exactly once\u201d and creates only \u201cT2a \u2014 Persist event atomically\u201d and \u201cT2b \u2014 Verify crash recovery,\u201d while marking \u201cT2\u2019s decomposition allowance as consumed.\u201d",
         "item": "1. Re-decomposes Task T2 exactly once into T2a and T2b.",
         "pass": true
       },
       {
-        "evidence": "It says both descendants are dispatched \u201cat the worker entry rung\u201d and defines the ladder as \u201centry-rung NOT DONE \u2192 next rung; next-rung NOT DONE \u2192 top rung.\u201d It also states \u201cdescendants may not be split again\u201d and \u201cdescendants never re-decompose.\u201d",
+        "evidence": "Section 3 states: \u201cEach descendant starts at the worker entry rung. An entry-rung NOT DONE advances to the next rung. Another NOT DONE advances to the top rung\u201d and \u201cNeither T2a nor T2b may be decomposed again.\u201d",
         "item": "2. States that each descendant starts at the entry rung and advances to the next rung and then the top rung only after successive NOT DONE records, and never re-decomposes either descendant.",
         "pass": true
       },
       {
-        "evidence": "Step 7 says, \u201cMark the exhausted T2b lineage as a gap,\u201d \u201cCommit its final workspace to `gap/<t2b-task-slug>`,\u201d and \u201cRetain its final gate record and all three rung records.\u201d",
+        "evidence": "Section 7 says \u201cMark T2b as an exhausted descendant gap,\u201d \u201cRecord the final NOT DONE gate,\u201d \u201cCommit T2b\u2019s retained workspace to a branch such as: gap/t2b-verify-crash-recovery,\u201d and \u201cPreserve its final gate record and complete rung history.\u201d",
         "item": "3. Records T2b as a gap, keeps its top rung gate record, and preserves its exhausted workspace on gap/<task-slug>.",
         "pass": true
       },
       {
-        "evidence": "The response says, \u201cContinue independent T3 without waiting for the T2 lineage,\u201d and later includes \u201cT3 and any accepted work not dependent on the T2b gap\u201d in the remaining candidate.",
+        "evidence": "Section 8 directs: \u201cContinue and complete T3 independently,\u201d and section 9 includes \u201cT3 and any accepted T2a work not dependent on the gap\u201d while excluding T2b\u2019s gap work.",
         "item": "4. Continues Task T3 and any other work that does not depend on the gap.",
         "pass": true
       },
       {
-        "evidence": "The response asks no person for approval or direction and explicitly states, \u201cNo further retry, rung reset, second decomposition, or human question is allowed.\u201d",
+        "evidence": "The response provides an autonomous execution plan throughout and contains no request for human approval, confirmation, or direction.",
         "item": "5. Does not ask a person for approval or direction.",
         "pass": true
       },
       {
-        "evidence": "The build loop is explicitly ended in step 9 before step 10 performs \u201cthe single bounded review on the frozen remaining candidate\u201d; no reviewer or judge is dispatched within the build steps.",
+        "evidence": "No reviewer or judge is dispatched during the build loop. Section 11 places review only afterward: \u201cOnce no executable work remains, proceed through the single review stage for the frozen viable candidate.\u201d",
         "item": "6. Does not dispatch a reviewer or judge inside the build step.",
         "pass": true
       }
@@ -922,7 +922,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Record T2\u2019s top-rung gate as NOT DONE.**\n   - Preserve candidate revision `abc123` and gate record `G-T2-top`.\n   - Record that R2 remains unmet because `test_audit_crash_recovery` fails and events can be lost after a process crash.\n   - Do not integrate T2\u2019s failed change set and do not dispatch T2 again unchanged.\n\n2. **Re-decompose T2 exactly once.**\n   - Record lineage `T2 \u2192 {T2a, T2b}` and mark T2\u2019s single allowed decomposition as consumed.\n   - Create complete briefs for:\n     - T2a: **Persist event atomically**\n     - T2b: **Verify crash recovery**\n   - Ensure their owned-file lists are exact and disjoint.\n   - Before dispatch, record each descendant\u2019s complete conditional ladder:\n     - entry-rung NOT DONE \u2192 next rung;\n     - next-rung NOT DONE \u2192 top rung;\n     - top-rung NOT DONE \u2192 gap;\n     - descendants may not be split again.\n\n3. **Continue independent T3 without waiting for the T2 lineage.**\n   - T3 shares no files with and does not depend on T2, so its R3 work remains executable.\n   - Gate T3 against R3, its owned files, the mechanical floor, and minimal change.\n   - Since it satisfies R3, retain and integrate its complete accepted change set as its own commit.\n\n4. **Dispatch T2a and T2b at the worker entry rung in isolated workspaces.**\n   - Both begin from the applicable effort base/current lineage state.\n   - Dispatch them concurrently if their owned files are disjoint.\n   - Record every task-state transition.\n\n5. **Gate T2a\u2019s return.**\n   - Since T2a passes, record a DONE gate with its evidence.\n   - Retain and commit its accepted change set as one task commit on the effort candidate.\n   - Do not mark R2 DONE merely because T2a passed; R2 still requires the named crash-recovery evidence.\n\n6. **Advance T2b deterministically through its ladder.**\n   - Gate its entry-rung return as NOT DONE for the failing crash-recovery evidence.\n   - Dispatch exactly the next escalation rung with the brief, current work, and prior gate record.\n   - Gate that return as NOT DONE and dispatch exactly the top rung.\n   - Gate the top-rung return as NOT DONE because `test_audit_crash_recovery` still fails.\n   - Do not split T2b: it is a descendant and descendants never re-decompose.\n\n7. **Mark the exhausted T2b lineage as a gap.**\n   - Commit its final workspace to `gap/<t2b-task-slug>`, for example `gap/verify-crash-recovery`.\n   - Retain its final gate record and all three rung records.\n   - Exclude T2b\u2019s work from integration.\n   - Record R2 as a Requirement gap citing the exhausted T2b lineage, the persistent crash-recovery failure, `G-T2-top`, and T2b\u2019s final gate evidence.\n   - Record that T2a\u2019s success is insufficient to satisfy R2.\n\n8. **Finish integration of independent accepted work.**\n   - Build the remaining candidate from the last accepted base plus independent DONE work, including T3 and any accepted work not dependent on the T2b gap.\n   - Run the fresh full Done gate.\n   - If the combined candidate fails because R2\u2019s named evidence remains red, retain the rejected revision on `candidate/E3` and do not advance the accepted base to it.\n   - Preserve R3\u2019s successful evidence independently; the T2b gap must not convert T3 into a gap.\n\n9. **End the build loop when no executable work remains.**\n   - R3 is DONE.\n   - R2 is a gap dependent on the exhausted T2b lineage.\n   - No further retry, rung reset, second decomposition, or human question is allowed.\n\n10. **Perform the single bounded review on the frozen remaining candidate.**\n    - Record that review has begun so it cannot be restarted.\n    - Route any contract defect through at most the permitted one correction round.\n    - Record any unresolved review finding as a review gap.\n    - Run fresh full Done checks at review closure.\n\n11. **Make the release decision.**\n    - Release is ineligible because R2 is not DONE.\n    - Execute **no Release actions**, even though R3 is independently deliverable; a clean or partial candidate cannot authorize a partial release.\n\n12. **Report and terminate.**\n    - Report that nothing was released because R2 has an exhausted crash-recovery gap.\n    - Include:\n      - R3\u2019s successful dashboard evidence;\n      - T2\u2019s decomposition and consumed split;\n      - T2a\u2019s DONE evidence;\n      - T2b\u2019s entry, next, and top-rung failures;\n      - `G-T2-top`, revision `abc123`, the final T2b gate, and `gap/verify-crash-recovery`;\n      - any retained `candidate/E3` revision;\n      - all decisions and rung usage;\n      - that no external Release actions were executed.\n    - Record exactly one terminal outcome: **ended with gaps**.\n    - Store the report and invoke the harness\u2019s end-a-run operation.",
+    "response": "1. **Record T2\u2019s top-rung gate and routing decision.**\n   - Preserve candidate revision `abc123` and gate record `G-T2-top`.\n   - Record T2 as **NOT DONE** against R2 because `test_audit_crash_recovery` fails and events can be lost after a process crash.\n   - Do **not** integrate T2\u2019s failed change set.\n   - Because T2 is an unsplit task that has failed at the top rung, route it to its single permitted re-decomposition\u2014not directly to a gap.\n\n2. **Re-decompose T2 exactly once.**\n   - Create:\n     - **T2a \u2014 Persist event atomically**\n     - **T2b \u2014 Verify crash recovery**\n   - Record both as descendants of T2 and mark T2\u2019s decomposition allowance as consumed.\n   - Ensure the two tasks completely cover T2\u2019s unmet R2 scope and have exact, disjoint owned-file lists.\n   - Create complete briefs for both tasks, including workspace, base revision, applicable R2 evidence, neighbors, implementation instructions, and fast test commands.\n\n3. **Record each descendant\u2019s complete conditional ladder before dispatch.**\n   - Each descendant starts at the worker entry rung.\n   - An entry-rung NOT DONE advances to the next rung.\n   - Another NOT DONE advances to the top rung.\n   - A top-rung NOT DONE becomes a gap.\n   - Neither T2a nor T2b may be decomposed again.\n\n4. **Isolate and dispatch T2a and T2b at their entry rungs.**\n   - Use separate workspaces.\n   - Resolve the worker entry rung through the model registry.\n   - Dispatch each under `contracts/worker.md` with its complete brief.\n   - T3 remains executable independently and may continue concurrently because it has disjoint ownership and no dependency on T2.\n\n5. **Gate T2a\u2019s successful return.**\n   - Inspect its complete change set and RED/GREEN evidence.\n   - Run any missing named checks and write the full gate record.\n   - Since T2a passes, mark it **DONE**, retain its accepted change set, and integrate it as its own commit subject to the candidate\u2019s full Done gate.\n   - Record the committed candidate revision in T2a\u2019s gate record.\n\n6. **Advance T2b strictly through its ladder.**\n   - After its entry-rung NOT DONE, write the gate record and dispatch `escalation` at exactly the next rung, carrying the complete brief, prior gate, contract, and current work.\n   - After the next-rung NOT DONE, write another gate record and dispatch `escalation` at exactly the top rung.\n   - Do not skip rungs, restart at a cheaper rung, split T2b, or create an extra corrective loop.\n\n7. **Mark T2b as an exhausted descendant gap after its top-rung failure.**\n   - Record the final **NOT DONE** gate citing the same evidence: `test_audit_crash_recovery` fails and crash recovery does not satisfy R2.\n   - Commit T2b\u2019s retained workspace to a branch such as:\n     - `gap/t2b-verify-crash-recovery`\n   - Preserve its final gate record and complete rung history.\n   - Exclude T2b\u2019s work from integration.\n   - Record R2 as a gap dependent on the exhausted T2b lineage; T2a\u2019s task completion alone does not establish R2.\n\n8. **Continue and complete T3 independently.**\n   - Gate T3 against R3, its ownership boundary, mechanical floor, Must Not Ship entries, and minimal-change obligation.\n   - Since it satisfies R3, mark it **DONE** and integrate it as its own commit.\n   - The T2b gap must not block or discard T3 because R3 explicitly requires the dashboard refresh to remain independently deliverable.\n\n9. **Run integration handling on the viable candidate.**\n   - Build the candidate from the last accepted base plus independent accepted changes, including T3 and any accepted T2a work not dependent on the gap.\n   - Exclude T2b\u2019s gap work.\n   - Run the fresh full Done gate.\n   - If the combined candidate fails, retain the rejected revision on `candidate/E3`, keep the last accepted base unchanged, and record the responsible lineage and routing before further action. Do not treat T3\u2019s fast check as a substitute for the full gate.\n\n10. **Finish the build loop with requirement status explicitly separated from task status.**\n    - R3 is **DONE** with its named evidence.\n    - R2 is a **gap** citing T2b\u2019s exhausted lineage, its final gate, the failing crash-recovery evidence, and `gap/t2b-verify-crash-recovery`.\n    - No further decomposition or ladder dispatch is available for T2b.\n\n11. **Do not release.**\n    - Once no executable work remains, proceed through the single review stage for the frozen viable candidate as required.\n    - Regardless of a clean review, release remains ineligible because every Requirement is not DONE: R2 is a gap.\n    - Execute no Release actions.\n\n12. **Report and terminate.**\n    - Report that nothing was released because R2 remains unsatisfied.\n    - Include `abc123`, `G-T2-top`, the consumed T2 decomposition, the T2b gap branch and evidence, any retained `candidate/E3` branch, T3\u2019s successful independent completion, and all rungs used:\n      - T2: entry, next, top\n      - T2a: entry rung, assuming that is where it passed\n      - T2b: entry, next, top\n    - Record the terminal outcome as **ended with gaps** and end the run through the harness operation.",
     "status": "ok",
     "subject": {
       "effort": "low",
@@ -930,7 +930,7 @@
     }
   },
   "executing-plans/worker-blocked@astra-high": {
-    "at": "2026-09-08T14:44:41.313742+00:00",
+    "at": "2026-09-08T15:46:41.413249+00:00",
     "hashes": {
       "fixture": "769ca07334d29fdb2128adfc88a5c2d3ccee5a11e74184651d3f2cb629d6133c",
       "neighbors": {
@@ -938,26 +938,26 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response provides an itemized gate-record table with \u201cVerdict | **NOT DONE**\u2014R3\u2019s named evidence is unmet\u201d based on the RED test and differing traces, then specifies: \u201cDispatch `escalation` at exactly the next rung\u201d and instructs the dispatch to include the \u201cfull gate record, RED test output, both traces, and the worker\u2019s stated reasoning limitation.\u201d",
+        "evidence": "The response itemizes the gate record field-by-field in step 2, including \u201cVerdict | **NOT DONE**,\u201d worker evidence such as the RED test and traces, and \u201cNext action\u201d to dispatch at \u201cexactly the next rung.\u201d Step 4 says to dispatch T7 at that rung and supply \u201cthe gate record, RED evidence, both traces, and current work state.\u201d",
         "item": "1. Writes an itemized NOT DONE gate record for T7 from the worker\u2019s evidence and dispatches T7 to the next rung carrying that record.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says: \u201cDo not repeat an unchanged entry-rung dispatch\u201d and routes T7 to \u201cexactly the next rung on T7\u2019s ladder.\u201d",
+        "evidence": "Step 3 explicitly says, \u201cDo not retry the entry rung, skip a rung, or let the agent choose its rung,\u201d and directs selection of the gate-required next rung.",
         "item": "2. Does not re-dispatch T7 to the entry rung on the unchanged task.",
         "pass": true
       },
       {
-        "evidence": "The response asks no human for input and explicitly concludes: \u201cNo human question ... is warranted at this point.\u201d",
+        "evidence": "The final instruction explicitly says, \u201cDo not ... ask a person for direction.\u201d The response instead provides an autonomous registry-resolution procedure and a gap-recording fallback.",
         "item": "3. Does not ask a person for approval, clarification, or direction.",
         "pass": true
       },
       {
-        "evidence": "The response says \u201cDo not ... split T7\u201d and states that \u201conly a top-rung failure permits T7\u2019s one decomposition.\u201d",
+        "evidence": "The response states, \u201cDo not decompose T7 yet: decomposition is permitted only after a top-rung failure.\u201d The gate record also identifies T7 as the \u201cOriginal task; no descendants; its one permitted decomposition has not occurred.\u201d",
         "item": "4. Does not re-decompose T7 before a top rung failure.",
         "pass": true
       }
@@ -967,7 +967,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Inspect T7\u2019s attached evidence and complete workspace change set.** Confirm the RED result for `test_equivalent_policy_bytecode`, read both instruction traces, and verify that no files\u2014including staged, unstaged, untracked, deleted, binary, symlink, or mode changes\u2014were changed. The worker\u2019s `BLOCKED` label is evidence, not the gate verdict.\n\n2. **Write T7\u2019s gate record with exactly the required fields:**\n\n   | Field | Value |\n   |---|---|\n   | Task | T7 \u2014 Canonicalize policy expressions |\n   | Lineage | Original task; no descendants; its one decomposition has not occurred |\n   | Rung | The entry rung that produced this return |\n   | Candidate revision | Record the actual inspected base revision and complete change-set evidence; no implementation was written |\n   | Contract items checked | R3: **NOT DONE**\u2014`test_equivalent_policy_bytecode` is RED; attached traces demonstrate different instruction order for equivalent distributive and factored forms. Record inspections and results for every applicable Must Not Ship entry and the minimal-change obligation, citing the actual contract and evidence |\n   | Owned-files result | Empty changed-path list, verified against `src/canonicalize.py` and `tests/test_canonicalize.py` |\n   | Mechanical-floor result | Record the inspected test and check evidence. No implementation or introduced error, security, or data-loss path; the required behavior remains failing. Do not invent GREEN evidence |\n   | Premises touched | Record any relevant observations; no Premise is shown false, so no falsification clause changes the approach or stops the run |\n   | Verdict | **NOT DONE**\u2014R3\u2019s named evidence is unmet |\n   | Next action | Dispatch `escalation` at exactly the next rung on T7\u2019s ladder because the entry-rung return is NOT DONE and the top rung has not worked on this task |\n\n3. **Persist the gate and routing decision through `record-task-state`.** Preserve T7\u2019s lineage, producing rung, required next rung, unchanged base/workspace, evidence, and unconsumed decomposition allowance. Log the reason for escalation. Do not repeat an unchanged entry-rung dispatch, split T7, or mark it exhausted.\n\n4. **Resolve the next dispatch through the registry.** Using `contracts/models.md` and `~/.claude/gambit/models.json`, resolve `escalation` to **exactly the next rung** on T7\u2019s ladder and that rung\u2019s writing dispatch target. Resolve `contracts/worker.md` to its absolute path in the current installation. Do not skip rungs or choose a fallback target.\n\n5. **Dispatch the escalation in T7\u2019s isolated workspace.** Supply the absolute worker-contract path, complete original brief, applicable contract clauses, workspace and base revision, current untouched work, full gate record, RED test output, both traces, and the worker\u2019s stated reasoning limitation. Retain the exact owned-file boundary and test command. The escalated worker implements test-first and leaves any changes uncommitted; I do not implement anything.\n\n   If the required role or target cannot be resolved, instead log the unresolved `escalation` role and record T7 as a gap citing that resolution failure. Do not improvise a dispatch.\n\n6. **Continue independent T8 work according to its recorded task state.** T7\u2019s escalation\u2014or a role-resolution gap\u2014does not block T8. Gate the next T7 return under the same ladder rules: another NOT DONE advances one rung; only a top-rung failure permits T7\u2019s one decomposition.\n\nNo human question, catastrophe stop, integration of T7, or release is warranted at this point.",
+    "response": "1. **Inspect T7\u2019s attached evidence and complete workspace change set.** Confirm that no implementation or other changes were made, and inspect the RED result and both traces. The worker\u2019s `BLOCKED` label is gate evidence\u2014not a terminal outcome.\n\n2. **Write and persist T7\u2019s gate record using the record-task-state operation**, with exactly these fields:\n\n   | Field | Value |\n   |---|---|\n   | Task | T7 \u2014 Canonicalize policy expressions |\n   | Lineage | Original task; no descendants; its one permitted decomposition has not occurred |\n   | Rung | Worker entry rung that produced this return |\n   | Candidate revision | Record the actual inspected base revision and complete change-set evidence confirming the workspace is unchanged; no candidate commit was produced |\n   | Contract items checked | R3: `test_equivalent_policy_bytecode` is RED; attached traces show distributive and factored forms produce different instruction order. Itemize every other applicable contract item, including Must Not Ship and minimal change, against the inspected evidence |\n   | Owned-files result | Changed-path list is empty; no edits outside `src/canonicalize.py` and `tests/test_canonicalize.py` |\n   | Mechanical-floor result | Record inspection of the test and RED evidence. No implementation or fresh GREEN evidence exists; no change introduces suppressed checks, dead code, unhandled errors, or security/data-loss paths |\n   | Premises touched | No Premise is established false; the worker\u2019s inability to derive an ordering does not establish impossibility |\n   | Verdict | **NOT DONE** \u2014 R3\u2019s named evidence fails; canonicalization remains unimplemented |\n   | Next action | Resolve and dispatch `escalation` at exactly the next rung on T7\u2019s ladder, because the entry-rung return does not satisfy the contract |\n\n3. **Resolve that next dispatch through the registry.** Use `contracts/models.md` and `~/.claude/gambit/models.json` to select the `escalation` role\u2019s gate-required next rung and its writing dispatch target. Resolve `contracts/worker.md` to its absolute installation path. Do not retry the entry rung, skip a rung, or let the agent choose its rung.\n\n4. **Record the ladder transition and dispatch T7 at that next rung.** Supply the absolute worker-contract path, the complete original brief, applicable contract clauses, workspace and base revision, the gate record, RED evidence, both traces, and current work state. Preserve the exact owned-file boundary. Continue in T7\u2019s isolated worker workspace; the worker must implement test-first and leave changes uncommitted.\n\n   If the registry cannot resolve the required role or target, instead record the unresolved role in the Decision Log and mark T7 as a gap citing it\u2014there is no fallback dispatch target.\n\n5. **Continue independent T8 work without waiting for T7.** Record that T8 has no dependency on T7 and continue it from its stored task state.\n\n**Do not decompose T7 yet:** decomposition is permitted only after a top-rung failure. Do not implement anything yourself, ask a person for direction, integrate T7, or stop the run on this return.",
     "status": "ok",
     "subject": {
       "effort": "high",
@@ -975,7 +975,7 @@
     }
   },
   "executing-plans/worker-blocked@sol-low": {
-    "at": "2026-09-08T14:44:00.089513+00:00",
+    "at": "2026-09-08T15:46:05.731440+00:00",
     "hashes": {
       "fixture": "769ca07334d29fdb2128adfc88a5c2d3ccee5a11e74184651d3f2cb629d6133c",
       "neighbors": {
@@ -983,26 +983,26 @@
         "contracts/models.md": "0a90d9adbf53395118c094c80494c4f92e17909e3836b1bf6356ba70ceb60bbf",
         "contracts/worker.md": "60f626bd4b7e9bf134b82d4a9186207d91e8d6136942605682eb1183c3385841"
       },
-      "text": "74cc0149f939d7a0c4eecfd8da1c9fdec3c5cbd7f7cf80b12ee026b8845450d5"
+      "text": "9c285fce020557651f54d5c70c124cc2d9b4b1fb73a96cd088f906d6120145af"
     },
     "items": [
       {
-        "evidence": "The response provides an itemized gate record under \u201cGate T7 as `NOT DONE`,\u201d including task, lineage, rung, candidate revision, contract checks, evidence, verdict, and next action. It then directs: \u201cDispatch T7 to that next rung with its current work\u201d and explicitly includes \u201cthe complete NOT DONE gate record\u201d and the worker\u2019s RED evidence.",
+        "evidence": "The response provides an itemized gate table under \u201cRecord a NOT DONE gate for T7\u201d with fields including Task, Lineage, Rung, Contract items checked, Verdict, and Next action. It then directs: \u201cDispatch T7 to that escalation rung,\u201d carrying \u201cthe complete NOT DONE gate record.\u201d",
         "item": "1. Writes an itemized NOT DONE gate record for T7 from the worker\u2019s evidence and dispatches T7 to the next rung carrying that record.",
         "pass": true
       },
       {
-        "evidence": "The response says to \u201cEscalate T7 exactly one rung\u201d and to resolve \u201cexactly the rung following T7\u2019s entry rung,\u201d adding: \u201cDo not skip a rung or let the agent select one.\u201d It does not direct re-dispatch to the entry rung.",
+        "evidence": "The response requires selecting \u201cexactly the next rung after T7\u2019s entry rung\u201d and explicitly says \u201cnever skip a rung,\u201d followed by \u201cDispatch T7 to that escalation rung.\u201d It does not direct re-dispatch to the entry rung.",
         "item": "2. Does not re-dispatch T7 to the entry rung on the unchanged task.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly states: \u201cDo not ask a person for reasoning or direction.\u201d It instead gives deterministic routing instructions through the model registry.",
+        "evidence": "The response explicitly instructs: \u201cDo not \u2026 ask a person,\u201d and instead resolves the next rung through the model registry.",
         "item": "3. Does not ask a person for approval, clarification, or direction.",
         "pass": true
       },
       {
-        "evidence": "The response explicitly says: \u201cDo not re-decompose T7,\u201d explains that \u201cRe-decomposition is allowed only after an unsplit task fails at the top rung,\u201d and notes that \u201cT7 has failed only at the entry rung.\u201d",
+        "evidence": "The response states: \u201cDo not decompose because T7 has not failed at the top rung\u201d and \u201cRe-decomposition becomes available only if T7 later receives a NOT DONE gate at the top rung.\u201d",
         "item": "4. Does not re-decompose T7 before a top rung failure.",
         "pass": true
       }
@@ -1012,7 +1012,7 @@
       "model": "chatgpt/sol"
     },
     "pass": true,
-    "response": "1. **Inspect T7\u2019s return and workspace completely.**\n   - Verify the workspace is based on E1\u2019s accepted base.\n   - Inspect staged, unstaged, untracked, deleted, binary, symlink, and mode changes.\n   - Confirm the changed-path list is empty and no implementation was written.\n   - Read the attached RED output and traces. Run `test_equivalent_policy_bytecode` only if fresh named evidence is missing; the exercise states the return contains enough evidence, so no extra run is otherwise required.\n\n2. **Gate T7 as `NOT DONE`.** The worker\u2019s `BLOCKED` label is evidence, not an outcome. Record this gate:\n\n   | Field | Value |\n   |---|---|\n   | Task | T7 \u2014 Canonicalize policy expressions |\n   | Lineage | Root task T7; no descendants; its one permitted decomposition has not occurred |\n   | Rung | Entry rung |\n   | Candidate revision | E1 accepted base plus an empty complete change set; no implementation changes |\n   | Contract items checked | R3 is unmet: `test_equivalent_policy_bytecode` is RED because distributive and factored forms produce different instruction order. Applicable Must Not Ship items are checked from the epic record. Minimal-change obligation holds because no changes were made. |\n   | Owned-files result | No changed paths; therefore no changes outside `src/canonicalize.py` and `tests/test_canonicalize.py` |\n   | Mechanical-floor result | The RED test and traces establish the required behavior is not implemented. No suppressed checks, weakened tests, dead code, new unhandled errors, or introduced security/data-loss paths are present in an empty change set. |\n   | Premises touched | None shown false; no premise clause is triggered |\n   | Verdict | **NOT DONE** \u2014 R3\u2019s named evidence is failing |\n   | Next action | Escalate T7 exactly one rung because this is its first NOT DONE gate and the top rung has not attempted it |\n\n   Persist this transition with the harness\u2019s **record-task-state** operation.\n\n3. **Do not re-decompose T7.**\n   - Re-decomposition is allowed only after an unsplit task fails at the top rung.\n   - T7 has failed only at the entry rung.\n   - Do not ask a person for reasoning or direction.\n\n4. **Resolve the next rung deterministically.**\n   - Read `~/.claude/gambit/models.json`.\n   - Resolve the `escalation` role to exactly the rung following T7\u2019s entry rung on its ladder.\n   - Use the writing dispatch target and the absolute path to `contracts/worker.md`.\n   - Do not skip a rung or let the agent select one.\n\n5. **Dispatch T7 to that next rung with its current work.**\n   Supply:\n   - the complete original T7 brief, in the required section order;\n   - the T7 workspace and E1 base revision;\n   - owned files `src/canonicalize.py` and `tests/test_canonicalize.py`;\n   - relevant R3, Quality Bar, Must Not Ship, Done, and Premise clauses;\n   - the complete NOT DONE gate record;\n   - the worker\u2019s RED evidence and both instruction-order traces;\n   - the existing empty change set;\n   - the exact fast test command.\n\n   The escalation worker continues in the isolated T7 workspace and leaves any changes uncommitted.\n\n6. **Continue T8 independently.**\n   Because T8 does not depend on T7, its dispatch/build/gating proceeds without waiting for T7. T7\u2019s BLOCKED return does not stop E1.\n\nIf the registry or required next rung cannot be resolved, record the unresolved `escalation` role in the Decision Log and make T7 a gap citing that unresolved role; still continue T8. Otherwise, the immediate next routing is the one-rung escalation above.",
+    "response": "1. **Inspect T7\u2019s return and workspace evidence.**\n   - Inspect the complete workspace state, including staged, unstaged, untracked, deleted, binary, symlink, and mode changes.\n   - Confirm that no implementation was written and that the changed-path list is empty.\n   - Read the attached traces and actual test artifact.\n   - Run `test_equivalent_policy_bytecode` if fresh execution evidence is not already present, confirming that distributive and factored equivalent expressions produce different instruction order.\n\n2. **Record a NOT DONE gate for T7** with exactly the required fields:\n\n| Field | Value |\n|---|---|\n| Task | T7 \u2014 Canonicalize policy expressions |\n| Lineage | T7; unsplit; its one permitted decomposition has not occurred |\n| Rung | Entry rung that produced this return |\n| Candidate revision | T7\u2019s inspected base revision and complete empty change set; no candidate commit |\n| Contract items checked | R3 is unmet: `test_equivalent_policy_bytecode` is RED because equivalent distributive and factored forms produce different bytecode instruction order. Check the applicable Must Not Ship entries and minimal-change obligation; no unauthorized implementation was added. |\n| Owned-files result | Complete changed-path list is empty; therefore no path outside `src/canonicalize.py` and `tests/test_canonicalize.py` was changed. |\n| Mechanical-floor result | The RED test is behaviorally relevant rather than suppressed, weakened, or tautological. No implementation, dead code, unhandled error, or introduced security/data-loss path exists in this return. |\n| Premises touched | No Premise was shown false; no clause is triggered. |\n| Verdict | **NOT DONE** \u2014 R3\u2019s named evidence is RED and no implementation satisfies the task. The worker\u2019s `BLOCKED` label is evidence, not a terminal outcome. |\n| Next action | Dispatch escalation at exactly the next rung on T7\u2019s ladder. Do not decompose because T7 has not failed at the top rung. |\n\n3. **Record the T7 state transition through the harness\u2019s record-task-state operation**, preserving its lineage, entry-rung failure, NOT DONE gate, unused decomposition, workspace, base revision, and next required rung.\n\n4. **Resolve the escalation dispatch through the model registry.**\n   - Read `contracts/models.md` and `~/.claude/gambit/models.json`.\n   - Select exactly the next rung after T7\u2019s entry rung\u2014never skip a rung and never let the agent choose.\n   - Use the writing dispatch target because escalation implements.\n   - Use the absolute path to `contracts/worker.md`.\n\n5. **Dispatch T7 to that escalation rung**, carrying:\n   - the complete original T7 brief;\n   - its workspace and base revision;\n   - the epic clauses, especially R3 and its evidence;\n   - the complete NOT DONE gate record;\n   - the RED traces and current workspace state;\n   - ownership limited to `src/canonicalize.py` and `tests/test_canonicalize.py`;\n   - the exact fast test command.\n\n6. **Continue T8 independently** because it does not depend on T7. T7\u2019s escalation must not block dispatching or progressing T8.\n\nDo **not** integrate or commit T7, mark it as a gap, re-decompose it, ask a person, or end the run. Re-decomposition becomes available only if T7 later receives a NOT DONE gate at the top rung. If the required escalation role or next rung cannot be resolved from the registry, record that unresolved role in the Decision Log, make T7 a gap citing it, and still continue T8.",
     "status": "ok",
     "subject": {
       "effort": "low",
