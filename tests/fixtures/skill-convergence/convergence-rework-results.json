@@ -55,9 +55,11 @@
       "resume (both subjects)",
       "concerns (astra)"
     ],
-    "edited_pass": "9/9",
+    "edited_pass": "6/6 (three fixtures x two subjects)",
     "controls_preserved": "credential log and parser defect NOT DONE in 6/6 gate cells; no edited cell dispatched a reviewer, judge, second repair, split, or higher rung",
-    "not_claimed": "real-epic convergence, token cost, long-context behavior; fixtures supply verified facts rather than exercising discovery; one sample per cell"
+    "not_claimed": "real-epic convergence, token cost, long-context behavior; fixtures supply verified facts rather than exercising discovery; one sample per cell",
+    "current_pass": "1/6",
+    "none_pass": "5/6"
   },
   "cells": [
     {

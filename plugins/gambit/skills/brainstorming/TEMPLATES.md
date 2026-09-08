@@ -74,8 +74,8 @@ Draft for user review as "Epic: [Feature Name]":
       checkpoints. Report the evidence and require explicit user approval before changing scope,
       architecture, or the delivery budget.
     - Repair limit: one implementation, then at most one informed repair on the `escalation`
-      rung. A task still NOT DONE after that repair is preserved uncommitted, marked
-      `awaiting_user`, and checkpointed with its diff and one question; no worker, higher rung,
+      rung. A task still NOT DONE after that repair is parked on its own `parked/<task-slug>`
+      branch, marked `awaiting_user`, and checkpointed with one question; no worker, higher rung,
       judge, or renamed task continues it until the user answers. `repairs_used` and
       `awaiting_user` travel with the task through splits, renames, and Goal resumes.
     - Scope growth: every newly discovered worker must map to an immutable requirement, an

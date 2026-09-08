@@ -72,7 +72,7 @@ Run `SessionPlanRead` and analyze the wave steps:
 - **Start next:** Previous wave completed and the next wave is pending → Step 1 then 2
 - **All done:** Every wave step is completed → Step 5 (final validation)
 
-**Do NOT ask "where did we leave off?"** — the root session's wave state tells you exactly where to resume. Before choosing a corrective wave on resume, read the latest checkpoint's `repairs_used` and `awaiting_user` for each worker. A worker marked `awaiting_user` is not work: leave it parked with its diff untouched, restate its question in this cycle's checkpoint, and take other ready work whose files are disjoint from it; if nothing else is ready, STOP with the question. Nothing re-dispatches, splits, renames, or escalates a parked worker — only the user's answer does. A worker whose repair state cannot be determined is treated as `awaiting_user`, never as fresh.
+**Do NOT ask "where did we leave off?"** — the root session's wave state tells you exactly where to resume. Before choosing a corrective wave on resume, read the latest checkpoint's `repairs_used` and `awaiting_user` for each worker. A worker marked `awaiting_user` is not work: leave its `parked/<task-slug>` branch untouched, restate its question in this cycle's checkpoint, and take other ready work whose files are disjoint from it; if nothing else is ready, STOP with the question. Nothing re-dispatches, splits, renames, or escalates a parked worker — only the user's answer does. A worker never dispatched before is fresh and gets its fields at dispatch; a worker already dispatched whose fields cannot be found in the checkpoint is treated as `awaiting_user`.
 
 **If native plan state is absent**, use `SessionContextRead` to recover only from this root session's approved contract and latest checkpoint, carrying `repairs_used` and `awaiting_user` forward. If same-session context cannot establish a worker's repair state, treat it as `awaiting_user`; never recover orchestration permission from repository artifacts, another session, a Goal, or legacy state.
 
@@ -114,7 +114,7 @@ The transient per-worker worktrees of a ≥2 wave (`references/wave-dispatch.md`
 **Find and claim the wave:**
 1. `SessionPlanRead` → identify the next pending wave step. Its workers have pairwise-disjoint file sets and no cross-dependency — usually one worker, sometimes several. Overlapping or dependent work waits for a later wave.
 2. `SessionContextRead` → load every worker's complete self-contained brief from this root transcript or latest checkpoint. Individual worker state comes from native subagent threads and checkpoint results, never plan records.
-3. `SessionPlanWrite` → replace the complete ordered plan, preserving every other step and marking only that single wave `in_progress`. At most one wave may be in progress.
+3. `SessionPlanWrite` → replace the complete ordered plan, preserving every other step and marking only that single wave `in_progress`. At most one wave may be in progress. Before dispatching, record in the root transcript `repairs_used: 0` and `awaiting_user: false` for each worker dispatched for the first time; a parked worker (`awaiting_user`) is never re-dispatched and its `parked/<task-slug>` branch stays untouched.
 
 **Investigate first if needed — reach for a scout.** Before constructing the worker brief, if you need to locate code, confirm an interface, or gather cross-task context, dispatch the read-only **scout class** — don't read around inline or spawn a bare generic agent. This is optional per task; skip it when the brief is already clear.
 
@@ -166,7 +166,7 @@ The ready work is a **wave** — one or more ready tasks whose file sets are **p
 
 3. **Route on the worker's returned status** (the contract defines four). The repair limit is fixed: one implementation, then at most one informed repair, then the user. Before any corrective dispatch, read the latest checkpoint's `repairs_used` for the worker; if it is already `1`, or the worker is `awaiting_user`, there is no dispatch to make — preserve the work and go to the checkpoint with the question:
 
-   1. **Initial implementation — worker.** Use the `worker` SpawnAgent dispatch above. A NEEDS_CONTEXT return gets the missing values and one re-dispatch on the same role — still the first implementation, not a repair; a second NEEDS_CONTEXT marks the worker `awaiting_user`.
+   1. **Initial implementation — worker.** Use the `worker` SpawnAgent dispatch above. A NEEDS_CONTEXT return gets the missing values and one re-dispatch on the same role — still the first implementation, not a repair; a second NEEDS_CONTEXT marks the worker `awaiting_user`. A BLOCKED return for size is decomposed ONCE into fresh briefs (each at `repairs_used: 0`); a brief produced by decomposition is never decomposed again, and if it returns BLOCKED it is `awaiting_user`.
       ```
       SpawnAgent agent_type="worker" task_name="implement_task_subject" fork_turns="none"  # Profile-aware: requires hide_spawn_agent_metadata = false and a non-reserved tool_namespace.
         message="<absolute worker contract path directive and complete worker brief>"
@@ -176,7 +176,7 @@ The ready work is a **wave** — one or more ready tasks whose file sets are **p
       SpawnAgent agent_type="escalation" task_name="repair_task_subject" fork_turns="none"  # Profile-aware: requires hide_spawn_agent_metadata = false and a non-reserved tool_namespace.
         message="Read <abs>/codex-contracts/worker.md first, then complete the original brief in <same worktree>. Prior attempt: <result>. NOT DONE: <each item with its baseline clause, changed-code cause, and evidence>."
       ```
-   3. **No second repair.** If the repair returns anything but DONE, preserve the incomplete work uncommitted, mark the worker `awaiting_user`, and go to the checkpoint with one question. Do not dispatch another worker, a higher rung, a judge, or a renamed descendant.
+   3. **No second repair.** If the repair returns anything but DONE, park the work: in the tree holding the diff, `git switch -c parked/<task-slug>`, stage exactly the worker's owned files, commit `parked: <task subject> — awaiting user`, and `git switch` back so the epic tree is clean, then mark the worker `awaiting_user` with the branch name in the checkpoint, and go to the checkpoint with one question. Do not dispatch another worker, a higher rung, a judge, or a renamed descendant.
 
    Route the repair result: verify `DONE` with FRESH evidence and the **Checkpoint gate**. Anything else pauses for the user. Do NOT water down requirements.
 
@@ -228,8 +228,8 @@ C1 <criterion or requirement this task owns>   DONE | NOT DONE   <evidence>
 C2 ...
 Anti-patterns: none present | present at file:line
 Scope:         within Files owned | outside at path  (mechanical fallout of a correct change that breaks the shared gate — regenerated fixtures, a cross-package test that must update — is in scope once the worker reports it and you authorize it)
-Floor:         clean | suppression / weakened or tautological test / dead code / unhandled error at file:line
-Minimal:       nothing beyond what the brief names | extra guard, fallback, retry, abstraction, or behavior at file:line (the repair removes it)
+Floor:         clean | suppression / weakened or tautological test / dead code / unhandled error / security or data-loss path with a reachable precondition, at file:line
+Minimal:       nothing beyond what the brief names and the floor handling the change itself requires | extra guard, fallback, retry, abstraction, or behavior at file:line (the repair removes it)
 Evidence:      RED/GREEN genuinely exercises the change (fails without it, for the right reason) | vacuous at file:line
 Wiring:        every new field, event, or behavior reaches its read/consumption path | orphan at file:line
 Verdict:       DONE | NOT DONE [C-ids and lines]
@@ -239,7 +239,7 @@ Each NOT DONE names its baseline clause, the changed-code cause, and the evidenc
 
 Route on the verdict:
 - **DONE** → proceed to the durable checkpoint with the native wave still `in_progress`.
-- **NOT DONE** → if the worker's `repairs_used` is `0`, route the itemized NOT DONE list as the one informed repair (Step 2.3); otherwise the worker is `awaiting_user` — preserve the work uncommitted and checkpoint with the diff and one question. **Never edit the diff yourself — you judge and route; workers implement.**
+- **NOT DONE** → if the worker's `repairs_used` is `0`, route the itemized NOT DONE list as the one informed repair (Step 2.3); otherwise the worker is `awaiting_user` — park the work on its `parked/<task-slug>` branch (Step 2.3) and checkpoint with the diff summary and one question. **Never edit the diff yourself — you judge and route; workers implement.**
 
 There is no per-task reviewer. The end-of-epic `gambit:review` (Step 5) is the one independent review of this epic, and it is bounded there; a defect this gate misses surfaces once, at review, and costs one bounded repair there instead of an open-ended loop mid-wave. Do NOT dispatch a finder, verifier, or judge from this gate, and do NOT run the four-dimension review per task.
 
@@ -360,6 +360,8 @@ Commit the verified wave to whatever branch is currently checked out — `main`,
    - Create a NEW commit (don't amend). Don't skip hooks. Don't push.
 3. If `git status` is clean (a ≥2 wave already landed its tested combined history atomically, intra-task commits during the TDD cycle captured everything, or the task was marked SKIPPED with no code changes), note it under "Commit" in the checkpoint summary
 
+Parked work is already committed on its own `parked/<task-slug>` branch and is never staged or committed here; the epic branch carries only accepted work.
+
 **Do NOT push.** Committing is local — the user decides when to push.
 
 **Skip the commit ONLY if** the user has explicitly said "don't commit yet" earlier in the current session. Absent that directive, commit.
@@ -382,7 +384,7 @@ Present the full checkpoint and every complete next-wave worker brief in the roo
 ### Gate verdict
 - [DONE — every owned criterion evidenced, within Files owned, floor clean, RED/GREEN genuine, wiring complete]
 - [Or: the NOT DONE items (clause, cause, evidence) and the repair dispatched on the `escalation` rung, with `file:line`]
-- [Or: `awaiting_user` — the diff is preserved uncommitted; the one question: <exact decision needed>]
+- [Or: `awaiting_user` — work parked on `parked/<task-slug>`; the one question: <exact decision needed>]
 
 ### Notes
 - [Observations from the worker's `## Notes` and your own gate that are outside the baseline — for you to read; no task was created from them]

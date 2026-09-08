@@ -104,7 +104,7 @@ class ExecutingPlansRungRoutingTest(unittest.TestCase):
                 "one implementation, then at most one informed repair on the `escalation` rung, then the user",
                 "read the task's `repairs_used`; if it is already `1`, or the task is `awaiting_user`, there is no dispatch to make",
                 "Resolve the `escalation` role through `contracts/models.md`",
-                "Record `repairs_used: 1` on the task with `TaskUpdate` BEFORE dispatching",
+                "Record `repairs_used: 1` on the task's metadata with `TaskUpdate` BEFORE dispatching",
                 "There is no second repair, no climb beyond this rung, and no renamed or split descendant that starts fresh",
                 'Agent subagent_type="general-purpose" model="<escalation rung alias — contracts/models.md>"',
                 'set `subagent_type="<escalation rung agent>"` instead',

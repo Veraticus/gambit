@@ -144,9 +144,10 @@ because an operator declared one in the config file.
   same call twice; something must change first.
 - **Each escalation step moves UP the ladder**, carrying the updated evidence the previous rung
   produced — the cited defect, the failing output, the missing value.
-- **Escalation is one step.** A task gets one implementation on the `worker` rung and at most one
-  informed repair on the `escalation` rung, carrying the itemized NOT DONE list. There is no third
-  dispatch: a task still NOT DONE is `awaiting_user`, and no rung, rename, split, judge, or later
+- **Escalation is one step.** A task gets one implementation on the `worker` rung (a NEEDS_CONTEXT
+  return may be re-dispatched once with the missing values as part of that same implementation)
+  and at most one informed repair on the `escalation` rung, carrying the itemized NOT DONE list.
+  There is no third dispatch: a task still NOT DONE is `awaiting_user`, and no rung, rename, split, judge, or later
   checkpoint continues it until the user answers. The rungs above `escalation`'s entry are
   reachable only through that answer. The historical tiltyard 100%-solve result is rationale for
   where the ladder's rungs sit, not a mandate to climb them automatically. An advisory or

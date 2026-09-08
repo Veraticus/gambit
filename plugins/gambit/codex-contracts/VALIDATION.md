@@ -94,9 +94,10 @@ the trials that replaced it. The record below is kept as the evidence trail for 
 
 Ten fresh subjects used the configured `sol-low` agent at low effort; exact reported model IDs
 are retained in the fixture JSON rather than pinned in this contract. The bounded set was declared before calls; no additional samples or
-retries were taken. `tests/fixtures/skill-convergence/delivery-results.json` retains exact dispatch
-prompts, instruction snapshots/hashes, returned reports and actual fixture action traces;
-`delivery-eval.txt` describes the adapter. No private product payloads were used.
+retries were taken. `tests/fixtures/skill-convergence/delivery-results.json` retained exact dispatch
+prompts, instruction snapshots/hashes, returned reports and actual fixture action traces, and
+`delivery-eval.txt` described the adapter; both were deleted with the layer on 2026-09-07 and remain
+readable at baseline `abd3ef8`. No private product payloads were used.
 
 - **Observed RED before the accepted policy implementation:** unaided and current-skill subjects
   dispatched another corrective worker after a failed informed repair, without independent judgment.
@@ -184,7 +185,7 @@ hashes, model ids, verbatim responses, and scores.
   and judge machinery around the single repair; on the resume fixture both subjects froze the cycle
   with independent work pending; on the concerns fixture Astra prepared a per-task reviewer for a
   hypothetical. These are the instruction-induced regressions the edit targets.
-- **Edited GREEN:** 9/9 edited cells match or exceed unaided behavior. Controls preserved: the
+- **Edited GREEN:** 6/6 edited cells (three fixtures × two subjects) match or exceed unaided behavior. Controls preserved: the
   credential log and the parser defect are NOT DONE in 6/6 gate cells; no edited cell dispatched a
   reviewer, judge, second repair, split, rename, or higher rung. The gate/Sol edited cell also
   returns the unrequested retry loop as NOT DONE where the unaided cell kept it (the `Minimal` line).
