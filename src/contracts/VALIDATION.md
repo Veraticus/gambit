@@ -193,6 +193,24 @@ hashes, model ids, verbatim responses, and scores.
   verified facts rather than exercising discovery; one sample per cell; the concerns fixture showed
   no Sol regression, so that edit's evidence rests on the Astra cell.
 
+**Post-review revision (same day).** An independent first-principles review by the production
+orchestrator model (xhigh, read-only, evidence restricted to the prior research digest, its own
+trial answers, and the trial record) returned SHIP-WITH-CHANGES with six findings, all confirmed
+against the files and fixed: review closure could reset a fix task's counter; "too large"
+decomposition could restart implementation indefinitely; a parked uncommitted diff blocked
+`integrate_wave.py`'s clean-tree check and could leak into single-task verification (now parked
+on a `parked/<task-slug>` branch); `Minimal` had no exception for the floor handling a change
+itself requires; fresh tasks never initialized `repairs_used`/`awaiting_user` (now set at claim;
+a pending task with no fields is fresh, an in-progress one is treated as parked); and
+`review/SKILL.md` still said the checkpoint gate reused the quality reviewer. It also corrected
+this file's "9/9" to 6/6. The revised resume and gate text was re-trialed under the edited
+condition: both `sol-low-ro` cells pass (parked branch untouched, Task 9 claimed with initialized
+fields; all three gate items NOT DONE, one repair, parking on failure). The two production-model
+re-trial cells were not obtained: four attempts stalled in the Codex transport before the first
+turn while trivial prompts and every earlier full trial completed. They should be re-run before a
+release; the record (`convergence-rework-results.json`, `post_review_retrial`) marks them as such
+rather than as passes.
+
 Each agent class and the governance reflex was validated with **baseline-RED → GREEN-under-pressure → mis-prompt/injection**, using the gambit:writing-skills evaluation-driven method (a fresh subagent, a realistic scenario, a forced choice under combined pressure). Tested at the tier each class actually runs at — the cheap tier is where contracts earn their keep, since capable models are already disciplined by default. Summary of recorded results:
 
 ## worker (`worker.md`)

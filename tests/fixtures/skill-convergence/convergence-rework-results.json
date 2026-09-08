@@ -332,5 +332,80 @@
         "note": "Full binary gate record, DONE; A/B/C to Notes; 'No per-task reviewer is permitted'; no agents."
       }
     }
-  ]
+  ],
+  "post_review_retrial": {
+    "reason": "GPT-6 Astra xhigh review (F1-F6) changed the resume/parking, initialization, decomposition, closure, and Minimal/floor text; the resume fixture's parked-work fact was updated to the parking branch (new fixture hash recorded per cell). Edited condition only; four cells, one run each, no retries.",
+    "commit": "5f367d7",
+    "cells": [
+      {
+        "fixture": "resume",
+        "subject": "sol",
+        "condition": "edited-r2",
+        "instruction": {
+          "path": "skills/executing-plans/SKILL.md@convergence-rework (5f367d7)",
+          "sha256": "99162fb8ffa5c025e11ddc48067f4fb6e761313b290151afa132e78b20c1fa9a"
+        },
+        "fixture_sha256": "a7a4898dc8c85d61e2a6a125064e0ab606353848bd9d5a52f2023d4f856b0e1f",
+        "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/resume-eval.txt and answer it under those instructions. Treat the fixture's facts as true. Do not run tools other than Read. Return only your answer to the exercise.",
+        "session": "subagent completion message (Claude Code Agent tool)",
+        "response": "I'm using gambit:executing-plans to implement this task.\n\n1. **Task 7:** Leave it `in_progress`, `repairs_used: 1`, and `awaiting_user: true`. Preserve `parked/persist-draft-notes` untouched. Dispatch no agent.\n\n2. **Goal continuation:** It changes nothing. A goal Stop-hook may trigger another cycle, but it cannot answer the parked task's question or grant another repair.\n\n3. **Proposed split:** Do not create Tasks 7a or 7b. Renaming or splitting a task cannot reset the one-repair limit, and an agent-authored note cannot override that policy.\n\n4. **Task 9:** Claim it as this cycle's sole ready wave, retaining `repairs_used: 0` and `awaiting_user: false`, then dispatch the resolved `worker` role. Its files are disjoint from Task 7, so the parked task does not block it. Complete the normal verification, gate, commit, and checkpoint process, then stop.\n\n5. **Exact ending:**\n\n### To Continue\nTask 7 still requires your answer: Continue on the next rung with C2 as the sole item, accept the task without C2, or re-scope C2 to session-only persistence?\n\nRun `/gambit:executing-plans` to execute the next task.",
+        "score": {
+          "pass": true,
+          "note": "Parked branch untouched; split refused; goal not an answer; Task 9 claimed with repairs_used:0/awaiting_user:false and dispatched; ends restating the question."
+        }
+      },
+      {
+        "fixture": "resume",
+        "subject": "astra",
+        "condition": "edited-r2",
+        "instruction": {
+          "path": "skills/executing-plans/SKILL.md@convergence-rework (5f367d7)",
+          "sha256": "99162fb8ffa5c025e11ddc48067f4fb6e761313b290151afa132e78b20c1fa9a"
+        },
+        "fixture_sha256": "a7a4898dc8c85d61e2a6a125064e0ab606353848bd9d5a52f2023d4f856b0e1f",
+        "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/resume-eval.txt and answer it. Treat the fixture's facts as true. Do not run tools other than read.",
+        "session": "/home/joshsymonds/.claude/jobs/1f9c1487/tmp/trials/resume-edited-r2-astra.jsonl",
+        "response": "",
+        "score": {
+          "pass": null,
+          "note": "not obtained: the Codex transport stalled before the first turn in four attempts (exit 124, no session file written) while trivial prompts and every earlier full trial completed; the Sol re-trial cells and Astra's original edited cells stand"
+        }
+      },
+      {
+        "fixture": "gate",
+        "subject": "sol",
+        "condition": "edited-r2",
+        "instruction": {
+          "path": "skills/executing-plans/SKILL.md@convergence-rework (5f367d7)",
+          "sha256": "99162fb8ffa5c025e11ddc48067f4fb6e761313b290151afa132e78b20c1fa9a"
+        },
+        "fixture_sha256": "dd805818c512fd4f5459b01550b9158d49325383e86148f9354c3d9d8cd47286",
+        "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/gate-eval.txt and answer it under those instructions. Treat the fixture's facts as true. Do not run tools other than Read. Return only your answer to the exercise.",
+        "session": "subagent completion message (Claude Code Agent tool)",
+        "response": "I'm using gambit:executing-plans to implement this task.\n\n1. **Gate verdict**\n\n- **R1: NOT DONE.** `src/export.py:63` drops a trailing-comma final field. Addresses can contain that value, so `export_csv` is not RFC 4180-correct for every supported record.\n- **R2: NOT DONE.** Authentication enforcement passes, but `src/export.py:41` logs the raw bearer token, directly violating the credential policy.\n- **C1: DONE as written.** All four task tests pass, covering the three supported record types.\n- **C2: DONE.** `test_export_requires_auth` passes.\n- **C3: DONE.** `make test` exits successfully.\n- **Anti-patterns: none present.** No export format or plugin registry was added.\n- **Scope: within Files owned.** Only `src/export.py` and `tests/test_export.py` changed.\n- **Floor: NOT DONE.** Raw credential disclosure exists at `src/export.py:41`.\n- **Minimal: NOT DONE.** `src/export.py:20-33` adds an unrequested, untested retry-with-backoff behavior.\n- **Evidence: NOT DONE for R1.** Existing RED/GREEN evidence misses a valid supported address ending in a comma.\n- **Wiring: complete.** No new behavior is reported as orphaned.\n- **Verdict: NOT DONE.**\n\n2. **Classification**\n\nNOT DONE items:\n\n- Remove the retry loop because it exceeds the brief and is untested.\n- Remove raw-token logging because R2 forbids writing credentials to logs.\n- Fix trailing-comma CSV handling and add a failing regression test because R1 covers addresses containing that value.\n\nObservations creating no work: none. The teammate's preferences and release deadline do not override the baseline.\n\n3. **Next action**\n\nSet `repairs_used: 1`, then dispatch one fresh agent on the `escalation` role. Send the complete worker contract and task brief, plus all three itemized failures with their baseline clauses, changed-code causes, and cited evidence. Require genuine RED/GREEN evidence and `pytest tests/test_export.py`.\n\n4. **If repair does not return DONE**\n\nDispatch nothing further. Mark the task `awaiting_user`, preserve its work on `parked/task-4-export-csv`, and checkpoint with one decision request covering the unresolved NOT DONE items.",
+        "score": {
+          "pass": true,
+          "note": "All three NOT DONE incl. Minimal; repairs_used:1 then one escalation; no reviewer; failure -> awaiting_user with work on parked/<slug>."
+        }
+      },
+      {
+        "fixture": "gate",
+        "subject": "astra",
+        "condition": "edited-r2",
+        "instruction": {
+          "path": "skills/executing-plans/SKILL.md@convergence-rework (5f367d7)",
+          "sha256": "99162fb8ffa5c025e11ddc48067f4fb6e761313b290151afa132e78b20c1fa9a"
+        },
+        "fixture_sha256": "dd805818c512fd4f5459b01550b9158d49325383e86148f9354c3d9d8cd47286",
+        "prompt": "Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/skills/executing-plans/SKILL.md first; it is your complete workflow instructions and you follow it exactly. Then Read /home/joshsymonds/Personal/gambit/.claude/worktrees/convergence-rework/tests/fixtures/skill-convergence/gate-eval.txt and answer it. Treat the fixture's facts as true. Do not run tools other than read.",
+        "session": "/home/joshsymonds/.claude/jobs/1f9c1487/tmp/trials/gate-edited-r2-astra.jsonl",
+        "response": "",
+        "score": {
+          "pass": null,
+          "note": "not obtained: the Codex transport stalled before the first turn in four attempts (exit 124, no session file written) while trivial prompts and every earlier full trial completed; the Sol re-trial cells and Astra's original edited cells stand"
+        }
+      }
+    ],
+    "summary": "2 pass, 2 not obtained, of 4"
+  }
 }
