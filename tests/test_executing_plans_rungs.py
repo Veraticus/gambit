@@ -92,6 +92,11 @@ class ExecutingPlansStructureTest(unittest.TestCase):
             with self.subTest(outcome=outcome):
                 self.assertIn(outcome, self.text)
 
+    def test_skill_names_no_harness_specific_end_run_tools(self) -> None:
+        for tool in ("goal_complete", "goal_end"):
+            with self.subTest(tool=tool):
+                self.assertNotIn(tool, self.text)
+
     def test_normative_prose_excludes_forbidden_content(self) -> None:
         for path in sorted(SKILL_ROOT.rglob("*.md")):
             text = path.read_text(encoding="utf-8")

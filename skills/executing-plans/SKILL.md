@@ -110,7 +110,7 @@ Always write the report, including after catastrophe. It contains:
 - Completed external actions and their observed effects.
 - Rungs used by task and lineage.
 
-Record exactly one terminal outcome: **released**, **ended with gaps**, or **stopped on catastrophe**. Store the report with that outcome, then use the harness's end-a-run operation. On Pi, use `goal_complete` for released, or `goal_end` with outcome `ended_with_gaps` or `stopped_on_catastrophe` and the report for the other outcomes. A terminal resume only shows the report.
+Record exactly one terminal outcome: **released**, **ended with gaps**, or **stopped on catastrophe**. Store the report with that outcome, then use the harness's end-a-run operation. For each harness, use the end-a-run realization mapped in `README.md`'s Install section. A terminal resume only shows the report.
 
 ## Human boundaries
 

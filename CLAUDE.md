@@ -14,7 +14,7 @@ tests/               # Structural and behavioral checks
 
 Edit files in `skills/<name>/` and `contracts/` directly. Run `just check` before committing.
 
-**The tests assert exact phrasings.** `tests/` pins substrings from skill prose such as role and rung resolution, agent versus model dispatch shape, and scout dispatch shape. Read the assertion before rewording guarded prose.
+**The tests pin structure and forbidden content, never phrasings.** `tests/` pins substrings from skill prose such as role and rung resolution, agent versus model dispatch shape, and scout dispatch shape. Read the assertion before rewording guarded prose.
 
 `just trials` runs the behavioral trials. `just scan` runs the normative-prose scan.
 

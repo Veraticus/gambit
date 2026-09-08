@@ -35,42 +35,6 @@ class RootSkillsTest(unittest.TestCase):
         ):
             self.assertIn(contract_path, catalog)
 
-    def test_validation_catalog_describes_wired_rung_routing(self) -> None:
-        validation = (
-            ROOT / "tests" / "fixtures" / "skill-convergence" / "VALIDATION.md"
-        ).read_text(encoding="utf-8")
-        normalized = " ".join(validation.split())
-
-        self.assertNotIn(
-            "Dispatch behavior is deliberately not claimed here",
-            normalized,
-        )
-        for coverage, module in (
-            (
-                "`tests/test_rung_dispatch.py` pins the `models.json` config path",
-                "test_rung_dispatch.py",
-            ),
-            (
-                "`tests/test_brainstorming_steelman.py` covers Steelman rung resolution and call wiring",
-                "test_brainstorming_steelman.py",
-            ),
-            (
-                "`tests/test_executing_plans_rungs.py` covers worker and escalation routing and the binary checkpoint gate",
-                "test_executing_plans_rungs.py",
-            ),
-            (
-                "`tests/test_review_rungs.py` covers finder and verifier routing",
-                "test_review_rungs.py",
-            ),
-            (
-                "`tests/test_workflow_routing.py` covers scout and test-runner routing",
-                "test_workflow_routing.py",
-            ),
-        ):
-            with self.subTest(module=module):
-                self.assertIn(coverage, normalized)
-                self.assertTrue((ROOT / "tests" / module).exists())
-
     def test_contracts_and_skills_do_not_name_concrete_provider_model_ids(self) -> None:
         for root in (CONTRACTS, SKILLS):
             for path in sorted(root.rglob("*.md")):
