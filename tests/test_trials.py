@@ -206,7 +206,108 @@ class TrialRunnerTest(unittest.TestCase):
         self.assertEqual([], record["items"])
         self.assertEqual(2, len(fake.calls))
 
-    def test_judge_output_is_strict_and_every_item_must_pass(self) -> None:
+    def test_judge_output_matches_numbered_items_by_position(self) -> None:
+        checklist = ("first item", "second item", "third item")
+        response = json.dumps(
+            {
+                "items": [
+                    {"item": "1. first item", "pass": True, "evidence": "one"},
+                    {"item": "2) second item", "pass": True, "evidence": "two"},
+                    {
+                        "item": "  third   item  ",
+                        "pass": True,
+                        "evidence": "three",
+                    },
+                ]
+            }
+        )
+
+        parsed = trials.parse_judge_output(response, checklist)
+
+        self.assertEqual(3, len(parsed))
+        self.assertTrue(all(item["pass"] is True for item in parsed))
+
+    def test_judge_output_extracts_fenced_or_surrounded_object(self) -> None:
+        payload = json.loads(judge_json(self.checklist))
+        payload["summary"] = "extra top-level keys are ignored"
+        raw = json.dumps(payload)
+        responses = [
+            f"```json\n{raw}\n```",
+            f"```\n{raw}\n```",
+            f"The verdict follows.\n{raw}",
+            f"{raw}\nThat is the verdict.",
+            f"The verdict follows.\n{raw}\nThat is the verdict.",
+        ]
+
+        for response in responses:
+            with self.subTest(response=response):
+                parsed = trials.parse_judge_output(response, tuple(self.checklist))
+                self.assertEqual(2, len(parsed))
+
+    def test_judge_output_rejects_invalid_item_data(self) -> None:
+        invalid_payloads = {
+            "missing items": {"summary": "no verdict"},
+            "wrong item count": {
+                "items": [
+                    {
+                        "item": self.checklist[0],
+                        "pass": True,
+                        "evidence": "only one item",
+                    }
+                ]
+            },
+            "non-boolean pass": {
+                "items": [
+                    {
+                        "item": self.checklist[0],
+                        "pass": "true",
+                        "evidence": "first",
+                    },
+                    {
+                        "item": self.checklist[1],
+                        "pass": True,
+                        "evidence": "second",
+                    },
+                ]
+            },
+            "mismatched normalized text": {
+                "items": [
+                    {
+                        "item": "1. states the wrong result",
+                        "pass": True,
+                        "evidence": "first",
+                    },
+                    {
+                        "item": self.checklist[1],
+                        "pass": True,
+                        "evidence": "second",
+                    },
+                ]
+            },
+            "non-string evidence": {
+                "items": [
+                    {
+                        "item": self.checklist[0],
+                        "pass": True,
+                        "evidence": ["first"],
+                    },
+                    {
+                        "item": self.checklist[1],
+                        "pass": True,
+                        "evidence": "second",
+                    },
+                ]
+            },
+        }
+
+        for name, payload in invalid_payloads.items():
+            with self.subTest(name=name):
+                with self.assertRaises(trials.JudgeParseError):
+                    trials.parse_judge_output(
+                        json.dumps(payload), tuple(self.checklist)
+                    )
+
+    def test_judge_scores_every_item(self) -> None:
         fixture = self.load_one()
         fake = FakeTransport(
             "subject answer", judge_json(self.checklist, [True, False])
@@ -216,26 +317,9 @@ class TrialRunnerTest(unittest.TestCase):
         self.assertFalse(record["pass"])
         self.assertEqual(self.checklist, [item["item"] for item in record["items"]])
 
-        with self.assertRaises(trials.JudgeParseError):
-            trials.parse_judge_output(
-                "```json\n" + judge_json(self.checklist) + "\n```",
-                tuple(self.checklist),
-            )
-        with self.assertRaises(trials.JudgeParseError):
-            trials.parse_judge_output(
-                json.dumps(
-                    {
-                        "items": [
-                            {
-                                "item": self.checklist[0],
-                                "pass": True,
-                                "evidence": "only one item",
-                            }
-                        ]
-                    }
-                ),
-                tuple(self.checklist),
-            )
+    def test_judge_prompt_allows_numbered_or_unnumbered_item_text(self) -> None:
+        prompt = trials.judge_prompt(tuple(self.checklist), "subject answer")
+        self.assertIn("with or without its number", prompt)
 
     def test_judge_parse_failure_retries_once_then_records_failure(self) -> None:
         fixture = self.load_one()
@@ -247,11 +331,15 @@ class TrialRunnerTest(unittest.TestCase):
         self.assertTrue(record["pass"])
         self.assertEqual(3, len(recovered.calls))
 
-        failed = FakeTransport("subject answer", "not json", "still not json")
+        failed = FakeTransport(
+            "subject answer", "first invalid verdict", "last invalid verdict"
+        )
         record = trials.run_cell(self.root, fixture, "sol-low", failed)
-        self.assertEqual("transport_failure", record["status"])
+        self.assertEqual("judge_failure", record["status"])
         self.assertFalse(record["pass"])
         self.assertEqual("subject answer", record["response"])
+        self.assertEqual([], record["items"])
+        self.assertEqual("last invalid verdict", record["judge_raw"])
         self.assertEqual(3, len(failed.calls))
 
     def test_check_fresh_reports_missing_stale_and_failed_cells(self) -> None:
@@ -286,7 +374,21 @@ class TrialRunnerTest(unittest.TestCase):
             trials.check_fresh(self.root, [fixture], results),
         )
 
-        results[identifiers[0]]["pass"] = True
+        results[identifiers[0]] = {
+            "status": "judge_failure",
+            "pass": False,
+            "hashes": current_hashes,
+        }
+        self.assertEqual(
+            [f"failing {identifiers[0]}"],
+            trials.check_fresh(self.root, [fixture], results),
+        )
+
+        results[identifiers[0]] = {
+            "status": "ok",
+            "pass": True,
+            "hashes": current_hashes,
+        }
         self.assertEqual([], trials.check_fresh(self.root, [fixture], results))
 
     def test_result_file_update_is_atomic_and_preserves_other_cells(self) -> None:

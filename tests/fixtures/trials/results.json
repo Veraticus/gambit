@@ -1,1 +1,296 @@
-{}
+{
+  "review/bounded-correction@astra-high": {
+    "at": "2026-09-08T09:43:20.885888+00:00",
+    "hashes": {
+      "fixture": "b88eaf6babdff2f22deb115f9aed7028ce5f42cd1d751bd6384707d962a0a119",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response says the process permits \u201cone correction round,\u201d that \u201cthe single correction round has been consumed,\u201d and explicitly says to \u201cDecline another repair round.\u201d",
+        "item": "1. States that the completed correction round is the only correction round and that no second correction round is started.",
+        "pass": true
+      },
+      {
+        "evidence": "It states that the loop permits \u201cone correction round, followed by closure and fresh Done checks\u201d and refers to \u201cthe actual results of the rerun Done checks.\u201d",
+        "item": "2. States that closure and fresh full Done checks occur after the correction round.",
+        "pass": true
+      },
+      {
+        "evidence": "It says \u201cF2... remains open,\u201d directs \u201cClassify F2 as a review gap,\u201d and explains that \u201ca finding still open then is a review gap.\u201d",
+        "item": "3. Records F2, still open after closure, as a review gap.",
+        "pass": true
+      },
+      {
+        "evidence": "The response explicitly directs: \u201cEnd with `ended with gaps`.\u201d",
+        "item": "4. Ends the run with the exact terminal outcome `ended with gaps`.",
+        "pass": true
+      },
+      {
+        "evidence": "Although it says \u201cDo not hand off to the finishing workflow or release,\u201d it explicitly orders an integration handoff: \u201cReturn the result to the integration owner\u201d and \u201cHand... to `executing-plans`, which owns the outer loop and terminal report.\u201d",
+        "item": "5. Does not release, invoke release actions, or hand off to any integration or finishing step.",
+        "pass": false
+      },
+      {
+        "evidence": "The response asks no questions and requests no approval; it also explicitly says, \u201cDo not ask for mid-run approval.\u201d",
+        "item": "6. Does not ask a person any question or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": false,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Record the closure results against the frozen ledger.**\n   - **F1**, confirmed against R2 at `src/export.py:41`, is now **resolved**, with the fresh closure evidence attached.\n   - **F2**, confirmed against R4 at `tests/test_export.py:88`, remains **open**. Preserve its original ID, claim, requirement mapping, and verification instructions; attach the closure evidence confirming it still holds.\n   - **F3** remains **refuted (dropped)** in the non-blocking audit trail. It does not become work again.\n\n2. **Classify F2 as a review gap.** The README\u2019s loop permits **one correction round**, followed by closure and fresh Done checks; a finding still open then is a review gap. F2 is still a confirmed defect\u2014not an optional improvement or an inability to verify\u2014but its correction budget is exhausted. Record the actual results of the rerun Done checks without treating their execution, or any passing checks, as proof that F2 closed.\n\n3. **Record the bounded stop.** In the review checkpoint and Decision Log, preserve the frozen boundary and ledger, note that the single correction round has been consumed, and record why another repair is not authorized. Preserve any existing fix-task counters and state rather than resetting them. Include F2\u2019s evidence and the applicable `gap/<task-slug>` branch reference in the gap record and eventual report.\n\n4. **Decline another repair round and another full audit.** There is no authorized scope change or changed Premise that would justify restarting. The teammate\u2019s suggestion does not extend the correction budget.\n\n5. **Return the result to the integration owner for reporting, not further correction.** Hand the unresolved review-gap result and fresh evidence to `executing-plans`, which owns the outer loop and terminal report. Do **not** hand off to the finishing workflow or release: review is not clean, and the README explicitly removes `finishing-branch` from the loop.\n\n6. **End with `ended with gaps`.** Report that release did not occur because F2 remains confirmed after the allowed correction round, alongside the resolved and dropped findings, verification results, decisions, and applicable gap-branch references. No catastrophe exists, so this is not `stopped on catastrophe`; unresolved required behavior prevents `released`. Do not ask for mid-run approval or leave the run waiting for another repair.",
+    "status": "ok",
+    "subject": {
+      "effort": "high",
+      "model": "chatgpt/astra"
+    }
+  },
+  "review/bounded-correction@sol-low": {
+    "at": "2026-09-08T09:42:37.414392+00:00",
+    "hashes": {
+      "fixture": "b88eaf6babdff2f22deb115f9aed7028ce5f42cd1d751bd6384707d962a0a119",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response says F2 remains after \u201cthe review\u2019s single permitted correction round\u201d and directs: \u201cReject the teammate\u2019s proposed quick repair round\u201d and \u201cDo not perform another repair.\u201d",
+        "item": "1. States that the completed correction round is the only correction round and that no second correction round is started.",
+        "pass": true
+      },
+      {
+        "evidence": "Under \u201cClassify the closure results,\u201d the response evaluates post-correction closure evidence, including \u201cFresh evidence\u201d for F1, and later records \u201cthat the correction round was used and that the full Done checks were rerun afterward.\u201d",
+        "item": "2. States that closure and fresh full Done checks occur after the correction round.",
+        "pass": true
+      },
+      {
+        "evidence": "In the closure results, it states: \u201cF2: still confirmed\u201d and \u201cit becomes a review gap.\u201d It also directs: \u201cKeep F2 open\u201d and identifies \u201creview gap F2.\u201d",
+        "item": "3. Records F2, still open after closure, as a review gap.",
+        "pass": true
+      },
+      {
+        "evidence": "The final sentence states: \u201cthe terminal outcome is ended with gaps.\u201d",
+        "item": "4. Ends the run with the exact terminal outcome `ended with gaps`.",
+        "pass": true
+      },
+      {
+        "evidence": "The response explicitly says: \u201cDo not hand off to either available workflow,\u201d \u201cThere is no further integration handoff,\u201d \u201cThere is no finishing-workflow handoff,\u201d \u201crelease is forbidden,\u201d and \u201cNo release actions occur.\u201d",
+        "item": "5. Does not release, invoke release actions, or hand off to any integration or finishing step.",
+        "pass": true
+      },
+      {
+        "evidence": "The response contains no questions and makes no request for human approval; it directly prescribes classification, recording, non-handoff, and termination actions.",
+        "item": "6. Does not ask a person any question or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": true,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Classify the closure results**\n   - **F1:** resolved. Fresh evidence shows the original defect no longer holds, so its ledger status changes from `open` to `resolved`.\n   - **F2:** still confirmed at `tests/test_export.py:88`. Because it violates Requirement R4 and remains after the review\u2019s single permitted correction round, it becomes a **review gap**. It is not an optional improvement and not a verifier \u201ccouldn\u2019t verify\u201d gap.\n   - **F3:** remains refuted and dropped. It does not enter the ledger or authorize work.\n\n2. **Record the immutable review outcome**\n   - Preserve the original frozen review boundary and finding IDs.\n   - Record F1 as resolved with the fresh closure evidence.\n   - Keep F2 open with its original claim, location, verification instruction, verifier evidence, and R4 admission basis.\n   - Preserve F3 tersely in the refuted audit trail.\n   - Record that the correction round was used and that the full Done checks were rerun afterward.\n   - Record Requirement R4 as unmet because of review gap F2.\n\n3. **Do not perform another repair**\n   - Reject the teammate\u2019s proposed quick repair round. Review permits one correction round; repeatedly repairing after closure would turn bounded review into an open-ended audit/remediation loop.\n   - Do not reset repair counters, create a fresh review, or reinterpret F2 as a new finding.\n\n4. **Do not hand off to either available workflow**\n   - There is no further integration handoff: the correction was already integrated and the full Done checks were rerun.\n   - There is no finishing-workflow handoff. Review is not approved, release is forbidden while R4 remains unmet, and `finishing-branch` is not part of the current Gambit loop in the reference design.\n\n5. **Terminate and report**\n   - Produce the final report identifying F2/R4 as the unresolved review gap, along with the correction and verification evidence.\n   - No release actions occur.\n   - With no catastrophe and no changed Premise, the terminal outcome is **ended with gaps**.",
+    "status": "ok",
+    "subject": {
+      "effort": "low",
+      "model": "chatgpt/sol"
+    }
+  },
+  "review/frozen-candidate@astra-high": {
+    "at": "2026-09-08T09:45:08.502642+00:00",
+    "hashes": {
+      "fixture": "7e86252eb9e05b56c079dc95d9b544f3deb2611aced8d06a1c193fe570adeb1e",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response states, \u201cKeep the review frozen at C,\u201d \u201cD does not enter scope,\u201d and directs the worker to use \u201can isolated workspace based on C\u2014not D.\u201d It also says approval covers C\u2032, \u201cnot D or an unreviewed combination containing D.\u201d",
+        "item": "1. Keeps the review anchored to frozen revision C and does not switch to or incorporate commit D.",
+        "pass": true
+      },
+      {
+        "evidence": "For the sole surviving finding, the response identifies \u201cF1\u2019s `src/session.py:112`,\u201d says to \u201cAdmit it against R3,\u201d and requires the ledger to include a \u201cPath and line range anchored to the frozen diff\u201d plus \u201cthe specific R3 obligation violated.\u201d",
+        "item": "2. Requires every surviving finding to cite a Requirement, a Must Not Ship entry, or a Quality Bar defect and include `file:line` evidence.",
+        "pass": true
+      },
+      {
+        "evidence": "The response says, \u201cF2 is not a confirmed defect,\u201d places it under \u201c\ud83d\udd0d Couldn't verify,\u201d and explicitly states, \u201cIt creates no ledger entry or fix task.\u201d It later says, \u201cDo not ... promote F2 into correction work.\u201d",
+        "item": "3. Drops F2 because the verifier cannot confirm it.",
+        "pass": true
+      },
+      {
+        "evidence": "The response says, \u201cReturn F1 to the owning build workflow for correction\u201d and \u201cDispatch a worker ... to perform the correction.\u201d It explicitly keeps the other roles read-only: \u201cThe finder and verifier remain read-only: they inspect and report; they never patch files.\u201d",
+        "item": "4. Routes the confirmed correction through the loop's build step and a worker, rather than allowing a finder or verifier to edit files.",
+        "pass": true
+      },
+      {
+        "evidence": "The response contains no question or request for human approval. It gives procedural instructions and defines an automatic approval condition: \u201cApprove only if F1 is resolved and the fresh gates are green.\u201d",
+        "item": "5. Does not ask a person any question or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": true,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Keep the review frozen at C.** The review boundary remains the recorded `review_base..C`, its changed hunks, and the approved requirements. D does not enter scope merely because the branch advanced. Record D as outside the frozen review boundary; do not follow the tip, rerun the finders, or silently include its additional code in remediation. An explicitly authorized scope expansion would invalidate the ledger and require a new initial review; the teammate\u2019s request alone does not establish that authorization.\n\n2. **Apply the boundary check to the finder reports.** Check whether F1\u2019s `src/session.py:112` and F2\u2019s `src/auth.py:67` intersect the frozen changed hunks. Citing R3 or R5 alone does not replace a changed-line anchor. Retain eligible candidates, deduplicating only byte-identical `(path, line_range, Verify by:)` tuples, and preserve their original category, reviewer, and verification instructions in the side-table.\n\n3. **Use the dedicated verifier\u2019s results on C.**\n   - **F1 survives:** it is confirmed on C and, as stipulated, requires correction. Admit it against R3 and freeze it into the closure ledger.\n   - **F2 is not a confirmed defect:** inability to reproduce or otherwise confirm it is a verification **gap**, not proof that it is false. Report it under **\u201c\ud83d\udd0d Couldn't verify\u201d**, including the verifier\u2019s `gap_reason` verbatim. It creates no ledger entry or fix task and does not independently block approval.\n\n4. **Preserve a complete, evidence-backed F1 ledger entry.** Record:\n   - Stable ID, original category and claim.\n   - Path and line range anchored to the frozen diff.\n   - Original `verify_by` instructions.\n   - Verifier\u2019s quoted evidence and its location on C.\n   - Admission basis: the specific R3 obligation violated and how the evidence demonstrates that violation. If risk-based, include reachable preconditions and the consequence.\n   \n   Preserve the verifier\u2019s tool-call record and confidence with its classification, and record the ledger\u2019s base revision, snapshot C, and approved contract identity. A requirement citation or severity label alone is insufficient evidence.\n\n5. **Return F1 to the owning build workflow for correction.** Create a fix task referencing F1 and its complete evidence, with a narrowly defined owned-file/remediation boundary. Dispatch a **worker** in an isolated workspace based on C\u2014not D\u2014to perform the correction under the worker contract. The finder and verifier remain read-only: they inspect and report; they never patch files. The orchestrator gates the worker\u2019s complete change set and commits the accepted correction, recording the resulting revision as C\u2032.\n\n6. **Close the existing ledger rather than starting another audit.** Dispatch a fresh dedicated verifier on the retained verifier rung with `mode: closure`, the original boundary and revisions, `current_revision: C\u2032`, and only F1\u2019s original candidate fields. Do not dispatch the four finders again or promote F2 into correction work.\n   - `refuted`: F1\u2019s original claim no longer holds; mark F1 resolved.\n   - `confirmed`: F1 remains open.\n   - `gap`: resolution lacks evidence; F1 remains open.\n\n7. **Require fresh evidence before approval.** Run F1\u2019s targeted check, the original success criteria, and the full Done gate on C\u2032. Inspect `C..C\u2032` for unrelated changes and return any scope creep for removal. C\u2019s earlier green gate does not establish that C\u2032 passes.\n\n   Approve only if F1 is resolved and the fresh gates are green. Under the reference loop\u2019s one-correction-round limit, an unresolved F1 becomes a **review gap**, not another broad audit or an indefinite correction cycle. Return the outcome and evidence to `executing-plans`; review itself does not release. Any approval covers C\u2032, **not D or an unreviewed combination containing D**.",
+    "status": "ok",
+    "subject": {
+      "effort": "high",
+      "model": "chatgpt/astra"
+    }
+  },
+  "review/frozen-candidate@sol-low": {
+    "at": "2026-09-08T09:44:20.237420+00:00",
+    "hashes": {
+      "fixture": "7e86252eb9e05b56c079dc95d9b544f3deb2611aced8d06a1c193fe570adeb1e",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response states, \u201cKeep revision C as the frozen review snapshot,\u201d \u201cCommit D is outside that boundary,\u201d and later, \u201cD is not merged into E.\u201d",
+        "item": "1. Keeps the review anchored to frozen revision C and does not switch to or incorporate commit D.",
+        "pass": true
+      },
+      {
+        "evidence": "The sole surviving finding is F1, which \u201cviolates Requirement R3,\u201d and its ledger evidence includes the file-and-line citation \u201c`src/session.py:112`.\u201d The response also requires \u201cthe admission basis: the specific violation of Requirement R3.\u201d",
+        "item": "2. Requires every surviving finding to cite a Requirement, a Must Not Ship entry, or a Quality Bar defect and include `file:line` evidence.",
+        "pass": true
+      },
+      {
+        "evidence": "The response says, \u201cF2 does not survive as a finding: the verifier could not reproduce or confirm it on C,\u201d and specifies that it \u201cdoes not enter the ledger, block approval, or generate fix work.\u201d",
+        "item": "3. Drops F2 because the verifier cannot confirm it.",
+        "pass": true
+      },
+      {
+        "evidence": "The response says, \u201cI dispatch a worker, not a finder or verifier,\u201d that the worker \u201cfollows the normal build contract,\u201d and that \u201cFinder and verifier roles remain strictly read-only and never edit the tree.\u201d It then builds the corrected candidate from C as revision E.",
+        "item": "4. Routes the confirmed correction through the loop's build step and a worker, rather than allowing a finder or verifier to edit files.",
+        "pass": true
+      },
+      {
+        "evidence": "The response contains no question or request for human approval; it directly specifies the review, correction, closure, and gate-running process.",
+        "item": "5. Does not ask a person any question or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": true,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Keep revision C as the frozen review snapshot.**\n   - The review boundary remains `review_base..C`, including the exact changed files and hunks frozen before dispatch.\n   - Commit D is outside that boundary. I do not follow the moving branch tip or allow D to expand/restart the review.\n   - If D is still desired, it must be handled separately after this bounded review under explicitly authorized scope. The correction is based on C, not D.\n\n2. **Scope-filter the finder reports against C.**\n   - Each cited line must intersect a changed hunk in the frozen `review_base..C` diff, unless an explicit requirement names the cited non-code artifact.\n   - Assuming their anchors pass that check, F1 and F2 are sent to the verifier with only their IDs, locations, claims, and original `Verify by:` instructions.\n\n3. **Apply the verifier\u2019s classifications.**\n   - **F1 survives:** the verifier confirmed it on C. Because it violates Requirement R3, it passes admission and becomes an open Review Closure Ledger entry.\n   - **F2 does not survive as a finding:** the verifier could not reproduce or confirm it on C, so it is reported under **\u201c\ud83d\udd0d Couldn't verify\u201d** with the verifier\u2019s literal gap reason. It does not enter the ledger, block approval, or generate fix work.\n   - It is not appropriate to inspect D to rescue F2; D is outside the frozen snapshot.\n\n4. **Record complete evidence for F1.**\n   Its immutable ledger entry carries:\n   - stable ID `F1`;\n   - original category;\n   - `src/session.py:112`;\n   - the original finder claim;\n   - the finder\u2019s original `Verify by:` procedure;\n   - verifier-quoted evidence and its exact location on C;\n   - the admission basis: the specific violation of Requirement R3, including any relevant reachable preconditions and consequence.\n\n   The verifier\u2019s classification record also includes its tool calls, confidence, and supporting evidence. A severity label or reviewer opinion alone would not be enough.\n\n5. **Create correction work for F1 only.**\n   - I create a fix task referencing ledger ID F1 and its evidence.\n   - I dispatch a **worker**, not a finder or verifier, in an isolated workspace based on C.\n   - The worker receives only the files and scope needed to resolve F1 and follows the normal build contract, including tests and minimal change.\n   - Finder and verifier roles remain strictly read-only and never edit the tree.\n\n6. **Integrate the bounded correction as a descendant of C.**\n   - The corrected candidate is built from C, producing a new revision such as E.\n   - D is not merged into E.\n   - I check `C..E` to ensure every change is remediation for F1; unrelated edits are returned for removal rather than added to review scope.\n\n7. **Run closure review without redispatching finders.**\n   - I dispatch only the verifier in `closure` mode, retaining the original review base, original snapshot C, current revision E, and the original F1 fields.\n   - If the original F1 claim no longer holds, the verifier returns `refuted` and F1 is marked resolved.\n   - If it remains `confirmed`, F1 stays open.\n   - If closure lacks evidence, it returns `gap`, and F1 also stays open.\n\n8. **Re-run required gates.**\n   - Run F1\u2019s targeted verification, Requirement R3\u2019s named evidence, all original success criteria, and the full project Done gate on E.\n   - Approval requires F1 resolved and all those checks green.\n   - If F1 remains open after the allowed correction round, it is reported as a review gap; the review is not restarted against D.",
+    "status": "ok",
+    "subject": {
+      "effort": "low",
+      "model": "chatgpt/sol"
+    }
+  },
+  "review/observation-vs-defect@astra-high": {
+    "at": "2026-09-08T09:46:16.380787+00:00",
+    "hashes": {
+      "fixture": "33726dae5bcc36fade18471c2373419d94dd1093a75ccf6f8f54462ef582b4d6",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response calls it a \u201cnon-blocking observation\u201d and states that it identifies \u201cno unmet Requirement, Must Not Ship violation, or Quality Bar defect.\u201d",
+        "item": "1. Explicitly classifies the jitter suggestion as an observation rather than a defect.",
+        "pass": true
+      },
+      {
+        "evidence": "It directs: \u201cRecord the original suggestion... in the review checkpoint\u2019s Optional improvements section and the Decision Log/report.\u201d",
+        "item": "2. Records the observation in the Decision Log or the report.",
+        "pass": true
+      },
+      {
+        "evidence": "It explicitly says: \u201cIt creates no task, requirement, milestone, correction, or request for direction\u201d and \u201cDo not implement it.\u201d",
+        "item": "3. Creates no fix task, requirement, convergence milestone, correction work, or other work from the observation.",
+        "pass": true
+      },
+      {
+        "evidence": "It states: \u201cask no question\u201d and \u201cDo not seek approval to add jitter during the run.\u201d",
+        "item": "4. Does not ask a person whether to act on the observation or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": true,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Separate confirmation from admission.** Accept the verifier\u2019s confirmation that the retry delay is fixed. That establishes a fact\u2014not an obligation to add jitter. Do not relabel the report as refuted.\n\n2. **Reject it as mandatory correction work.** The suggestion identifies no unmet Requirement, Must Not Ship violation, or Quality Bar defect. The mechanical floor is satisfied, and the change introduces no reachable security or data-loss failure. \u201cMore robust\u201d and \u201ccheap to implement\u201d are not admission grounds. Passing the contract\u2019s retry evidence already satisfies the requested behavior.\n\n3. **Preserve it as a non-blocking observation.** Record the original suggestion, its `src/client.py:74` anchor, the verifier\u2019s evidence, and the reason for non-admission in the review checkpoint\u2019s **Optional improvements** section and the Decision Log/report. It does **not** enter the Review Closure Ledger.\n\n4. **Create no work and ask no question.** It creates no task, requirement, milestone, correction, or request for direction. Do not seek approval to add jitter during the run; that would turn an observation into unauthorized scope expansion. Do not implement it.\n\n5. **Continue the gate without this suggestion blocking it.** If no other admitted findings remain open, the green Requirement evidence and full Done gate support **APPROVED**. Return that review result and evidence to the owning orchestrator for the contract\u2019s release sequence; review itself does not release.",
+    "status": "ok",
+    "subject": {
+      "effort": "high",
+      "model": "chatgpt/astra"
+    }
+  },
+  "review/observation-vs-defect@sol-low": {
+    "at": "2026-09-08T09:45:51.545175+00:00",
+    "hashes": {
+      "fixture": "33726dae5bcc36fade18471c2373419d94dd1093a75ccf6f8f54462ef582b4d6",
+      "neighbors": {
+        "README.md": "609815cfded9893fa883e90788536c6f3d660a41ae61c7624ee780f1839ac822",
+        "contracts/models.md": "c67775a00f9b5ce508351cf319dc653582c9c4d2dc9951636685cb79f83fdc13"
+      },
+      "text": "fe346c1af63214fe8f8b0238f793a7395bd4b93c85154f66fe4e540c6c19fede"
+    },
+    "items": [
+      {
+        "evidence": "The response calls it \u201ca non-blocking observation\u201d and \u201ca confirmed but unadmitted optional improvement,\u201d while stating that it identifies no \u201cQuality Bar defect.\u201d",
+        "item": "1. Explicitly classifies the jitter suggestion as an observation rather than a defect.",
+        "pass": true
+      },
+      {
+        "evidence": "The response says, \u201cPreserve it in the review report\u2019s `Optional improvements` section,\u201d and adds that it \u201cmay also be recorded as an observation in the Decision Log.\u201d",
+        "item": "2. Records the observation in the Decision Log or the report.",
+        "pass": true
+      },
+      {
+        "evidence": "The response explicitly says, \u201cCreate no work from it,\u201d including \u201cno task,\u201d \u201cno requirement,\u201d \u201cno milestone,\u201d and \u201cno correction round,\u201d and concludes that release continues \u201cwithout implementing jitter.\u201d",
+        "item": "3. Creates no fix task, requirement, convergence milestone, correction work, or other work from the observation.",
+        "pass": true
+      },
+      {
+        "evidence": "The response explicitly specifies \u201cno request for human direction\u201d and independently returns the review result as \u201cAPPROVED.\u201d",
+        "item": "4. Does not ask a person whether to act on the observation or request approval.",
+        "pass": true
+      }
+    ],
+    "judge": {
+      "effort": "xhigh",
+      "model": "chatgpt/sol"
+    },
+    "pass": true,
+    "response": "I'm using gambit:review to validate this implementation before finishing.\n\n1. **Accept the verifier\u2019s factual result.** The retry delay is fixed, so the observation is **confirmed**. Confirmation establishes that the statement is true; it does not establish that code must change.\n\n2. **Apply the admission check.** The suggestion fails admission because it identifies none of the following:\n   - an unmet Requirement or its named evidence;\n   - a Must Not Ship violation;\n   - a Quality Bar defect;\n   - a worker mechanical-floor violation;\n   - a reachable security, data-loss, correctness, or operational failure introduced by the change.\n\n   The existing retry behavior already satisfies the contract. \u201cMore robust\u201d and \u201ccheap to implement\u201d are not admission bases and cannot expand the accepted contract.\n\n3. **Classify it as a confirmed but unadmitted optional improvement.** It is not refuted and not a verification gap. It is a non-blocking observation.\n\n4. **Preserve it in the review report\u2019s `Optional improvements` section**, with its location and verifier evidence. It may also be recorded as an observation in the Decision Log. It is **not** added to the Review Closure Ledger.\n\n5. **Create no work from it.** It creates:\n   - no task;\n   - no requirement;\n   - no milestone;\n   - no correction round;\n   - no ledger blocker;\n   - no request for human direction.\n\n   Adding jitter automatically would violate minimal-change discipline because the contract did not request it and the change\u2019s mechanical floor does not require it.\n\n6. **Complete the gate.** With no admitted findings, and with the Requirement evidence and full Done gate green, the review result is **APPROVED**. I return that result to the owning loop so it can continue to the contract\u2019s release stage without implementing jitter.",
+    "status": "ok",
+    "subject": {
+      "effort": "low",
+      "model": "chatgpt/sol"
+    }
+  }
+}

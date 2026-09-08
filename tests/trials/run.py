@@ -5,7 +5,8 @@ Fixtures live at ``tests/fixtures/trials/<skill>/<name>.json`` and contain
 ``skill``, repo-relative ``text``, repo-relative ``neighbors``, ``exercise``,
 and a non-empty binary ``checklist``. Cells are fixture x subject and are
 stored by ``<skill>/<name>@<subject>`` in ``results.json`` with current SHA-256
-hashes for the fixture, tested text, and every neighbor.
+hashes for the fixture, tested text, and every neighbor. Cell status is ``ok``,
+``transport_failure``, or ``judge_failure``.
 
 CLI: ``--skill NAME`` or ``--all`` runs and stores cells; ``--check-fresh``
 performs no network calls; ``--probe`` checks both subjects and the judge; and
@@ -210,20 +211,56 @@ def judge_prompt(checklist: tuple[str, ...], response: str) -> str:
         "Judge the subject response against every binary checklist item. Return "
         "JSON and nothing else, exactly in this shape: "
         '{"items": [{"item": "...", "pass": true, "evidence": "..."}]}. '
-        "Include every checklist item once, in the original order, with its exact "
-        "text. Evidence must cite the response.\n\n"
+        "Include every checklist item once, in the original order. Copy each item "
+        "text with or without its number. Evidence must cite the response.\n\n"
         f"CHECKLIST\n{numbered}\n\n"
         f"{_marked('SUBJECT RESPONSE', response)}"
     )
 
 
+def _extract_json_object(response: str) -> str:
+    text = response.strip()
+    lines = text.splitlines()
+    if (
+        len(lines) >= 2
+        and re.fullmatch(r"```(?:json)?\s*", lines[0], re.IGNORECASE)
+        and lines[-1].strip() == "```"
+    ):
+        text = "\n".join(lines[1:-1]).strip()
+
+    start = text.find("{")
+    if start == -1:
+        raise JudgeParseError("judge output contains no JSON object")
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        character = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+        elif character == '"':
+            in_string = True
+        elif character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    raise JudgeParseError("judge output contains no complete JSON object")
+
+
 def parse_judge_output(response: str, checklist: tuple[str, ...]) -> list[dict[str, object]]:
     try:
-        payload = json.loads(response)
+        payload = json.loads(_extract_json_object(response))
     except json.JSONDecodeError as error:
         raise JudgeParseError(f"judge output is not JSON: {error}") from error
-    if not isinstance(payload, dict) or set(payload) != {"items"}:
-        raise JudgeParseError("judge output must contain only items")
+    if not isinstance(payload, dict) or "items" not in payload:
+        raise JudgeParseError("judge output must contain items")
     items = payload["items"]
     if not isinstance(items, list) or len(items) != len(checklist):
         raise JudgeParseError("judge output must contain every checklist item")
@@ -231,7 +268,12 @@ def parse_judge_output(response: str, checklist: tuple[str, ...]) -> list[dict[s
     for expected, item in zip(checklist, items):
         if not isinstance(item, dict) or set(item) != {"item", "pass", "evidence"}:
             raise JudgeParseError("each judge item must contain item, pass, and evidence")
-        if item["item"] != expected:
+        item_text = item["item"]
+        if not isinstance(item_text, str):
+            raise JudgeParseError("judge item text must be a string")
+        normalized = re.sub(r"^\s*\d+[.)]\s*", "", item_text)
+        normalized = " ".join(normalized.split())
+        if normalized != expected:
             raise JudgeParseError("judge checklist items must match in order")
         if type(item["pass"]) is not bool:
             raise JudgeParseError("judge pass values must be booleans")
@@ -305,15 +347,17 @@ def _transport_call(
 
 def _judge_call(
     transport: Transport, checklist: tuple[str, ...], response: str
-) -> list[dict[str, object]] | None:
+) -> tuple[list[dict[str, object]] | None, str]:
     prompt = judge_prompt(checklist, response)
+    last_raw = ""
     for _ in range(2):
         try:
             output = transport(JUDGE["model"], JUDGE["effort"], prompt)
-            return parse_judge_output(output, checklist)
+            last_raw = output
+            return parse_judge_output(output, checklist), last_raw
         except (TransportError, OSError, urllib.error.URLError, JudgeParseError):
             continue
-    return None
+    return None, last_raw
 
 
 def _record_base(root: Path, fixture: Fixture, subject_name: str) -> dict[str, object]:
@@ -345,14 +389,15 @@ def run_cell(
             "response": "",
             "items": [],
         }
-    items = _judge_call(transport, fixture.checklist, response)
+    items, judge_raw = _judge_call(transport, fixture.checklist, response)
     if items is None:
         return {
-            "status": "transport_failure",
+            "status": "judge_failure",
             "pass": False,
             **base,
             "response": response,
             "items": [],
+            "judge_raw": judge_raw,
         }
     return {
         "status": "ok",

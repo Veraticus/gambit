@@ -18,7 +18,7 @@ Each fixture produces one cell per fixed subject. Its ID is `<skill>/<name>@<sub
 
 ```json
 {
-  "status": "ok|transport_failure",
+  "status": "ok|transport_failure|judge_failure",
   "pass": true,
   "hashes": {
     "fixture": "<sha256>",
@@ -29,6 +29,7 @@ Each fixture produces one cell per fixed subject. Its ID is `<skill>/<name>@<sub
   "judge": {"model": "<route>", "effort": "xhigh"},
   "response": "<subject response>",
   "items": [{"item": "<checklist item>", "pass": true, "evidence": "<quote>"}],
+  "judge_raw": "<last raw judge reply; judge_failure only>",
   "at": "<ISO timestamp>"
 }
 ```
