@@ -16,9 +16,11 @@
 
 A rung is a model at an effort level, with a writing variant and a read-only variant. Every role has an entry rung. `worker` and `escalation` also have a ladder: an ordered list of rungs beginning at the entry and continuing upward.
 
-Every dispatch starts at the role's entry rung. A NOT DONE gate record advances that task exactly one rung. A task never moves down, and an agent never selects or changes its own rung. No role enters above its entry rung.
+Every dispatch starts at the role's entry rung. A rung gets at most two attempts at a task; the second only when the gate record names the exact fix the first lacked: an owned path the brief omitted, a value or decision it left out, or one named check with its failing output. That attempt carries the corrected brief, the gate record, and the current work.
 
-When a task fails at the top rung, the loop re-decomposes it once. Its descendants climb their ladders under the same gate rule, but they are never split again. A descendant that fails at the top becomes a gap.
+A NOT DONE gate naming no such fix advances the task exactly one rung. A gate finding the task too large splits it at once, at any rung; a lineage splits once, and descendants never split. A task never moves down, and an agent never selects or changes its own rung. No role enters above its entry rung.
+
+When the top rung fails, the orchestrator makes one final attempt itself, in the task's workspace under the worker contract, gated like any return. If that fails, the lineage is a gap.
 
 ## The registry
 
@@ -38,7 +40,7 @@ No contract or skill names a rung, model, or provider. Skills name roles and res
 To dispatch a role:
 
 1. Look up the role in the registry.
-2. Select its entry rung, or the next rung in its ladder when a NOT DONE gate record requires advancement.
+2. Select its entry rung, the same rung for a second attempt, or the next rung in its ladder when a NOT DONE gate record requires advancement.
 3. Select the rung's agent, using its read-only variant for a read-only role, or select its model alias.
 4. Invoke the harness's dispatch operation, passing the role's contract by path and its brief as text.
 
